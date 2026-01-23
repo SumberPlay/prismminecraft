@@ -152,31 +152,44 @@
     }
 
     async function sendReport() {
-        const text = document.getElementById('reportText').value.trim();
-        const uid = sessionStorage.getItem('prism_uid') || "Unknown";
-        const statusMsg = document.getElementById('reportStatus');
+    const text = document.getElementById('reportText').value.trim();
+    const uid = sessionStorage.getItem('prism_uid') || "Unknown";
+    const statusMsg = document.getElementById('reportStatus');
 
-        if (!text) {
-            statusMsg.innerText = "❌ ОШИБКА: ТЕКСТ ОТСУТСТВУЕТ";
-            statusMsg.style.color = "var(--alert-red)";
-            return;
-        }
-
-        statusMsg.innerText = "⚡ ОТПРАВКА ДАННЫХ...";
-        statusMsg.style.color = "#888";
-
-        try {
-            // Отправка в Google Script
-            await fetch(`${scriptURL}?action=report&uid=${uid}&text=${encodeURIComponent(text)}`, { mode: 'no-cors' });
-            
-            statusMsg.style.color = "var(--neon-green)";
-            statusMsg.innerText = "✅ РАПОРТ ПРИНЯТ ШТАБОМ";
-            document.getElementById('reportText').value = "";
-        } catch (e) {
-            statusMsg.style.color = "var(--alert-red)";
-            statusMsg.innerText = "⚠️ СБОЙ СЕТИ. ПОВТОРИТЕ ПОПЫТКУ";
-        }
+    if (!text) {
+        statusMsg.innerText = "❌ ОШИБКА: ПУСТОЙ ТЕКСТ";
+        statusMsg.style.color = "var(--alert-red)";
+        return;
     }
+
+    statusMsg.innerText = "⚡ ОТПРАВКА...";
+    statusMsg.style.color = "#888";
+
+    // Очищаем ссылку от возможных пробелов по краям
+    const cleanURL = scriptURL.trim();
+    
+    // Формируем полную ссылку для проверки в консоли
+    const finalUrl = `${cleanURL}?action=report&uid=${encodeURIComponent(uid)}&text=${encodeURIComponent(text)}`;
+
+    try {
+        // Используем метод 'no-cors', так как Google Script не возвращает заголовки CORS
+        await fetch(finalUrl, { 
+            method: 'GET',
+            mode: 'no-cors',
+            cache: 'no-cache'
+        });
+        
+        // Если дошли сюда, значит запрос ушел в сеть
+        statusMsg.style.color = "var(--neon-green)";
+        statusMsg.innerText = "✅ РАПОРТ ОТПРАВЛЕН В ШТАБ";
+        document.getElementById('reportText').value = ""; // Чистим поле
+        
+    } catch (e) {
+        console.error("Ошибка отправки:", e);
+        statusMsg.style.color = "var(--alert-red)";
+        statusMsg.innerText = "⚠️ ОШИБКА СЕТИ (см. консоль F12)";
+    }
+}
 
     function logout() {
         sessionStorage.clear();
@@ -189,5 +202,6 @@
 </script>
 </body>
 </html>
+
 
 
