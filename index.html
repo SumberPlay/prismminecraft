@@ -164,16 +164,17 @@
     updateClock();
 
     async function syncPrism() {
+        // Мы используем CSV ссылку, но добавляем обман кэша через временную метку
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?output=csv&t=${Date.now()}`;
+
         try {
-            // Анти-кэш: добавляем уникальный штамп времени к каждому запросу
-            const response = await fetch(`${DATA_URL}&cachebuster=${Date.now()}`);
+            const response = await fetch(CSV_URL);
             if (!response.ok) throw new Error("Connection failed");
 
             const text = await response.text();
             
-            // Парсим CSV данные
+            // Логика парсинга
             const rows = text.trim().split('\n');
-            // Убираем кавычки и лишние пробелы из первой строки
             const parts = rows[0].split(',').map(item => 
                 item.replace(/^["']|["']$/g, '').trim()
             );
@@ -185,34 +186,33 @@
                 const statusDot = document.getElementById('status-dot');
                 const alertBanner = document.getElementById('emergency-alert');
 
-                // 1. Обновляем текстовый статус и цвет индикатора
+                // Обновляем текст
                 if (statusTxt) {
                     statusTxt.innerText = "LEVEL: " + label.toUpperCase();
                     statusTxt.style.color = color;
                 }
+                
+                // Обновляем точку
                 if (statusDot) {
                     statusDot.style.background = color;
                     statusDot.style.boxShadow = `0 0 15px ${color}`;
                 }
 
-                // 2. Логика эффектов погружения (RED / STABLE / CUSTOM)
+                // Визуальные эффекты для RED
                 if (state.toUpperCase() === "RED") {
                     if (alertBanner) alertBanner.style.display = "block";
                     document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
                     document.body.style.backgroundColor = "#0a0000";
-                    if (statusDot) statusDot.style.animation = "pulse 0.5s infinite"; // Ускоряем пульс
                 } else {
                     if (alertBanner) alertBanner.style.display = "none";
                     document.body.style.boxShadow = "none";
                     document.body.style.backgroundColor = "#050505";
-                    if (statusDot) statusDot.style.animation = "pulse 2s infinite"; // Возвращаем спокойный пульс
                 }
             }
         } catch (error) {
-            console.error("P.R.I.S.M. Sync Error:", error);
+            console.error("Ошибка синхронизации P.R.I.S.M:", error);
         }
     }
-
     // Опрашиваем таблицу каждые 3 секунды для максимальной точности
     setInterval(syncPrism, 3000);
     syncPrism();
@@ -225,3 +225,4 @@
 </body>
 
 </html>
+
