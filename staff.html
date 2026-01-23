@@ -31,13 +31,19 @@
         }
         .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 10px var(--neon-green); }
         
-        /* Особый стиль для Высшего Совета */
         .btn-council { border-color: var(--gold); color: var(--gold); }
         .btn-council:hover { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
 
         .role-tag { font-size: 0.8em; color: #666; text-transform: uppercase; letter-spacing: 2px; }
         #staff-content { display: none; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        
+        textarea {
+            width: 100%; height: 80px; background: #000; color: #fff; border: 1px solid #222; 
+            padding: 10px; font-family: 'Courier New', monospace; box-sizing: border-box; 
+            resize: none; margin-top: 10px; outline: none;
+        }
+        textarea:focus { border-color: var(--neon-green); }
     </style>
 </head>
 <body>
@@ -61,16 +67,26 @@
     <div id="staff-content">
         <div class="role-tag" id="user-role">Role: Undefined</div>
         <h2 id="greet" style="margin-top: 5px;">ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
-        <hr border="0" style="border-bottom: 1px solid #222; margin-bottom: 20px;">
+        <hr style="border: 0; border-bottom: 1px solid #222; margin-bottom: 20px;">
 
-        <div class="grid" id="buttons-container">
-            </div>
+        <div class="grid" id="buttons-container"></div>
+
+        <div class="card" style="border: 1px dashed #333; margin-top: 30px; background: #0a0a0a;">
+            <h3 style="color: var(--neon-green); margin-top: 0; font-size: 0.9em;">📝 СЛУЖЕБНЫЙ РАПОРТ</h3>
+            <textarea id="reportText" placeholder="Введите данные о происшествии или отчет о дежурстве..."></textarea>
+            <button onclick="sendReport()" class="btn" style="margin-top: 10px; font-size: 0.8em; padding: 10px;">ОТПРАВИТЬ В ШТАБ</button>
+            <p id="reportStatus" style="font-size: 0.7em; margin-top: 5px; text-align: center; height: 1em;"></p>
+        </div>
 
         <button onclick="logout()" style="background:none; border:none; color:#444; margin-top:40px; cursor:pointer; width: 100%;">[ЗАВЕРШИТЬ СЕАНС]</button>
     </div>
 </div>
 
 <script>
+    // --- НАСТРОЙКИ ---
+    // ВСТАВЬ СВОЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT НИЖЕ:
+    const scriptURL = "https://script.google.com/macros/s/AKfycbw5IJgv69eQTF8hHh5orX6t1au6Bk9acpB1HnDr10QlQmCJSDkE5JEDAB0RYdwhjm-gKg/exec";
+
     const staffDB = {
         "M4SK": { pass: "5e03fcd2d70a976a6b026374da5da3f9", role: "scientific", level: 2, name: "МэнсиКейн, НИД" },
         "KRMP": { pass: "1bf502b835ee007957e558cbb1959ecb", role: "military", level: 3, name: "Кримпи, глава ВГР" },
@@ -78,7 +94,6 @@
         "MRYZE": { pass: "b0eee0a274f64e6f5792b85c93321159", role: "council", level: 5, name: "Юз, Высший Совет" }
     };
 
-    // --- ПРОВЕРКА СЕССИИ ПРИ ЗАГРУЗКЕ ---
     window.onload = function() {
         const savedUID = sessionStorage.getItem('prism_uid');
         if (savedUID && staffDB[savedUID]) {
@@ -93,17 +108,11 @@
 
         if (user) {
             const hashedInput = CryptoJS.MD5(ps).toString();
-
             if (user.pass === hashedInput) {
-                // СОХРАНЯЕМ В СЕССИЮ (до закрытия вкладки)
                 sessionStorage.setItem('prism_uid', id); 
                 renderDashboard(user);
-            } else {
-                showError();
-            }
-        } else {
-            showError();
-        }
+            } else { showError(); }
+        } else { showError(); }
     }
 
     function showError() {
@@ -112,30 +121,27 @@
     }
 
     function renderDashboard(user) {
-        
         document.getElementById('login-zone').style.display = 'none';
         document.getElementById('staff-content').style.display = 'block';
         document.getElementById('greet').innerText = user.name;
         document.getElementById('user-role').innerText = "Допуск: " + user.role;
+        
         const container = document.getElementById('buttons-container');
         container.innerHTML = ""; 
 
-        const role = user.role;
+        // Базовые кнопки для всех
+        container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
 
-        // Генерация кнопок в зависимости от роли
-        if (role === "scientific") {
-            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+        if (user.role === "scientific") {
             container.innerHTML += '<button class="btn" onclick="nav(\'archive\')">📂 АРХИВ АНОМАЛИЙ</button>';
             container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
             container.innerHTML += '<button class="btn" onclick="nav(\'nid\')">🧪 ПРОТОКОЛЫ НИД</button>';
         } 
-        else if (role === "military") {
-            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+        else if (user.role === "military") {
             container.innerHTML += '<button class="btn" onclick="nav(\'military_prot\')">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
             container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
         } 
-        else if (role === "council") {
-            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+        else if (user.role === "council") {
             container.innerHTML += '<button class="btn btn-council" onclick="nav(\'archive\')">📂 ВЕСЬ АРХИВ</button>';
             container.innerHTML += '<button class="btn btn-council" onclick="nav(\'map\')">🗺️ ВСЕ КОМПЛЕКСЫ</button>';
             container.innerHTML += '<button class="btn btn-council" onclick="nav(\'nid\')">🧪 НИД (ЧТЕНИЕ)</button>';
@@ -144,9 +150,33 @@
         }
     }
 
-    // --- ПРИНУДИТЕЛЬНЫЙ ВЫХОД ---
+    async function sendReport() {
+        const text = document.getElementById('reportText').value;
+        const uid = sessionStorage.getItem('prism_uid') || "Unknown";
+        const status = document.getElementById('reportStatus');
+
+        if (!text.trim()) {
+            status.innerText = "ОШИБКА: ПУСТОЙ ТЕКСТ";
+            status.style.color = "var(--alert-red)";
+            return;
+        }
+
+        status.innerText = "УСТАНОВКА СВЯЗИ...";
+        status.style.color = "#888";
+
+        try {
+            await fetch(`${scriptURL}?action=report&uid=${uid}&text=${encodeURIComponent(text)}`, { mode: 'no-cors' });
+            status.style.color = "var(--neon-green)";
+            status.innerText = "РАПОРТ УСПЕШНО ДОСТАВЛЕН В ШТАБ";
+            document.getElementById('reportText').value = "";
+        } catch (e) {
+            status.style.color = "var(--alert-red)";
+            status.innerText = "ОШИБКА СЕТИ. ПОВТОРИТЕ ПОПЫТКУ";
+        }
+    }
+
     function logout() {
-        sessionStorage.clear(); // Полная очистка данных сессии
+        sessionStorage.clear();
         location.reload(); 
     }
 
@@ -154,6 +184,5 @@
         location.href = page + ".html";
     }
 </script>
-
 </body>
 </html>
