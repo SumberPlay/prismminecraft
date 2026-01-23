@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>P.R.I.S.M. | Личные Дела</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        :root { --neon: #00ffcc; --bg: #050505; --alert: #ff4444; }
+        
+        body { background: var(--bg); color: #bbb; font-family: 'Courier New', monospace; margin: 0; padding: 0; min-height: 100vh; }
+
+        /* Эффект сканирования */
+        #scanner-line {
+            position: fixed; top: -5px; left: 0; width: 100%; height: 5px;
+            background: var(--neon); box-shadow: 0 0 15px var(--neon);
+            z-index: 2000; display: none;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+
+        /* Экран входа */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98); z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .login-card {
+            border: 1px solid var(--neon); padding: 40px; background: #000;
+            text-align: center; width: 350px; position: relative;
+        }
+
+        .login-card::before { content: ""; position: absolute; top: -5px; left: -5px; width: 20px; height: 20px; border-top: 2px solid var(--neon); border-left: 2px solid var(--neon); }
+        .login-card::after { content: ""; position: absolute; bottom: -5px; right: -5px; width: 20px; height: 20px; border-bottom: 2px solid var(--neon); border-right: 2px solid var(--neon); }
+
+        input { background: #000; border: 1px solid #333; color: var(--neon); padding: 10px; margin: 10px 0; width: 100%; box-sizing: border-box; outline: none; }
+
+        .btn { background: var(--neon); color: #000; border: none; padding: 10px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; text-transform: uppercase; transition: 0.3s; }
+        .btn:hover { background: #fff; box-shadow: 0 0 15px #fff; }
+
+        .btn-guest { background: none; color: #555; border: 1px solid #333; margin-top: 20px; }
+        .btn-guest:hover { border-color: #777; color: #777; }
+
+        .btn-home { background: none; color: #333; border: none; font-size: 0.7em; margin-top: 15px; text-decoration: underline; cursor: pointer; }
+        .btn-home:hover { color: var(--neon); }
+
+        /* Контент */
+        nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
+        nav a { color: #888; text-decoration: none; padding: 0 20px; font-size: 0.9em; }
+        nav a:hover { color: var(--neon); }
+        
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .header { border-bottom: 2px solid var(--neon); padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .dossier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 25px; }
+
+        .player-card { background: #0a0a0a; border: 1px solid #222; display: flex; padding: 20px; position: relative; overflow: hidden; }
+        .locked { filter: blur(15px) grayscale(1); pointer-events: none; opacity: 0.3; }
+
+        .lock-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--alert); font-weight: bold; z-index: 10; display: none; text-shadow: 0 0 10px var(--alert); }
+
+        .photo { width: 100px; height: 100px; border: 1px solid #333; margin-right: 20px; filter: grayscale(1); }
+        .name { color: var(--neon); font-size: 1.3em; margin-bottom: 5px; }
+        .status { font-size: 0.75em; padding: 2px 8px; border: 1px solid; margin-bottom: 10px; display: inline-block; }
+        .status-active { color: #00ff00; }
+        .status-wanted { color: var(--alert); }
+
+        .btn-exit { background: none; border: 1px solid var(--alert); color: var(--alert); cursor: pointer; padding: 5px 10px; font-family: monospace; font-size: 0.8em; transition: 0.3s; }
+        .btn-exit:hover { background: var(--alert); color: #000; }
+        .btn-reset-guest { border-color: #555; color: #555; }
+        .btn-reset-guest:hover { border-color: #888; color: #888; background: none; }
+    </style>
+</head>
+<body>
+
+<div id="scanner-line"></div>
+
+<div id="auth-overlay">
+    <div class="login-card">
+        <h2 id="main-title" style="color: var(--neon); letter-spacing: 3px;">P.R.I.S.M. ACCESS</h2>
+        <p id="sub-title" style="font-size: 0.7em; color: #555;">ОЖИДАНИЕ АВТОРИЗАЦИИ...</p>
+        
+        <div id="inputs-group">
+            <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
+            <input type="password" id="ups" placeholder="ПАРОЛЬ">
+            <button class="btn" onclick="startAuthProcess('admin')">ВХОД</button>
+            <button class="btn btn-guest" onclick="startAuthProcess('guest')">ГОСТЕВОЙ ДОСТУП</button>
+            <button class="btn-home" onclick="window.location.href='index.html'">ВЕРНУТЬСЯ НА ГЛАВНУЮ</button>
+        </div>
+        <div id="err" style="color: var(--alert); display: none; margin-top: 10px; font-size: 0.8em;">ОТКАЗАНО В ДОСТУПЕ</div>
+    </div>
+</div>
+
+<nav>
+    <a href="index.html">ГЛАВНАЯ</a>
+    <a href="dossier.html" style="color: var(--neon);">ЛИЧНЫЕ ДЕЛА</a>
+    <a href="staff.html">ТЕРМИНАЛ</a>
+</nav>
+
+<div class="container">
+    <div class="header">
+        <h1>PERSONNEL DOSSIER</h1>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="access-info" style="font-size: 0.8em; color: #555;"></div>
+            <div id="exit-container"></div>
+        </div>
+    </div>
+
+    <div class="dossier-grid" id="dossier-container">
+        <div class="player-card" data-level="1">
+            <div class="lock-text">ДОСТУП ОГРАНИЧЕН</div>
+            <div class="content-wrap" style="display:flex; width:100%;">
+                <img src="https://minotar.net/armor/bust/Steve/100.png" class="photo">
+                <div class="info">
+                    <div class="name">Объект #1</div>
+                    <div class="status status-active">СТАТУС: АКТИВЕН</div>
+                    <div class="bio">Информация не доступна.</div>
+                </div>
+            </div>
+        </div>
+        </div>
+</div>
+
+<script>
+    const staffDB = {
+        "M4SK": { pass: "5e03fcd2d70a976a6b026374da5da3f9", role: "scientific", level: 2,name: "МэнсиКейн, НИД" },
+        "KRMP": { pass: "1bf502b835ee007957e558cbb1959ecb", role: "military", level: 3, name: "Кримпи, глава ВГР" },
+        "SUMBR": { pass: "8aaa688aadaf78796f5f620a4897eeb3", role: "council", level: 5, name: "Самбер, Высший Совет" },
+        "MRYZE": { pass: "b0eee0a274f64e6f5792b85c93321159", role: "council", level: 5, name: "Юз, Высший Совет" }
+    };
+
+    function startAuthProcess(type) {
+        const scanner = document.getElementById('scanner-line');
+        const subTitle = document.getElementById('sub-title');
+        scanner.style.display = 'block';
+        scanner.style.animation = 'scan 1.5s linear infinite';
+        subTitle.innerText = "ВЫПОЛНЯЕТСЯ ДЕШИФРОВКА...";
+        subTitle.style.color = "#00ffcc";
+
+        setTimeout(() => {
+            if (type === 'guest') {
+                localStorage.setItem('prism_level', 1);
+                localStorage.setItem('prism_user', 'ГОСТЬ');
+                location.reload();
+            } else {
+                const id = document.getElementById('uid').value;
+                const ps = document.getElementById('ups').value;
+                const user = staffDB[id];
+                if (user && CryptoJS.MD5(ps).toString() === user.pass) {
+                    localStorage.setItem('prism_level', user.level);
+                    localStorage.setItem('prism_user', user.name);
+                    location.reload();
+                } else {
+                    scanner.style.display = 'none';
+                    subTitle.innerText = "ОШИБКА АУТЕНТИФИКАЦИИ";
+                    subTitle.style.color = '#ff4444';
+                    document.getElementById('err').style.display = 'block';
+                }
+            }
+        }, 1800);
+    }
+
+    function logout() {
+        localStorage.clear();
+        location.reload();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const level = localStorage.getItem('prism_level');
+        if (!level) {
+            document.getElementById('auth-overlay').style.display = 'flex';
+        } else {
+            document.getElementById('auth-overlay').style.display = 'none';
+            renderPage(parseInt(level));
+        }
+    });
+
+    function renderPage(userLevel) {
+        const info = document.getElementById('access-info');
+        const exitContainer = document.getElementById('exit-container');
+        if (localStorage.getItem('prism_user') === 'ГОСТЬ') {
+            info.innerText = "ГОСТЕВОЙ РЕЖИМ";
+            exitContainer.innerHTML = `<button class="btn-exit btn-reset-guest" onclick="logout()">СБРОСИТЬ ДОСТУП</button>`;
+        } else {
+            info.innerText = "ДОСТУП: LEVEL " + userLevel + " (" + localStorage.getItem('prism_user') + ")";
+            info.style.color = "var(--neon)";
+            exitContainer.innerHTML = `<button class="btn-exit" onclick="logout()">ЗАВЕРШИТЬ СЕАНС</button>`;
+        }
+        document.querySelectorAll('.player-card').forEach(card => {
+            const req = parseInt(card.getAttribute('data-level'));
+            if (userLevel < req) {
+                card.querySelector('.content-wrap').classList.add('locked');
+                card.querySelector('.lock-text').style.display = 'flex';
+            }
+        });
+    }
+</script>
+</body>
+</html>

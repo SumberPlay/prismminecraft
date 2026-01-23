@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <meta charset="UTF-8">
+    <title>P.R.I.S.M. | Staff Portal</title>
+    <style>
+        :root { 
+            --neon-green: #00ffcc; 
+            --alert-red: #ff4444; 
+            --gold: #ffd700;
+            --bg-dark: #050505; 
+            --panel-bg: #111; 
+        }
+        body { background: var(--bg-dark); color: #d1d1d1; font-family: 'Courier New', monospace; margin: 0; }
+        nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
+        nav a { color: #888; text-decoration: none; text-transform: uppercase; padding: 0 20px; }
+        nav a:hover { color: var(--neon-green); }
+        .container { max-width: 800px; margin: 50px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); border: 1px solid #222; padding: 30px; }
+        
+        input { 
+            background: #000; border: 1px solid #333; color: var(--neon-green); 
+            padding: 15px; width: 100%; margin-bottom: 20px; box-sizing: border-box; 
+        }
+
+        .btn { 
+            background: #1a1a1a; border: 1px solid var(--neon-green); color: var(--neon-green); 
+            padding: 15px; width: 100%; cursor: pointer; font-weight: bold; 
+            text-transform: uppercase; transition: 0.3s; margin-bottom: 10px;
+        }
+        .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 10px var(--neon-green); }
+        
+        /* Особый стиль для Высшего Совета */
+        .btn-council { border-color: var(--gold); color: var(--gold); }
+        .btn-council:hover { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
+
+        .role-tag { font-size: 0.8em; color: #666; text-transform: uppercase; letter-spacing: 2px; }
+        #staff-content { display: none; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="index.html">Главная</a>
+    <a href="staff.html">Сотрудникам</a>
+</nav>
+
+<div class="container">
+    <div id="login-zone">
+        <h2 style="text-align: center;">АВТОРИЗАЦИЯ ТЕРМИНАЛА</h2>
+        <div class="card">
+            <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
+            <input type="password" id="ups" placeholder="ПАРОЛЬ">
+            <button class="btn" onclick="checkAuth()">ВХОД</button>
+            <p id="err" style="color: var(--alert-red); display: none; text-align: center;">ОШИБКА: ДОСТУП ЗАПРЕЩЕН</p>
+        </div>
+    </div>
+
+    <div id="staff-content">
+        <div class="role-tag" id="user-role">Role: Undefined</div>
+        <h2 id="greet" style="margin-top: 5px;">ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
+        <hr border="0" style="border-bottom: 1px solid #222; margin-bottom: 20px;">
+
+        <div class="grid" id="buttons-container">
+            </div>
+
+        <button onclick="logout()" style="background:none; border:none; color:#444; margin-top:40px; cursor:pointer; width: 100%;">[ЗАВЕРШИТЬ СЕАНС]</button>
+    </div>
+</div>
+
+<script>
+    const staffDB = {
+        "M4SK": { pass: "5e03fcd2d70a976a6b026374da5da3f9", role: "scientific", level: 2, name: "МэнсиКейн, НИД" },
+        "KRMP": { pass: "1bf502b835ee007957e558cbb1959ecb", role: "military", level: 3, name: "Кримпи, глава ВГР" },
+        "SUMBR": { pass: "8aaa688aadaf78796f5f620a4897eeb3", role: "council", level: 5, name: "Самбер, Высший Совет" },
+        "MRYZE": { pass: "b0eee0a274f64e6f5792b85c93321159", role: "council", level: 5, name: "Юз, Высший Совет" }
+    };
+
+    // --- ПРОВЕРКА СЕССИИ ПРИ ЗАГРУЗКЕ ---
+    window.onload = function() {
+        const savedUID = sessionStorage.getItem('prism_uid');
+        if (savedUID && staffDB[savedUID]) {
+            renderDashboard(staffDB[savedUID]);
+        }
+    };
+
+    function checkAuth() {
+        const id = document.getElementById('uid').value;
+        const ps = document.getElementById('ups').value;
+        const user = staffDB[id];
+
+        if (user) {
+            const hashedInput = CryptoJS.MD5(ps).toString();
+
+            if (user.pass === hashedInput) {
+                // СОХРАНЯЕМ В СЕССИЮ (до закрытия вкладки)
+                sessionStorage.setItem('prism_uid', id); 
+                renderDashboard(user);
+            } else {
+                showError();
+            }
+        } else {
+            showError();
+        }
+    }
+
+    function showError() {
+        document.getElementById('err').style.display = 'block';
+        setTimeout(() => { document.getElementById('err').style.display = 'none'; }, 3000);
+    }
+
+    function renderDashboard(user) {
+        
+        document.getElementById('login-zone').style.display = 'none';
+        document.getElementById('staff-content').style.display = 'block';
+        document.getElementById('greet').innerText = user.name;
+        document.getElementById('user-role').innerText = "Допуск: " + user.role;
+        const container = document.getElementById('buttons-container');
+        container.innerHTML = ""; 
+
+        const role = user.role;
+
+        // Генерация кнопок в зависимости от роли
+        if (role === "scientific") {
+            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+            container.innerHTML += '<button class="btn" onclick="nav(\'archive\')">📂 АРХИВ АНОМАЛИЙ</button>';
+            container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
+            container.innerHTML += '<button class="btn" onclick="nav(\'nid\')">🧪 ПРОТОКОЛЫ НИД</button>';
+        } 
+        else if (role === "military") {
+            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+            container.innerHTML += '<button class="btn" onclick="nav(\'military_prot\')">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
+            container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
+        } 
+        else if (role === "council") {
+            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'archive\')">📂 ВЕСЬ АРХИВ</button>';
+            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'map\')">🗺️ ВСЕ КОМПЛЕКСЫ</button>';
+            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'nid\')">🧪 НИД (ЧТЕНИЕ)</button>';
+            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'military_prot\')">🛡️ ОБОРОНА (ЧТЕНИЕ)</button>';
+            container.innerHTML += '<button class="btn btn-council" style="grid-column: span 2;" onclick="nav(\'override\')">⚖️ ПРОТОКОЛ ОБНУЛЕНИЯ</button>';
+        }
+    }
+
+    // --- ПРИНУДИТЕЛЬНЫЙ ВЫХОД ---
+    function logout() {
+        sessionStorage.clear(); // Полная очистка данных сессии
+        location.reload(); 
+    }
+
+    function nav(page) {
+        location.href = page + ".html";
+    }
+</script>
+
+</body>
+</html>
