@@ -151,78 +151,73 @@
 </div>
 
 <script>
-    // --- НАСТРОЙКИ СИНХРОНИЗАЦИИ ---
-    const SHEET_ID = "1ezQZE3dRLtlkQ06qJ1SxY1cHfCklPat154ZHrSgU8II";
-    // Используем более быстрый метод чтения через gviz (мгновенное обновление)
-    const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
-
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString();
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+    // Самый надежный способ прописать ID
+    const SHEET_ID = "1ezQZE3dRLtlkQ06qJ1SxY1cHfCklPat154ZHrSgU8II".trim();
+    
+    // Ссылка, которая точно отдаст данные, если ID верный
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:csv&sheet=Sheet1";
 
     async function syncPrism() {
-        // Мы используем CSV ссылку, но добавляем обман кэша через временную метку
-        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?output=csv&t=${Date.now()}`;
-
         try {
-            const response = await fetch(CSV_URL);
-            if (!response.ok) throw new Error("Connection failed");
+            // Добавляем случайное число, чтобы Google не подсовывал старые данные
+            const finalUrl = CSV_URL + "&v=" + Math.random();
+            const response = await fetch(finalUrl);
+            
+            if (!response.ok) {
+                console.error("ID таблицы верный, но Google отклонил запрос. Проверь настройки доступа (Доступно всем).");
+                return;
+            }
 
             const text = await response.text();
-            
-            // Логика парсинга
             const rows = text.trim().split('\n');
-            const parts = rows[0].split(',').map(item => 
-                item.replace(/^["']|["']$/g, '').trim()
-            );
-
-            if (parts.length >= 3) {
-                const [state, label, color] = parts;
-
-                const statusTxt = document.getElementById('status-text');
-                const statusDot = document.getElementById('status-dot');
-                const alertBanner = document.getElementById('emergency-alert');
-
-                // Обновляем текст
-                if (statusTxt) {
-                    statusTxt.innerText = "LEVEL: " + label.toUpperCase();
-                    statusTxt.style.color = color;
-                }
-                
-                // Обновляем точку
-                if (statusDot) {
-                    statusDot.style.background = color;
-                    statusDot.style.boxShadow = `0 0 15px ${color}`;
-                }
-
-                // Визуальные эффекты для RED
-                if (state.toUpperCase() === "RED") {
-                    if (alertBanner) alertBanner.style.display = "block";
-                    document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
-                    document.body.style.backgroundColor = "#0a0000";
-                } else {
-                    if (alertBanner) alertBanner.style.display = "none";
-                    document.body.style.boxShadow = "none";
-                    document.body.style.backgroundColor = "#050505";
-                }
+            
+            // Если в таблице пусто или она не загрузилась, rows[0] будет содержать ошибку
+            if (!rows[0] || rows[0].includes("html")) {
+                console.error("Получены неверные данные. Проверь, что таблица не пустая.");
+                return;
             }
-        } catch (error) {
-            console.error("Ошибка синхронизации P.R.I.S.M:", error);
+
+            const cols = rows[0].split(',').map(c => c.replace(/^["']|["']$/g, '').trim());
+
+            // Применяем данные к сайту
+            updateInterface(cols[0], cols[1], cols[2]);
+
+        } catch (err) {
+            console.error("Критическая ошибка связи:", err);
         }
     }
-    // Опрашиваем таблицу каждые 3 секунды для максимальной точности
+
+    function updateInterface(state, label, color) {
+        // Устанавливаем цвет фона (основной индикатор)
+        // Если статус RED — делаем очень темный красный, если STABLE — почти черный
+        const bgColor = (state === "RED") ? "#1a0000" : "#050505";
+        document.body.style.backgroundColor = bgColor;
+
+        const statusTxt = document.getElementById('status-text');
+        if (statusTxt) {
+            statusTxt.innerText = "LEVEL: " + label.toUpperCase();
+            statusTxt.style.color = color;
+        }
+
+        const statusDot = document.getElementById('status-dot');
+        if (statusDot) {
+            statusDot.style.backgroundColor = color;
+            statusDot.style.boxShadow = "0 0 20px " + color;
+        }
+        
+        const alertBanner = document.getElementById('emergency-alert');
+        if (alertBanner) {
+            alertBanner.style.display = (state === "RED") ? "block" : "none";
+        }
+    }
+
+    // Запуск
     setInterval(syncPrism, 3000);
     syncPrism();
-
-    function triggerEmergency() {
-        alert("ВНИМАНИЕ: Ручной сброс системы безопасности. Введите код подтверждения.");
-    }
 </script>
 
 </body>
 
 </html>
+
 
