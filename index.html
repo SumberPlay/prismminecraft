@@ -152,8 +152,10 @@
 
 <script>
     // --- НАСТРОЙКИ СИНХРОНИЗАЦИИ ---
+    const SHEET_ID = "1ezQZE3dRLtlkQ06qJ1SxY1cHfCklPat154ZHrSgU8II";
+    // Используем более быстрый метод чтения через gviz (мгновенное обновление)
+    const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
 
-    // Обновление часов
     function updateClock() {
         const now = new Date();
         document.getElementById('clock').innerText = now.toLocaleTimeString();
@@ -161,21 +163,19 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Твоя проверенная ссылка (которая скачивает файл)
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAgYC_hWFk84TAaaVxiuZp5YV1cugpEx9my32z5TKFp6u8gM47xPHBigJ0MUWWUcHwYNbZ9Ol6W0Y5/pub?output=csv"; 
-    const SHEET_ID = "1ezQZE3dRLtlkQ06qJ1SxY1cHfCklPat154ZHrSgU8II"
     async function syncPrism() {
         try {
-            // Добавляем параметр времени, чтобы Google не выдавал старую копию (кэш)
-            const response = await fetch(`${CSV_URL}&nocache=${Date.now()}`);
+            // Анти-кэш: добавляем уникальный штамп времени к каждому запросу
+            const response = await fetch(`${DATA_URL}&cachebuster=${Date.now()}`);
             if (!response.ok) throw new Error("Connection failed");
 
             const text = await response.text();
             
-            // Разбиваем строку и убираем лишние кавычки, которые вечно всё портят
+            // Парсим CSV данные
             const rows = text.trim().split('\n');
+            // Убираем кавычки и лишние пробелы из первой строки
             const parts = rows[0].split(',').map(item => 
-                item.replace(/^["'](.+)["']$/, '$1').replace(/["\r]/g, '').trim()
+                item.replace(/^["']|["']$/g, '').trim()
             );
 
             if (parts.length >= 3) {
@@ -185,9 +185,9 @@
                 const statusDot = document.getElementById('status-dot');
                 const alertBanner = document.getElementById('emergency-alert');
 
-                // Применяем данные
+                // 1. Обновляем текстовый статус и цвет индикатора
                 if (statusTxt) {
-                    statusTxt.innerText = label.toUpperCase();
+                    statusTxt.innerText = "LEVEL: " + label.toUpperCase();
                     statusTxt.style.color = color;
                 }
                 if (statusDot) {
@@ -195,28 +195,33 @@
                     statusDot.style.boxShadow = `0 0 15px ${color}`;
                 }
 
-                // Логика для RED (Критический режим)
+                // 2. Логика эффектов погружения (RED / STABLE / CUSTOM)
                 if (state.toUpperCase() === "RED") {
                     if (alertBanner) alertBanner.style.display = "block";
-                    document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.5)";
+                    document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
                     document.body.style.backgroundColor = "#0a0000";
-                    if (statusDot) statusDot.style.animation = "pulse-fast 0.8s infinite";
+                    if (statusDot) statusDot.style.animation = "pulse 0.5s infinite"; // Ускоряем пульс
                 } else {
                     if (alertBanner) alertBanner.style.display = "none";
                     document.body.style.boxShadow = "none";
                     document.body.style.backgroundColor = "#050505";
-                    if (statusDot) statusDot.style.animation = "none";
+                    if (statusDot) statusDot.style.animation = "pulse 2s infinite"; // Возвращаем спокойный пульс
                 }
             }
         } catch (error) {
-            console.error("P.R.I.S.M. Error:", error);
+            console.error("P.R.I.S.M. Sync Error:", error);
         }
     }
 
-    // Запуск каждые 5 секунд
-    setInterval(syncPrism, 5000);
+    // Опрашиваем таблицу каждые 3 секунды для максимальной точности
+    setInterval(syncPrism, 3000);
     syncPrism();
+
+    function triggerEmergency() {
+        alert("ВНИМАНИЕ: Ручной сброс системы безопасности. Введите код подтверждения.");
+    }
 </script>
 
 </body>
+
 </html>
