@@ -151,67 +151,59 @@
 </div>
 
 <script>
-    // Самый надежный способ прописать ID
-    const SHEET_ID = "1ezQZE3dRLtlkQ06qJ1SxY1cHfCklPat154ZHrSgU8II".trim();
-    
-    // Ссылка, которая точно отдаст данные, если ID верный
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:csv&sheet=Sheet1";
+    const SHEET_ID = "1ezQZE3dRLtlkQ06qJ1SxY1cHfCklPat154ZHrSgU8II";
+    // Используем ссылку ПУБЛИКАЦИИ (Файл -> Поделиться -> Опубликовать в интернете -> CSV)
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?output=csv`;
+
+    function updateClock() {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
 
     async function syncPrism() {
         try {
-            // Добавляем случайное число, чтобы Google не подсовывал старые данные
-            const finalUrl = CSV_URL + "&v=" + Math.random();
-            const response = await fetch(finalUrl);
-            
-            if (!response.ok) {
-                console.error("ID таблицы верный, но Google отклонил запрос. Проверь настройки доступа (Доступно всем).");
-                return;
-            }
+            // Анти-кэш t=Date.now()
+            const response = await fetch(`${CSV_URL}&t=${Date.now()}`);
+            if (!response.ok) throw new Error("CORS or Access Error");
 
             const text = await response.text();
             const rows = text.trim().split('\n');
             
-            // Если в таблице пусто или она не загрузилась, rows[0] будет содержать ошибку
-            if (!rows[0] || rows[0].includes("html")) {
-                console.error("Получены неверные данные. Проверь, что таблица не пустая.");
-                return;
-            }
-
+            // Чистим данные от кавычек Google
             const cols = rows[0].split(',').map(c => c.replace(/^["']|["']$/g, '').trim());
 
-            // Применяем данные к сайту
-            updateInterface(cols[0], cols[1], cols[2]);
-
-        } catch (err) {
-            console.error("Критическая ошибка связи:", err);
+            if (cols.length >= 3) {
+                const [state, label, color] = cols;
+                updateUI(state, label, color);
+            }
+        } catch (error) {
+            console.error("Ошибка синхронизации:", error);
+            document.getElementById('status-text').innerText = "OFFLINE";
+            document.getElementById('status-text').style.color = "gray";
         }
     }
 
-    function updateInterface(state, label, color) {
-        // Устанавливаем цвет фона (основной индикатор)
-        // Если статус RED — делаем очень темный красный, если STABLE — почти черный
-        const bgColor = (state === "RED") ? "#1a0000" : "#050505";
-        document.body.style.backgroundColor = bgColor;
-
+    function updateUI(state, label, color) {
         const statusTxt = document.getElementById('status-text');
-        if (statusTxt) {
-            statusTxt.innerText = "LEVEL: " + label.toUpperCase();
-            statusTxt.style.color = color;
-        }
-
         const statusDot = document.getElementById('status-dot');
-        if (statusDot) {
-            statusDot.style.backgroundColor = color;
-            statusDot.style.boxShadow = "0 0 20px " + color;
-        }
-        
         const alertBanner = document.getElementById('emergency-alert');
-        if (alertBanner) {
-            alertBanner.style.display = (state === "RED") ? "block" : "none";
+
+        statusTxt.innerText = label.toUpperCase();
+        statusTxt.style.color = color;
+        statusDot.style.backgroundColor = color;
+        statusDot.style.boxShadow = `0 0 15px ${color}`;
+
+        if (state.toUpperCase() === "RED") {
+            alertBanner.style.display = "block";
+            document.body.style.backgroundColor = "#1a0000";
+            document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
+        } else {
+            alertBanner.style.display = "none";
+            document.body.style.backgroundColor = "#050505";
+            document.body.style.boxShadow = "none";
         }
     }
 
-    // Запуск
     setInterval(syncPrism, 3000);
     syncPrism();
 </script>
@@ -219,5 +211,6 @@
 </body>
 
 </html>
+
 
 
