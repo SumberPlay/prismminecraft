@@ -210,34 +210,39 @@ function updateUI(state, label, color) {
     const alertBanner = document.getElementById('emergency-alert');
     const alarm = document.getElementById('alarm-sound');
 
-    statusTxt.innerText = label.toUpperCase();
+    // Базовые настройки текста
     statusTxt.style.color = color;
     statusDot.style.backgroundColor = color;
     statusDot.style.boxShadow = `0 0 15px ${color}`;
 
     if (state && state.toUpperCase() === "RED") {
+        // ВКЛЮЧАЕМ БЕГУЩУЮ СТРОКУ
+        // Повторяем текст несколько раз, чтобы не было пустых дырок
+        const repeatedText = (label.toUpperCase() + " — ").repeat(10);
+        statusTxt.innerHTML = `<div class="marquee"><span>${repeatedText}</span></div>`;
+        
         alertBanner.style.display = "block";
         document.body.style.backgroundColor = "#1a0000";
         
+        // Логика звука (плавное нарастание)
         if (audioUnlocked && alarm && !isAlarmPlaying) {
             isAlarmPlaying = true;
-            
-            // Сбрасываем громкость на минимум перед стартом
             alarm.volume = 0.1; 
             alarm.play().catch(e => console.log("Sound pending click"));
 
-            // Плавное нарастание
-            clearInterval(volumeInterval); // Чистим старый таймер на всякий случай
+            clearInterval(volumeInterval);
             volumeInterval = setInterval(() => {
                 if (alarm.volume < 0.3) {
-                    // Прибавляем по чуть-чуть (0.01)
                     alarm.volume = Math.min(0.3, alarm.volume + 0.01);
                 } else {
-                    clearInterval(volumeInterval); // Достигли 0.4 — стоп
+                    clearInterval(volumeInterval);
                 }
-            }, 400); // Каждые 0.2 секунды
+            }, 600);
         }
     } else {
+        // ОБЫЧНЫЙ ТЕКСТ (STABLE)
+        statusTxt.innerHTML = label.toUpperCase(); 
+        
         alertBanner.style.display = "none";
         document.body.style.backgroundColor = "#050505";
         
@@ -260,6 +265,7 @@ function updateUI(state, label, color) {
 </body>
 
 </html>
+
 
 
 
