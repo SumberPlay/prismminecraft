@@ -229,13 +229,13 @@ function updateUI(state, label, color) {
             // Плавное нарастание
             clearInterval(volumeInterval); // Чистим старый таймер на всякий случай
             volumeInterval = setInterval(() => {
-                if (alarm.volume < 0.4) {
+                if (alarm.volume < 0.3) {
                     // Прибавляем по чуть-чуть (0.01)
-                    alarm.volume = Math.min(0.4, alarm.volume + 0.01);
+                    alarm.volume = Math.min(0.3, alarm.volume + 0.01);
                 } else {
                     clearInterval(volumeInterval); // Достигли 0.4 — стоп
                 }
-            }, 200); // Каждые 0.2 секунды
+            }, 400); // Каждые 0.2 секунды
         }
     } else {
         alertBanner.style.display = "none";
@@ -260,6 +260,7 @@ function updateUI(state, label, color) {
 </body>
 
 </html>
+
 
 
 
