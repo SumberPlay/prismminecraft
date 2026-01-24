@@ -154,10 +154,10 @@ function checkAuth() {
     const user = staffDB[id];
 
     if (user) {
-        const hashedInput = CryptoJS.MD5(ps).toString();
         if (user.pass === hashedInput) {
-            sessionStorage.setItem('prism_uid', id); 
-            renderDashboard(user);
+    sessionStorage.setItem('prism_uid', id); 
+    sessionStorage.setItem('prism_level', user.level); // ДОБАВЬ ЭТУ СТРОКУ
+    renderDashboard(user);
         } else { showError(); }
     } else { showError(); }
 }
@@ -250,3 +250,4 @@ window.onload = function() {
 </script>
 </body>
 </html>
+
