@@ -20,7 +20,7 @@
             transition: background 0.5s;
         }
         
-        /* Стили для тревоги */
+        /* Стили для режима тревоги */
         body.alarm-mode { background: #1a0505; }
         body.alarm-mode .card { border-color: var(--alert-red); box-shadow: 0 0 15px rgba(255, 68, 68, 0.1); }
 
@@ -98,9 +98,9 @@
 
         <div class="card" style="border: 1px dashed #444; background: #080808;">
             <h3 style="color: var(--neon-green); margin: 0 0 10px 0; font-size: 1em;">📝 ЭЛЕКТРОННЫЙ РАПОРТ</h3>
-            <p style="font-size: 0.7em; color: #666; margin: 0;">Шифрованный канал связи с ботом штаба.</p>
-            <textarea id="reportText" placeholder="Введите отчет о ситуации..."></textarea>
-            <button onclick="sendReport()" class="btn" style="margin-top: 15px; font-size: 0.85em; padding: 12px;">ОТПРАВИТЬ В ШТАБ</button>
+            <p style="font-size: 0.75em; color: #666; margin-bottom: 10px;">Прямая передача данных в Telegram-бот штаба.</p>
+            <textarea id="reportText" placeholder="Введите текст сообщения..."></textarea>
+            <button onclick="sendReport()" class="btn" style="margin-top: 15px; font-size: 0.85em;">ОТПРАВИТЬ В ШТАБ</button>
             <div id="reportStatus"></div>
         </div>
 
@@ -109,7 +109,6 @@
 </div>
 
 <script>
-// --- КОНФИГУРАЦИЯ ---
 const RENDER_API = "https://prism-bot.onrender.com";
 
 const staffDB = {
@@ -119,7 +118,7 @@ const staffDB = {
     "MRYZE": { pass: "b0eee0a274f64e6f5792b85c93321159", role: "council", level: 5, name: "Юз, Высший Совет" }
 };
 
-// --- СИНХРОНИЗАЦИЯ СЕРВЕРА ---
+// 1. СИНХРОНИЗАЦИЯ С БОТОМ
 async function syncSystem() {
     try {
         const response = await fetch(`${RENDER_API}/status`);
@@ -148,7 +147,7 @@ async function syncSystem() {
     }
 }
 
-// --- АВТОРИЗАЦИЯ ---
+// 2. АВТОРИЗАЦИЯ
 function checkAuth() {
     const id = document.getElementById('uid').value.toUpperCase().trim();
     const ps = document.getElementById('ups').value;
@@ -163,6 +162,12 @@ function checkAuth() {
     } else { showError(); }
 }
 
+function showError() {
+    document.getElementById('err').style.display = 'block';
+    setTimeout(() => { document.getElementById('err').style.display = 'none'; }, 3000);
+}
+
+// 3. ОТРИСОВКА ИНТЕРФЕЙСА
 function renderDashboard(user) {
     document.getElementById('login-zone').style.display = 'none';
     document.getElementById('staff-content').style.display = 'block';
@@ -170,25 +175,32 @@ function renderDashboard(user) {
     document.getElementById('user-role').innerText = `Access Level: ${user.role.toUpperCase()} (Lvl ${user.level})`;
     
     const container = document.getElementById('buttons-container');
-    container.innerHTML = '<button class="btn" onclick="alert(\'Доступно в полной версии\')">👤 ЛИЧНОЕ ДОСЬЕ</button>';
-    
+    container.innerHTML = ""; 
 
+    // Базовые кнопки
+    container.innerHTML += '<button class="btn" onclick="nav(\'profile\')">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+    container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
+
+    // Ролевые кнопки
     if (user.role === "scientific") {
-        container.innerHTML += '<button class="btn">📂 АРХИВ АНОМАЛИЙ</button>';
-        container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
-        
-    } else if (user.role === "military") {
-        container.innerHTML += '<button class="btn">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
-        container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
-    } else if (user.role === "council") {
-        container.innerHTML += '<button class="btn">📂 АРХИВ АНОМАЛИЙ</button>';
-        container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
-        container.innerHTML += '<button class="btn">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
-        container.innerHTML += '<button class="btn btn-council">⚖️ ПРОТОКОЛЫ СОВЕТА</button>';
+        container.innerHTML += '<button class="btn" onclick="nav(\'archive\')">📂 АРХИВ АНОМАЛИЙ</button>';
+    } 
+    else if (user.role === "military") {
+        container.innerHTML += '<button class="btn" onclick="nav(\'military_prot\')">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
+    } 
+    else if (user.role === "council") {
+        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'archive\')">📂 ВЕСЬ АРХИВ</button>';
+        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'military_prot\')">🛡️ ОБОРОНА</button>';
+        container.innerHTML += '<button class="btn btn-council" style="grid-column: span 2;" onclick="nav(\'override\')">⚖️ ПРОТОКОЛ ОБНУЛЕНИЯ</button>';
     }
 }
 
-// --- ОТПРАВКА РАПОРТА ---
+// 4. НАВИГАЦИЯ
+function nav(page) {
+    window.location.href = page + ".html";
+}
+
+// 5. ОТПРАВКА РАПОРТА
 async function sendReport() {
     const text = document.getElementById('reportText').value.trim();
     const uid = sessionStorage.getItem('prism_uid') || "Unknown";
@@ -197,6 +209,7 @@ async function sendReport() {
     if (!text) return;
 
     statusMsg.innerText = "⚡ ОТПРАВКА...";
+    statusMsg.style.color = "#888";
     
     try {
         const response = await fetch(`${RENDER_API}/send-report`, {
@@ -212,12 +225,12 @@ async function sendReport() {
 
         if (response.ok) {
             statusMsg.style.color = "var(--neon-green)";
-            statusMsg.innerText = "✅ ДОСТАВЛЕНО В ШТАБ";
+            statusMsg.innerText = "✅ РАПОРТ ДОСТАВЛЕН В ШТАБ";
             document.getElementById('reportText').value = "";
         } else { throw new Error(); }
     } catch (e) {
         statusMsg.style.color = "var(--alert-red)";
-        statusMsg.innerText = "⚠️ ОШИБКА СЕТИ";
+        statusMsg.innerText = "⚠️ ОШИБКА СЕТИ (СЕРВЕР OFFLINE)";
     }
 }
 
@@ -226,7 +239,7 @@ function logout() {
     location.reload(); 
 }
 
-// Инициализация
+// СТАРТ
 setInterval(syncSystem, 3000);
 syncSystem();
 
@@ -237,4 +250,3 @@ window.onload = function() {
 </script>
 </body>
 </html>
-
