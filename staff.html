@@ -88,70 +88,77 @@
     // --- КОНФИГУРАЦИЯ ---
     const scriptURL = "https://script.google.com/macros/s/AKfycbyus0-Ji2zZY9QRsnX1P2iuANunJbBntS7FOVWimM_ZHf0po7GNajCC44zpeiRMMfpu9g/exec"; // <--- ВСТАВЬ СВОЮ ССЫЛКУ СЮДА!
 
-    const staffDB = {
-        "M4SK": { pass: "5e03fcd2d70a976a6b026374da5da3f9", role: "scientific", level: 2, name: "МэнсиКейн, НИД" },
-        "KRMP": { pass: "1bf502b835ee007957e558cbb1959ecb", role: "military", level: 3, name: "Кримпи, глава ВГР" },
-        "SUMBR": { pass: "8aaa688aadaf78796f5f620a4897eeb3", role: "council", level: 5, name: "Самбер, Высший Совет" },
-        "MRYZE": { pass: "b0eee0a274f64e6f5792b85c93321159", role: "council", level: 5, name: "Юз, Высший Совет" }
-    };
+const staffDB = {
+    "M4SK": { pass: "5e03fcd2d70a976a6b026374da5da3f9", role: "scientific", level: 2, name: "МэнсиКейн, НИД" },
+    "KRMP": { pass: "1bf502b835ee007957e558cbb1959ecb", role: "military", level: 3, name: "Кримпи, глава ВГР" },
+    "SUMBR": { pass: "8aaa688aadaf78796f5f620a4897eeb3", role: "council", level: 5, name: "Самбер, Высший Совет" },
+    "MRYZE": { pass: "b0eee0a274f64e6f5792b85c93321159", role: "council", level: 5, name: "Юз, Высший Совет" }
+};
 
-    window.onload = function() {
-        const savedUID = sessionStorage.getItem('prism_uid');
-        if (savedUID && staffDB[savedUID]) {
-            renderDashboard(staffDB[savedUID]);
-        }
-    };
+window.onload = function() {
+    const savedUID = sessionStorage.getItem('prism_uid');
+    if (savedUID && staffDB[savedUID]) {
+        renderDashboard(staffDB[savedUID]);
+    }
+};
 
-    function checkAuth() {
-        const id = document.getElementById('uid').value.toUpperCase().trim();
-        const ps = document.getElementById('ups').value;
-        const user = staffDB[id];
+function checkAuth() {
+    const id = document.getElementById('uid').value.toUpperCase().trim();
+    const ps = document.getElementById('ups').value;
+    const user = staffDB[id];
 
-        if (user) {
-            const hashedInput = CryptoJS.MD5(ps).toString();
-            if (user.pass === hashedInput) {
-                sessionStorage.setItem('prism_uid', id); 
-                renderDashboard(user);
-            } else { showError(); }
+    if (user) {
+        const hashedInput = CryptoJS.MD5(ps).toString();
+        if (user.pass === hashedInput) {
+            // Сохраняем данные для сессии
+            sessionStorage.setItem('prism_uid', id); 
+            // ПЕРЕДАЕМ УРОВЕНЬ ДОСТУПА В LOCALSTORAGE ДЛЯ АРХИВА
+            localStorage.setItem('prism_level', user.level);
+            
+            renderDashboard(user);
         } else { showError(); }
+    } else { showError(); }
+}
+
+function showError() {
+    document.getElementById('err').style.display = 'block';
+    setTimeout(() => { document.getElementById('err').style.display = 'none'; }, 3000);
+}
+
+function renderDashboard(user) {
+    // Дублируем сохранение уровня при рендере (на всякий случай)
+    localStorage.setItem('prism_level', user.level);
+
+    document.getElementById('login-zone').style.display = 'none';
+    document.getElementById('staff-content').style.display = 'block';
+    document.getElementById('greet').innerText = user.name;
+    document.getElementById('user-role').innerText = "Access Level: " + user.role.toUpperCase() + " (Lvl " + user.level + ")";
+    
+    const container = document.getElementById('buttons-container');
+    container.innerHTML = ""; 
+
+    // Кнопка досье (для всех)
+    container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+
+    if (user.role === "scientific") {
+        container.innerHTML += '<button class="btn" onclick="nav(\'archive\')">📂 АРХИВ АНОМАЛИЙ</button>';
+        container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
+        container.innerHTML += '<button class="btn" onclick="nav(\'nid\')">🧪 ПРОТОКОЛЫ НИД</button>';
+    } 
+    else if (user.role === "military") {
+        container.innerHTML += '<button class="btn" onclick="nav(\'military_prot\')">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
+        container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
+    } 
+    else if (user.role === "council") {
+        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'archive\')">📂 ВЕСЬ АРХИВ</button>';
+        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'map\')">🗺️ ВСЕ КОМПЛЕКСЫ</button>';
+        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'nid\')">🧪 НИД (ЧТЕНИЕ)</button>';
+        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'military_prot\')">🛡️ ОБОРОНА (ЧТЕНИЕ)</button>';
+        container.innerHTML += '<button class="btn btn-council" style="grid-column: span 2;" onclick="nav(\'override\')">⚖️ ПРОТОКОЛ ОБНУЛЕНИЯ</button>';
     }
+}
 
-    function showError() {
-        document.getElementById('err').style.display = 'block';
-        setTimeout(() => { document.getElementById('err').style.display = 'none'; }, 3000);
-    }
-
-    function renderDashboard(user) {
-        document.getElementById('login-zone').style.display = 'none';
-        document.getElementById('staff-content').style.display = 'block';
-        document.getElementById('greet').innerText = user.name;
-        document.getElementById('user-role').innerText = "Access Level: " + user.role.toUpperCase();
-        
-        const container = document.getElementById('buttons-container');
-        container.innerHTML = ""; 
-
-        // Кнопка досье (для всех)
-        container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
-
-        if (user.role === "scientific") {
-            container.innerHTML += '<button class="btn" onclick="nav(\'archive\')">📂 АРХИВ АНОМАЛИЙ</button>';
-            container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
-            container.innerHTML += '<button class="btn" onclick="nav(\'nid\')">🧪 ПРОТОКОЛЫ НИД</button>';
-        } 
-        else if (user.role === "military") {
-            container.innerHTML += '<button class="btn" onclick="nav(\'military_prot\')">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
-            container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
-        } 
-        else if (user.role === "council") {
-            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'archive\')">📂 ВЕСЬ АРХИВ</button>';
-            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'map\')">🗺️ ВСЕ КОМПЛЕКСЫ</button>';
-            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'nid\')">🧪 НИД (ЧТЕНИЕ)</button>';
-            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'military_prot\')">🛡️ ОБОРОНА (ЧТЕНИЕ)</button>';
-            container.innerHTML += '<button class="btn btn-council" style="grid-column: span 2;" onclick="nav(\'override\')">⚖️ ПРОТОКОЛ ОБНУЛЕНИЯ</button>';
-        }
-    }
-
-    async function sendReport() {
+async function sendReport() {
     const text = document.getElementById('reportText').value.trim();
     const uid = sessionStorage.getItem('prism_uid') || "Unknown";
     const statusMsg = document.getElementById('reportStatus');
@@ -165,43 +172,32 @@
     statusMsg.innerText = "⚡ ОТПРАВКА...";
     statusMsg.style.color = "#888";
 
-    // Очищаем ссылку от возможных пробелов по краям
-    const cleanURL = scriptURL.trim();
-    
-    // Формируем полную ссылку для проверки в консоли
-    const finalUrl = `${cleanURL}?action=report&uid=${encodeURIComponent(uid)}&text=${encodeURIComponent(text)}`;
+    const finalUrl = `${scriptURL.trim()}?action=report&uid=${encodeURIComponent(uid)}&text=${encodeURIComponent(text)}`;
 
     try {
-        // Используем метод 'no-cors', так как Google Script не возвращает заголовки CORS
-        await fetch(finalUrl, { 
-            method: 'GET',
-            mode: 'no-cors',
-            cache: 'no-cache'
-        });
-        
-        // Если дошли сюда, значит запрос ушел в сеть
+        await fetch(finalUrl, { method: 'GET', mode: 'no-cors', cache: 'no-cache' });
         statusMsg.style.color = "var(--neon-green)";
         statusMsg.innerText = "✅ РАПОРТ ОТПРАВЛЕН В ШТАБ";
-        document.getElementById('reportText').value = ""; // Чистим поле
-        
+        document.getElementById('reportText').value = ""; 
     } catch (e) {
-        console.error("Ошибка отправки:", e);
         statusMsg.style.color = "var(--alert-red)";
-        statusMsg.innerText = "⚠️ ОШИБКА СЕТИ (см. консоль F12)";
+        statusMsg.innerText = "⚠️ ОШИБКА СЕТИ";
     }
 }
 
-    function logout() {
-        sessionStorage.clear();
-        location.reload(); 
-    }
+function logout() {
+    sessionStorage.clear();
+    localStorage.removeItem('prism_level'); // Очищаем уровень для архива
+    location.reload(); 
+}
 
-    function nav(page) {
-        location.href = page + ".html";
-    }
+function nav(page) {
+    location.href = page + ".html";
+}
 </script>
 </body>
 </html>
+
 
 
 
