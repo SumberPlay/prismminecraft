@@ -90,7 +90,10 @@
         <hr style="border: 0; border-bottom: 1px solid #333; margin-bottom: 20px;">
 
         <div class="grid" id="buttons-container"></div>
-
+        <div id="incident-box" style="display: none; border: 1px solid #ff4444; background: rgba(255, 68, 68, 0.1); padding: 15px; margin: 20px 0; color: #ff4444;">
+            <span style="font-size: 0.8em; opacity: 0.7;">[!] ПРИЧИНА ТРЕВОГИ:</span>
+            <div id="incident-reason" style="font-weight: bold; font-size: 1.2em; margin-top: 5px;"></div>
+        </div>
         <div class="card" style="border: 1px dashed #444; background: #080808;">
             <h3 style="color: var(--neon-green); margin: 0 0 10px 0; font-size: 1em;">📝 ЭЛЕКТРОННЫЙ РАПОРТ</h3>
             <p style="font-size: 0.7em; color: #666; margin: 0;">Данные будут переданы в штаб мгновенно через зашифрованный канал.</p>
@@ -115,26 +118,50 @@ const staffDB = {
 };
 
 // --- ФУНКЦИЯ СИНХРОНИЗАЦИИ С БОТОМ ---
+<script>
+const RENDER_API = "https://prism-bot.onrender.com";
+
 async function syncSystem() {
     try {
         const response = await fetch(`${RENDER_API}/status`);
         const data = await response.json();
         
+        // 1. Обновляем текст статуса
         const syncVal = document.getElementById('sync-val');
         syncVal.innerText = data.label;
         syncVal.style.color = data.color;
 
-        // Если статус RED — включаем визуальную тревогу
+        // 2. Логика для причины тревоги
+        const incidentBox = document.getElementById('incident-box');
+        const incidentReason = document.getElementById('incident-reason');
+
         if (data.state === "RED") {
             document.body.classList.add('alarm-mode');
+            
+            // Если в боте ввели причину — показываем её
+            if (data.reason) {
+                incidentBox.style.display = "block";
+                incidentReason.innerText = data.reason.toUpperCase();
+            }
         } else {
             document.body.classList.remove('alarm-mode');
+            incidentBox.style.display = "none";
         }
+
     } catch (e) {
-        document.getElementById('sync-val').innerText = "OFFLINE";
-        document.getElementById('sync-val').style.color = "gray";
+        const syncVal = document.getElementById('sync-val');
+        if (syncVal) {
+            syncVal.innerText = "OFFLINE";
+            syncVal.style.color = "gray";
+        }
+        console.error("Ошибка синхронизации:", e);
     }
 }
+
+// Запускаем цикл обновления (каждые 3 секунды)
+setInterval(syncSystem, 3000);
+syncSystem(); // И один раз сразу при загрузке
+</script>
 
 setInterval(syncSystem, 3000); // Проверка статуса каждые 3 сек
 syncSystem();
@@ -239,4 +266,5 @@ function nav(page) {
 </script>
 </body>
 </html>
+
 
