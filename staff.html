@@ -1,108 +1,92 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>P.R.I.S.M. | Staff Terminal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <meta charset="UTF-8">
+    <title>P.R.I.S.M. | Staff Portal</title>
     <style>
-        :root { --neon: #00ffcc; --bg: #050505; --alert: #ff4444; --panel: #0a0a0a; }
-        body { background: var(--bg); color: #bbb; font-family: 'Courier New', monospace; margin: 0; padding: 0; min-height: 100vh; transition: 0.5s; }
-        body.alarm-active { background: #1a0505; }
-        
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 350px; }
-        
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
-        .panel { background: var(--panel); border: 1px solid #222; padding: 20px; margin-bottom: 20px; }
-        .panel-header { color: var(--neon); border-bottom: 1px solid #333; margin-bottom: 15px; padding-bottom: 5px; font-size: 0.8em; letter-spacing: 2px; text-transform: uppercase; }
-
-        /* Сетка кнопок */
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
-        .menu-item { 
-            border: 1px solid #333; padding: 15px 5px; text-align: center; 
-            cursor: pointer; transition: 0.3s; background: #000; 
-            text-transform: uppercase; font-weight: bold; font-size: 0.75em; color: #888;
+        :root { 
+            --neon-green: #00ffcc; 
+            --alert-red: #ff4444; 
+            --gold: #ffd700;
+            --bg-dark: #050505; 
+            --panel-bg: #111; 
         }
-        .menu-item:hover { border-color: var(--neon); color: var(--neon); box-shadow: 0 0 10px rgba(0,255,204,0.1); }
-        .menu-item.active { border-color: var(--neon); color: var(--neon); }
-
-        input, textarea { background: #000; border: 1px solid #333; color: var(--neon); padding: 12px; margin: 10px 0; width: 100%; box-sizing: border-box; outline: none; }
-        .btn { background: var(--neon); color: #000; border: none; padding: 12px; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; }
+        body { background: var(--bg-dark); color: #d1d1d1; font-family: 'Courier New', monospace; margin: 0; }
+        nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
+        nav a { color: #888; text-decoration: none; text-transform: uppercase; padding: 0 20px; }
+        nav a:hover { color: var(--neon-green); }
+        .container { max-width: 800px; margin: 50px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); border: 1px solid #222; padding: 30px; }
         
-        #scanner-line { position: fixed; top: -5px; left: 0; width: 100%; height: 5px; background: var(--neon); box-shadow: 0 0 15px var(--neon); z-index: 2000; display: none; }
-        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+        input { 
+            background: #000; border: 1px solid #333; color: var(--neon-green); 
+            padding: 15px; width: 100%; margin-bottom: 20px; box-sizing: border-box; 
+        }
+
+        .btn { 
+            background: #1a1a1a; border: 1px solid var(--neon-green); color: var(--neon-green); 
+            padding: 15px; width: 100%; cursor: pointer; font-weight: bold; 
+            text-transform: uppercase; transition: 0.3s; margin-bottom: 10px;
+        }
+        .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 10px var(--neon-green); }
+        
+        /* Особый стиль для Высшего Совета */
+        .btn-council { border-color: var(--gold); color: var(--gold); }
+        .btn-council:hover { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
+
+        .role-tag { font-size: 0.8em; color: #666; text-transform: uppercase; letter-spacing: 2px; }
+        #staff-content { display: none; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<div id="scanner-line"></div>
-
-<div id="auth-overlay">
-    <div class="login-card">
-        <h2 style="color: var(--neon); letter-spacing: 3px;">P.R.I.S.M.</h2>
-        <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
-        <input type="password" id="ups" placeholder="ПАРОЛЬ">
-        <button class="btn" onclick="startAuthProcess()">ВОЙТИ</button>
-    </div>
-</div>
-
-<nav style="background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center;">
-    <a href="index.html" style="color: #888; text-decoration: none; padding: 0 20px;">ГЛАВНАЯ</a>
-    <a href="dossier.html" style="color: #888; text-decoration: none; padding: 0 20px;">ЛИЧНЫЕ ДЕЛА</a>
-    <a href="staff.html" style="color: var(--neon); text-decoration: none; padding: 0 20px;">ТЕРМИНАЛ</a>
+<nav>
+    <a href="index.html">Главная</a>
+    <a href="staff.html">Сотрудникам</a>
 </nav>
 
 <div class="container">
-    <div class="main-content">
-        <div class="panel">
-            <div class="panel-header">СИСТЕМНЫЙ ЖУРНАЛ <span id="sync-label" style="float:right; font-size: 0.8em; color: #444;">SYNC: OFF</span></div>
-            <div id="terminal-output" style="height: 200px; overflow-y: auto; font-size: 0.8em; color: #555; background: #000; padding: 10px; border: 1px solid #111;">
-                <div>> Ожидание авторизации...</div>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header">ОТПРАВИТЬ РАПОРТ</div>
-            <input type="text" id="rep-sub" placeholder="ТЕМА">
-            <textarea id="rep-text" rows="4" placeholder="ОПИСАНИЕ..."></textarea>
-            <button class="btn" onclick="sendReport()">ОТПРАВИТЬ</button>
+    <div id="login-zone">
+        <h2 style="text-align: center;">АВТОРИЗАЦИЯ ТЕРМИНАЛА</h2>
+        <div class="card">
+            <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
+            <input type="password" id="ups" placeholder="ПАРОЛЬ">
+            <button class="btn" onclick="checkAuth()">ВХОД</button>
+            <p id="err" style="color: var(--alert-red); display: none; text-align: center;">ОШИБКА: ДОСТУП ЗАПРЕЩЕН</p>
         </div>
     </div>
 
-    <div class="sidebar">
-        <div class="panel">
-            <div class="panel-header">ПРОФИЛЬ</div>
-            <div style="text-align: center;">
-                <img id="u-skin" src="https://minotar.net/armor/bust/Steve/100.png" style="width: 80px; border: 1px solid var(--neon); margin-bottom: 10px;">
-                <div id="u-name" style="font-weight: bold; color: #fff;">---</div>
-                <div id="u-lvl" style="color: var(--neon); font-size: 0.8em;">LEVEL: -</div>
-            </div>
-        </div>
+    <div id="staff-content">
+        <div class="role-tag" id="user-role">Role: Undefined</div>
+        <h2 id="greet" style="margin-top: 5px;">ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
+        <hr border="0" style="border-bottom: 1px solid #222; margin-bottom: 20px;">
 
-        <div class="panel">
-            <div class="panel-header">БЫСТРЫЙ ДОСТУП</div>
-            <div class="menu-grid">
-                <div class="menu-item" onclick="location.href='archive.html'">АРХИВ</div>
-                <div class="menu-item" onclick="location.href='nid.html'">ПРОТОКОЛЫ НИД</div>
-                <div class="menu-item" onclick="location.href='military_prot.html'">ПРОТОКОЛЫ ВГР</div>
-                <div class="menu-item" onclick="location.href='map.html'">КАРТА</div>
-                <div class="menu-item" style="color: var(--alert);" onclick="logout()">ВЫХОД</div>
+        <div class="grid" id="buttons-container">
             </div>
-        </div>
+
+        <button onclick="logout()" style="background:none; border:none; color:#444; margin-top:40px; cursor:pointer; width: 100%;">[ЗАВЕРШИТЬ СЕАНС]</button>
     </div>
 </div>
 
 <script>
     const RENDER_URL = "https://prism-bot.onrender.com";
 
-    async function startAuthProcess() {
+    // --- ПРОВЕРКА СЕССИИ ПРИ ЗАГРУЗКЕ ---
+    window.onload = function() {
+        const savedUser = sessionStorage.getItem('prism_user_data');
+        if (savedUser) {
+            renderDashboard(JSON.parse(savedUser));
+        }
+    };
+
+    async function checkAuth() {
         const uid = document.getElementById('uid').value;
         const ups = document.getElementById('ups').value;
-        const scanner = document.getElementById('scanner-line');
-        if(!uid || !ups) return;
         
-        scanner.style.display = 'block';
-        scanner.style.animation = 'scan 1.5s linear infinite';
+        if (!uid || !ups) return showError();
+
         const passwordMD5 = CryptoJS.MD5(ups).toString();
 
         try {
@@ -112,51 +96,67 @@
                 body: JSON.stringify({ uid, passwordMD5 })
             });
             const data = await res.json();
+
             if (data.success) {
-                localStorage.setItem('prism_user', data.name);
-                localStorage.setItem('prism_level', data.level);
-                localStorage.setItem('prism_uid', uid.toUpperCase());
-                location.reload();
+                // Сохраняем все данные пользователя (включая роль и уровень) в сессию
+                sessionStorage.setItem('prism_uid', uid.toUpperCase());
+                sessionStorage.setItem('prism_user_data', JSON.stringify(data));
+                renderDashboard(data);
             } else {
-                alert("ОТКАЗАНО");
-                scanner.style.display = 'none';
+                showError();
             }
-        } catch (e) { scanner.style.display = 'none'; }
-    }
-
-    async function sendReport() {
-        const user = localStorage.getItem('prism_user');
-        const subject = document.getElementById('rep-sub').value;
-        const text = document.getElementById('rep-text').value;
-        await fetch(`${RENDER_URL}/send-report`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user, subject, text, timestamp: new Date().toLocaleString() })
-        });
-        alert("РАПОРТ ОТПРАВЛЕН");
-    }
-
-    function logout() { localStorage.clear(); location.reload(); }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        const user = localStorage.getItem('prism_user');
-        if (user) {
-            document.getElementById('auth-overlay').style.display = 'none';
-            document.getElementById('u-name').innerText = user;
-            document.getElementById('u-lvl').innerText = `LEVEL: ${localStorage.getItem('prism_level')}`;
-            document.getElementById('u-skin').src = `https://minotar.net/armor/bust/${localStorage.getItem('prism_uid')}/100.png`;
+        } catch (e) {
+            console.error("Connection error:", e);
+            showError();
         }
-        
-        setInterval(async () => {
-            try {
-                const res = await fetch(`${RENDER_URL}/status`);
-                const data = await res.json();
-                document.getElementById('sync-label').innerText = `SYNC: ${data.label}`;
-                if(data.state === "RED") document.body.classList.add('alarm-active');
-                else document.body.classList.remove('alarm-active');
-            } catch(e) {}
-        }, 5000);
-    });
+    }
+
+    function showError() {
+        document.getElementById('err').style.display = 'block';
+        setTimeout(() => { document.getElementById('err').style.display = 'none'; }, 3000);
+    }
+
+    function renderDashboard(user) {
+        document.getElementById('login-zone').style.display = 'none';
+        document.getElementById('staff-content').style.display = 'block';
+        document.getElementById('greet').innerText = user.name;
+        document.getElementById('user-role').innerText = "Допуск: " + user.role;
+        const container = document.getElementById('buttons-container');
+        container.innerHTML = ""; 
+
+        const role = user.role;
+
+        // Твоя оригинальная генерация кнопок
+        if (role === "scientific") {
+            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+            container.innerHTML += '<button class="btn" onclick="nav(\'archive\')">📂 АРХИВ АНОМАЛИЙ</button>';
+            container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
+            container.innerHTML += '<button class="btn" onclick="nav(\'nid\')">🧪 ПРОТОКОЛЫ НИД</button>';
+        } 
+        else if (role === "military") {
+            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+            container.innerHTML += '<button class="btn" onclick="nav(\'military_prot\')">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
+            container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
+        } 
+        else if (role === "council") {
+            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'archive\')">📂 ВЕСЬ АРХИВ</button>';
+            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'map\')">🗺️ ВСЕ КОМПЛЕКСЫ</button>';
+            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'nid\')">🧪 НИД (ЧТЕНИЕ)</button>';
+            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'military_prot\')">🛡️ ОБОРОНА (ЧТЕНИЕ)</button>';
+            container.innerHTML += '<button class="btn btn-council" style="grid-column: span 2;" onclick="nav(\'override\')">⚖️ ПРОТОКОЛ ОБНУЛЕНИЯ</button>';
+        }
+    }
+
+    function logout() {
+        sessionStorage.clear();
+        location.reload(); 
+    }
+
+    function nav(page) {
+        location.href = page + ".html";
+    }
 </script>
+
 </body>
 </html>
