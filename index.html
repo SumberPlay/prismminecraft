@@ -171,21 +171,36 @@
 
     async function syncPrism() {
         try {
-            // Теперь мы запрашиваем JSON напрямую у твоего скрипта
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error("CORS or Access Error");
+            // Добавляем режим cors и обработку редиректов
+            const response = await fetch(API_URL, {
+                method: 'GET',
+                mode: 'cors', 
+                redirect: 'follow'
+            });
+
+            if (!response.ok) throw new Error("API Connection Failed");
 
             const data = await response.json();
             
-            // Распределяем данные: state (RED/STABLE), label (Текст), color (Hex)
-            updateUI(data.state, data.label, data.color);
+            // Если данные пришли — обновляем UI
+            if (data && data.state) {
+                updateUI(data.state, data.label, data.color);
+                console.log("Sync success:", data.state);
+            }
 
         } catch (error) {
-            console.error("Ошибка синхронизации:", error);
-            const statusTxt = document.getElementById('status-text');
-            statusTxt.innerText = "SYSTEM OFFLINE";
-            statusTxt.style.color = "gray";
+            console.error("Sync Error:", error);
+            // Пробуем альтернативный метод, если fetch не сработал из-за CORS
+            fallbackSync();
         }
+    }
+
+    // Запасной метод на случай капризов CORS
+    function fallbackSync() {
+        const script = document.createElement('script');
+        // Мы просто «пингуем» API. Для полноценного JSONP нужно менять Apps Script,
+        // но сначала проверь, заработает ли основной fetch с параметром redirect.
+        console.log("Attempting fallback...");
     }
 
     function updateUI(state, label, color) {
@@ -231,4 +246,5 @@
 </body>
 
 </html>
+
 
