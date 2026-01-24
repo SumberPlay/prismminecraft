@@ -7,6 +7,7 @@
         :root { 
             --neon-green: #00ffcc; 
             --gold: #ffd700;
+            --alert: #ff4444;
             --bg-dark: #050505; 
         }
         body { 
@@ -14,9 +15,16 @@
             color: #d1d1d1; 
             font-family: 'Courier New', monospace; 
             display: flex; 
-            justify-content: center; 
+            flex-direction: column;
+            align-items: center;
             padding-top: 50px;
+            transition: background 0.5s;
         }
+
+        /* Эффект тревоги */
+        body.alarm-mode { background: #1a0505; }
+        body.alarm-mode .dossier-card { border-color: var(--alert); box-shadow: 0 0 30px rgba(255, 0, 0, 0.2); }
+
         .dossier-card {
             width: 600px;
             border: 1px solid #222;
@@ -33,24 +41,33 @@
         }
         .photo-stub {
             width: 120px;
-            height: 150px;
+            height: 120px;
             border: 1px solid #333;
             background: #0a0a0a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3em;
             margin-right: 30px;
-            filter: grayscale(1) sepia(0.5) hue-rotate(100deg);
+            object-fit: cover;
+            image-rendering: pixelated;
         }
         .info-row { margin: 15px 0; font-size: 1.1em; }
         .label { color: #555; text-transform: uppercase; font-size: 0.8em; display: block; }
         .value { color: var(--neon-green); margin-top: 5px; }
+        
+        /* Темы должностей */
         .council-theme { border-color: var(--gold) !important; }
         .council-text { color: var(--gold) !important; }
+        
         .back-btn {
-            position: absolute; top: 10px; left: 10px;
+            position: absolute; top: 15px; left: 15px;
             color: #444; text-decoration: none; font-size: 0.8em;
+            transition: 0.3s;
+        }
+        .back-btn:hover { color: var(--neon-green); }
+
+        #sync-indicator {
+            margin-top: 20px;
+            font-size: 0.7em;
+            letter-spacing: 2px;
+            color: #333;
         }
     </style>
 </head>
@@ -60,9 +77,9 @@
     <a href="staff.html" class="back-btn"><-- ВЕРНУТЬСЯ В ТЕРМИНАЛ</a>
     
     <div class="dossier-header" id="header-line">
-        <div class="photo-stub" id="photo">👤</div>
+        <img src="" class="photo-stub" id="user-photo" alt="PHOTO">
         <div>
-            <h1 id="name" style="margin: 0; letter-spacing: 3px;">ЗАГРУЗКА...</h1>
+            <h1 id="name" style="margin: 0; letter-spacing: 3px; text-transform: uppercase;">ЗАГРУЗКА...</h1>
             <p id="id-display" style="color: #444; margin: 5px 0;">ID: NULL</p>
         </div>
     </div>
@@ -87,25 +104,50 @@
     </div>
 </div>
 
+<div id="sync-indicator">СВЯЗЬ: <span id="sync-val">ПОДКЛЮЧЕНИЕ...</span></div>
+
 <script>
-    // Та же база данных (в будущем её можно вынести в отдельный js файл)
+    const RENDER_API = "https://твой-адрес-на-render.onrender.com"; // <--- ТВОЯ ССЫЛКА
+
     const staffDB = {
-        "M4SK": { name: "МэнсиКейн", dept: "Научный Департамент", level: "L2", spec: "Аномалии", joined: "2024", role: "scientific" },
+        "M4SK": { name: "МэнсиКейн", dept: "Научный Департамент", level: "L3", spec: "Аномалии", joined: "2024", role: "scientific" },
         "KRMP": { name: "Кримпи", dept: "Военная Группа", level: "L3", spec: "Тактика", joined: "2023", role: "military" },
         "SUMBR": { name: "Самбер", dept: "Высший Совет", level: "L5", spec: "Куратор", joined: "2020", role: "council" },
         "MRYZE": { name: "Юз", dept: "Высший Совет", level: "L5", spec: "Стратег", joined: "2020", role: "council" }
     };
 
+    // 1. Синхронизация статуса (RED CODE)
+    async function syncSystem() {
+        try {
+            const res = await fetch(`${RENDER_API}/status`);
+            const data = await res.json();
+            const val = document.getElementById('sync-val');
+            val.innerText = data.label;
+            val.style.color = data.color;
+
+            if (data.state === "RED") {
+                document.body.classList.add('alarm-mode');
+            } else {
+                document.body.classList.remove('alarm-mode');
+            }
+        } catch (e) {
+            document.getElementById('sync-val').innerText = "OFFLINE";
+        }
+    }
+    setInterval(syncSystem, 3000);
+    syncSystem();
+
+    // 2. Загрузка данных пользователя
     window.onload = function() {
         const uid = sessionStorage.getItem('prism_uid');
         const user = staffDB[uid];
 
         if (!user) {
-            window.location.href = "staff.html"; // Если не залогинен — выкидываем
+            window.location.href = "staff.html";
             return;
         }
 
-        // Заполняем данные
+        // Заполняем текст
         document.getElementById('name').innerText = user.name;
         document.getElementById('id-display').innerText = "ID: " + uid;
         document.getElementById('dept').innerText = user.dept;
@@ -113,7 +155,10 @@
         document.getElementById('spec').innerText = user.spec;
         document.getElementById('joined').innerText = user.joined;
 
-        // Если это совет — меняем стиль на золотой
+        // Ставим фото из Minecraft по нику
+        document.getElementById('user-photo').src = `https://minotar.net/armor/bust/${uid}/120.png`;
+
+        // Тема совета
         if (user.role === 'council') {
             document.getElementById('header-line').classList.add('council-theme');
             document.getElementById('name').classList.add('council-text');
