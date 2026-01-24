@@ -154,12 +154,19 @@ function checkAuth() {
     const user = staffDB[id];
 
     if (user) {
+        // ЭТА СТРОКА БЫЛА ПРОПУЩЕНА:
+        const hashedInput = CryptoJS.MD5(ps).toString(); 
+
         if (user.pass === hashedInput) {
-    sessionStorage.setItem('prism_uid', id); 
-    sessionStorage.setItem('prism_level', user.level); // ДОБАВЬ ЭТУ СТРОКУ
-    renderDashboard(user);
-        } else { showError(); }
-    } else { showError(); }
+            sessionStorage.setItem('prism_uid', id); 
+            sessionStorage.setItem('prism_level', user.level); 
+            renderDashboard(user);
+        } else { 
+            showError(); 
+        }
+    } else { 
+        showError(); 
+    }
 }
 
 function showError() {
@@ -250,4 +257,5 @@ window.onload = function() {
 </script>
 </body>
 </html>
+
 
