@@ -202,39 +202,54 @@
         console.log("Attempting fallback...");
     }
 
-    function updateUI(state, label, color) {
-        const statusTxt = document.getElementById('status-text');
-        const statusDot = document.getElementById('status-dot');
-        const alertBanner = document.getElementById('emergency-alert');
-        const alarm = document.getElementById('alarm-sound');
+    let volumeInterval; // Переменная для контроля нарастания
 
-        statusTxt.innerText = label.toUpperCase();
-        statusTxt.style.color = color;
-        statusDot.style.backgroundColor = color;
-        statusDot.style.boxShadow = `0 0 15px ${color}`;
+function updateUI(state, label, color) {
+    const statusTxt = document.getElementById('status-text');
+    const statusDot = document.getElementById('status-dot');
+    const alertBanner = document.getElementById('emergency-alert');
+    const alarm = document.getElementById('alarm-sound');
 
-        if (state && state.toUpperCase() === "RED") {
-            alertBanner.style.display = "block";
-            document.body.style.backgroundColor = "#1a0000";
-            document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
+    statusTxt.innerText = label.toUpperCase();
+    statusTxt.style.color = color;
+    statusDot.style.backgroundColor = color;
+    statusDot.style.boxShadow = `0 0 15px ${color}`;
+
+    if (state && state.toUpperCase() === "RED") {
+        alertBanner.style.display = "block";
+        document.body.style.backgroundColor = "#1a0000";
+        
+        if (audioUnlocked && alarm && !isAlarmPlaying) {
+            isAlarmPlaying = true;
             
-            // Логика звука сирены
-            if (audioUnlocked && alarm && !isAlarmPlaying) {
-                alarm.play().catch(e => console.log("Sound pending click"));
-                isAlarmPlaying = true;
-            }
-        } else {
-            alertBanner.style.display = "none";
-            document.body.style.backgroundColor = "#050505";
-            document.body.style.boxShadow = "none";
-            
-            if (alarm) {
-                alarm.pause();
-                alarm.currentTime = 0;
-            }
-            isAlarmPlaying = false;
+            // Сбрасываем громкость на минимум перед стартом
+            alarm.volume = 0.1; 
+            alarm.play().catch(e => console.log("Sound pending click"));
+
+            // Плавное нарастание
+            clearInterval(volumeInterval); // Чистим старый таймер на всякий случай
+            volumeInterval = setInterval(() => {
+                if (alarm.volume < 0.4) {
+                    // Прибавляем по чуть-чуть (0.01)
+                    alarm.volume = Math.min(0.4, alarm.volume + 0.01);
+                } else {
+                    clearInterval(volumeInterval); // Достигли 0.4 — стоп
+                }
+            }, 200); // Каждые 0.2 секунды
         }
+    } else {
+        alertBanner.style.display = "none";
+        document.body.style.backgroundColor = "#050505";
+        
+        if (alarm) {
+            clearInterval(volumeInterval);
+            alarm.pause();
+            alarm.currentTime = 0;
+            alarm.volume = 0.1;
+        }
+        isAlarmPlaying = false;
     }
+}
 
     // Запуск цикла
     setInterval(syncPrism, 3000);
@@ -245,6 +260,7 @@
 </body>
 
 </html>
+
 
 
 
