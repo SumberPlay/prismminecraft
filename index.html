@@ -89,7 +89,9 @@
     </style>
 </head>
 <body>
-
+<audio id="alarm-sound" loop>
+    <source src="alarm.mp3" type="audio/mpeg">
+</audio>
 <div id="emergency-alert">ВНИМАНИЕ: ЗАФИКСИРОВАНО НАРУШЕНИЕ УСЛОВИЙ СОДЕРЖАНИЯ В СЕКТОРЕ-7. СОБЛЮДАЙТЕ ПРАВИЛА ТИШИНЫ.</div>
 
 <nav>
@@ -183,27 +185,40 @@
         }
     }
 
-    function updateUI(state, label, color) {
-        const statusTxt = document.getElementById('status-text');
-        const statusDot = document.getElementById('status-dot');
-        const alertBanner = document.getElementById('emergency-alert');
+    let isAlarmPlaying = false; // Флаг, чтобы звук не запускался по кругу каждую секунду
 
-        statusTxt.innerText = label.toUpperCase();
-        statusTxt.style.color = color;
-        statusDot.style.backgroundColor = color;
-        statusDot.style.boxShadow = `0 0 15px ${color}`;
+function updateUI(state, label, color) {
+    const statusTxt = document.getElementById('status-text');
+    const statusDot = document.getElementById('status-dot');
+    const alertBanner = document.getElementById('emergency-alert');
+    const alarm = document.getElementById('alarm-sound');
 
-        if (state.toUpperCase() === "RED") {
-            alertBanner.style.display = "block";
-            document.body.style.backgroundColor = "#1a0000";
-            document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
-        } else {
-            alertBanner.style.display = "none";
-            document.body.style.backgroundColor = "#050505";
-            document.body.style.boxShadow = "none";
+    statusTxt.innerText = label.toUpperCase();
+    statusTxt.style.color = color;
+    statusDot.style.backgroundColor = color;
+    statusDot.style.boxShadow = `0 0 15px ${color}`;
+
+    if (state.toUpperCase() === "RED") {
+        alertBanner.style.display = "block";
+        document.body.style.backgroundColor = "#1a0000";
+        document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
+        
+        // Включаем сирену, если она еще не играет
+        if (!isAlarmPlaying) {
+            alarm.play().catch(e => console.log("Нужен клик по странице для активации звука"));
+            isAlarmPlaying = true;
         }
+    } else {
+        alertBanner.style.display = "none";
+        document.body.style.backgroundColor = "#050505";
+        document.body.style.boxShadow = "none";
+        
+        // Выключаем сирену
+        alarm.pause();
+        alarm.currentTime = 0; // Сброс в начало
+        isAlarmPlaying = false;
     }
-
+}
     setInterval(syncPrism, 3000);
     syncPrism();
 </script>
@@ -211,6 +226,7 @@
 </body>
 
 </html>
+
 
 
 
