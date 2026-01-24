@@ -8,7 +8,6 @@
             --gold: #d4af37;
             --red: #ff4444;
             --dark: #050505;
-            --panel: #0f0f0f;
         }
 
         body {
@@ -40,6 +39,29 @@
             background: #000;
         }
 
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .btn-exit {
+            background: transparent;
+            border: 1px solid #444;
+            color: #888;
+            padding: 5px 15px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.8em;
+            transition: 0.3s;
+        }
+
+        .btn-exit:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+        }
+
         .main-layout {
             display: grid;
             grid-template-columns: 350px 1fr;
@@ -47,7 +69,7 @@
             overflow: hidden;
         }
 
-        /* Список протоколов (Слева) */
+        /* Список протоколов */
         .protocol-list {
             border-right: 1px solid #222;
             overflow-y: auto;
@@ -68,7 +90,7 @@
             color: #fff;
         }
 
-        /* Рабочая область (Справа) */
+        /* Рабочая область */
         .details-area {
             padding: 60px;
             overflow-y: auto;
@@ -94,30 +116,9 @@
             margin: 20px 0;
         }
 
-        /* Кнопка активации */
-        .btn-initiate {
-            background: transparent;
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            padding: 15px 30px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            align-self: flex-start;
-            transition: 0.3s;
-        }
-
-        .btn-initiate:hover:not(:disabled) {
-            background: var(--gold);
-            color: #000;
-            box-shadow: 0 0 20px var(--gold);
-        }
-
-        .btn-initiate:disabled { border-color: #333; color: #333; cursor: not-allowed; }
-
         /* Лог снизу */
         .console-log {
-            height: 150px;
+            height: 120px;
             background: #000;
             border-top: 1px solid #222;
             padding: 15px;
@@ -130,58 +131,62 @@
 </head>
 <body>
 
-<div id="auth-overlay">IDENTIFYING...</div>
+<div id="auth-overlay">IDENTIFYING BIOMETRICS...</div>
 
 <header>
     <div>
-        <span style="color: var(--gold); font-weight: bold;">P.R.I.S.M. OVERRIDE</span>
+        <span style="color: var(--gold); font-weight: bold; letter-spacing: 2px;">P.R.I.S.M. OVERRIDE</span>
         <span style="margin-left: 20px; font-size: 0.8em; color: #444;">CLEARANCE: O5-COUNCIL</span>
     </div>
-    <div id="status-display">SYSTEM: CONNECTING...</div>
+    
+    <div class="header-controls">
+        <div id="status-display" style="font-size: 0.9em;">SYSTEM: CONNECTING...</div>
+        <button class="btn-exit" onclick="location.href='staff.html'">Выход</button>
+    </div>
 </header>
 
 <div class="main-layout">
-    <div class="protocol-list" id="protocol-list">
-        </div>
+    <div class="protocol-list" id="protocol-list"></div>
 
     <div class="details-area" id="details-area">
         <div style="text-align: center; margin-top: 100px; color: #333;">
-            ВЫБЕРИТЕ РЕГЛАМЕНТ ДЛЯ ПРОСМОТРА
+            ВЫБЕРИТЕ РЕГЛАМЕНТ ДЛЯ МОНИТОРИНГА
         </div>
     </div>
 </div>
 
 <div class="console-log" id="console-log">
     > Terminal initialized...<br>
-    > Waiting for credentials...
+    > Council session started.
 </div>
 
 <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwbKQqiQVVvJQjrFSHayG1pHa5i3ptgCwy_1tZgXlSQh_fiDQiGjR909CG31EOch4fJ8g/exec";
 
     const PROTOCOLS = [
-        { id: "OVR-ST", name: "СТАБИЛИЗАЦИЯ (Stable)", desc: "Принудительный сброс всех тревог. Перевод системы в режим NORMAL.", danger: "Информационное сообщение: Сирены будут отключены." }
+        { id: "OVR-ST", name: "СТАБИЛИЗАЦИЯ (Stable)", desc: "Принудительный сброс всех активных тревог. Перевод всех систем мониторинга в штатный режим (NORMAL).", danger: "Информационное сообщение: Все активные звуковые и визуальные оповещения будут прекращены." }
     ];
 
-    // Инициализация списка
     function init() {
         const list = document.getElementById('protocol-list');
         PROTOCOLS.forEach(p => {
             const div = document.createElement('div');
             div.className = 'protocol-item';
             div.innerText = p.id + " | " + p.name;
-            div.onclick = () => showDetails(p);
+            div.onclick = (e) => showDetails(p, e);
             list.appendChild(div);
         });
 
         setTimeout(() => {
-            document.getElementById('auth-overlay').style.opacity = '0';
-            setTimeout(() => document.getElementById('auth-overlay').remove(), 1000);
+            const overlay = document.getElementById('auth-overlay');
+            if(overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 1000);
+            }
         }, 1500);
     }
 
-    function showDetails(p) {
-        // Подсветка в списке
+    function showDetails(p, event) {
         document.querySelectorAll('.protocol-item').forEach(el => el.classList.remove('active'));
         event.currentTarget.classList.add('active');
 
@@ -190,13 +195,12 @@
             <h2 class="protocol-header">${p.name}</h2>
             <p style="color: #ccc; line-height: 1.8;">${p.desc}</p>
             <div class="warning-box">
-                <strong>ПРОТОКОЛ БЕЗОПАСНОСТИ:</strong><br>${p.danger}
+                <strong>СТАТУС ИСПОЛНЕНИЯ:</strong><br>${p.danger}
             </div>
+            <p style="color: #444; font-size: 0.8em; margin-top: 40px;">// Для активации используйте мобильный терминал (BOT_CMD).</p>
         `;
-        log(`Selected: ${p.id}`);
+        log(`Viewed protocol: ${p.id}`);
     }
-
-
 
     function log(msg) {
         const logger = document.getElementById('console-log');
@@ -204,9 +208,12 @@
         logger.scrollTop = logger.scrollHeight;
     }
 
-    // Синхронизация статуса (как на главной)
     function sync() {
+        const oldScript = document.getElementById('sync-script');
+        if (oldScript) oldScript.remove();
+
         const script = document.createElement('script');
+        script.id = 'sync-script';
         script.src = API_URL + "?callback=handleSync&t=" + Date.now();
         document.body.appendChild(script);
     }
@@ -224,5 +231,3 @@
 
 </body>
 </html>
-
-
