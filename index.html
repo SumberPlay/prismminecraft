@@ -178,9 +178,8 @@
 
     let isAlarmPlaying = false;
     let audioUnlocked = false;
-    let volumeInterval;
+    let volumeInterval = null; // Оставляем ОДНО объявление здесь
 
-    // Разблокировка звука при первом клике
     document.body.addEventListener('click', () => {
         audioUnlocked = true;
         console.log("Audio system: READY");
@@ -192,7 +191,6 @@
     }
     setInterval(updateClock, 1000);
 
-    // Основная функция синхронизации (JSONP)
     function syncPrism() {
         const oldScript = document.getElementById('prism-sync-script');
         if (oldScript) oldScript.remove();
@@ -205,46 +203,43 @@
             console.error("Sync Error");
             document.getElementById('status-text').innerText = "OFFLINE";
         };
-        
         document.body.appendChild(script);
     }
 
-    // Обработка данных от Google
-    function handleData(data) {
+    // Эта функция вызывается ответом от Google
+    window.handleData = function(data) {
         updateUI(data.state, data.label, data.color);
-    }
+    };
 
-    // Визуальное обновление
     function updateUI(state, label, color) {
         const statusTxt = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
         const alertBanner = document.getElementById('emergency-alert');
         const alarm = document.getElementById('alarm-sound');
 
-        if (!statusTxt || !statusDot) return; // Защита от ошибок
+        if (!statusTxt || !statusDot) return;
 
-        // Обновляем центральный статус
         statusTxt.innerText = label.toUpperCase();
         statusTxt.style.color = color;
         statusDot.style.backgroundColor = color;
         statusDot.style.boxShadow = `0 0 15px ${color}`;
 
         if (state && state.toUpperCase() === "RED") {
-            // Бегущая строка вверху
-            const alertMsg = "ВНИМАНИЕ: ЗАФИКСИРОВАНО НАРУШЕНИЕ ПРОТОКОЛОВ P.R.I.S.M. СОХРАНЯЙТЕ СПОКОЙСТВИЕ. СОТРУДНИКАМ СРОЧНО ПРИСТУПИТЬ К СТАБИЛИЗАЦИИ СИТУАЦИИ. — ";
-            alertBanner.innerHTML = `<div class="alert-marquee">${alertMsg.repeat(3)}</div>`;
-            alertBanner.style.display = "block";
+            if (alertBanner.style.display !== "block") {
+                const alertMsg = "ВНИМАНИЕ: ЗАФИКСИРОВАНО НАРУШЕНИЕ ПРОТОКОЛОВ P.R.I.S.M. СОХРАНЯЙТЕ СПОКОЙСТВИЕ. — ";
+                alertBanner.innerHTML = `<div class="alert-marquee">${alertMsg.repeat(5)}</div>`;
+                alertBanner.style.display = "block";
+            }
             
             document.body.style.backgroundColor = "#1a0000";
             document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
 
-            // Сирена
             if (audioUnlocked && alarm && !isAlarmPlaying) {
                 isAlarmPlaying = true;
                 alarm.volume = 0.1; 
                 alarm.play().catch(e => console.log("Audio blocked"));
 
-                clearInterval(volumeInterval);
+                if (volumeInterval) clearInterval(volumeInterval);
                 volumeInterval = setInterval(() => {
                     if (alarm.volume < 0.4) {
                         alarm.volume = Math.min(0.4, alarm.volume + 0.01);
@@ -254,14 +249,13 @@
                 }, 200);
             }
         } else {
-            // Режим STABLE
             alertBanner.style.display = "none";
             alertBanner.innerHTML = "";
             document.body.style.backgroundColor = "#050505";
             document.body.style.boxShadow = "none";
             
             if (alarm) {
-                clearInterval(volumeInterval);
+                if (volumeInterval) clearInterval(volumeInterval);
                 alarm.pause();
                 alarm.currentTime = 0;
             }
@@ -269,7 +263,6 @@
         }
     }
 
-    // Запуск циклов
     setInterval(syncPrism, 3000);
     syncPrism();
     updateClock();
@@ -278,6 +271,7 @@
 </body>
 
 </html>
+
 
 
 
