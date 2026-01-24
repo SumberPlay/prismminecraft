@@ -154,71 +154,85 @@
 
 <script>
     const SHEET_ID = "1ezQZE3dRLtlkQ06qJ1SxY1cHfCklPat154ZHrSgU8II";
-    // Используем ссылку ПУБЛИКАЦИИ (Файл -> Поделиться -> Опубликовать в интернете -> CSV)
+    // Используем максимально надежную ссылку
     const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?output=csv`;
 
-    function updateClock() {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-    }
-    setInterval(updateClock, 1000);
+    let isAlarmPlaying = false;
 
     async function syncPrism() {
         try {
-            // Анти-кэш t=Date.now()
-            const response = await fetch(`${CSV_URL}&t=${Date.now()}`);
-            if (!response.ok) throw new Error("CORS or Access Error");
+            // Запрос с защитой от кэша
+            const response = await fetch(`${CSV_URL}&nocache=${Date.now()}`);
+            if (!response.ok) throw new Error("Network response was not ok");
 
             const text = await response.text();
-            const rows = text.trim().split('\n');
             
-            // Чистим данные от кавычек Google
+            // Очень надежный парсинг (убираем кавычки и делим по запятой)
+            const rows = text.trim().split('\n');
+            if (rows.length === 0) return;
+            
             const cols = rows[0].split(',').map(c => c.replace(/^["']|["']$/g, '').trim());
 
             if (cols.length >= 3) {
-                const [state, label, color] = cols;
-                updateUI(state, label, color);
+                // Вызываем обновление интерфейса
+                updateUI(cols[0], cols[1], cols[2]);
             }
         } catch (error) {
-            console.error("Ошибка синхронизации:", error);
-            document.getElementById('status-text').innerText = "OFFLINE";
-            document.getElementById('status-text').style.color = "gray";
+            console.error("P.R.I.S.M. Error:", error);
+            // Если ошибка — пишем OFFLINE только в статус, не ломая весь дизайн
+            const stText = document.getElementById('status-text');
+            if (stText) stText.innerText = "SYSTEM OFFLINE";
         }
     }
 
-    let isAlarmPlaying = false; // Флаг, чтобы звук не запускался по кругу каждую секунду
+    function updateUI(state, label, color) {
+        const statusTxt = document.getElementById('status-text');
+        const statusDot = document.getElementById('status-dot');
+        const alertBanner = document.getElementById('emergency-alert');
+        const alarm = document.getElementById('alarm-sound');
 
-function updateUI(state, label, color) {
-    const statusTxt = document.getElementById('status-text');
-    const statusDot = document.getElementById('status-dot');
-    const alertBanner = document.getElementById('emergency-alert');
-    const alarm = document.getElementById('alarm-sound');
-
-    statusTxt.innerText = label.toUpperCase();
-    statusTxt.style.color = color;
-    statusDot.style.backgroundColor = color;
-    statusDot.style.boxShadow = `0 0 15px ${color}`;
-
-    if (state.toUpperCase() === "RED") {
-        alertBanner.style.display = "block";
-        document.body.style.backgroundColor = "#1a0000";
-        document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
-        
-        // Включаем сирену, если она еще не играет
-        if (!isAlarmPlaying) {
-            alarm.play().catch(e => console.log("Нужен клик по странице для активации звука"));
-            isAlarmPlaying = true;
+        // Элементарные проверки, чтобы скрипт не падал, если ID не найден
+        if (statusTxt) {
+            statusTxt.innerText = label.toUpperCase();
+            statusTxt.style.color = color;
         }
-    } else {
-        alertBanner.style.display = "none";
-        document.body.style.backgroundColor = "#050505";
-        document.body.style.boxShadow = "none";
         
-        // Выключаем сирену
-        alarm.pause();
-        alarm.currentTime = 0; // Сброс в начало
-        isAlarmPlaying = false;
+        if (statusDot) {
+            statusDot.style.backgroundColor = color;
+            statusDot.style.boxShadow = `0 0 15px ${color}`;
+        }
+
+        // Логика RED режима
+        if (state && state.toUpperCase() === "RED") {
+            if (alertBanner) alertBanner.style.display = "block";
+            document.body.style.backgroundColor = "#1a0000";
+            document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
+            
+            // Звук (только если элемент существует)
+            if (alarm && !isAlarmPlaying) {
+                alarm.play().catch(() => { /* Браузер может блокировать до клика */ });
+                isAlarmPlaying = true;
+            }
+        } else {
+            if (alertBanner) alertBanner.style.display = "none";
+            document.body.style.backgroundColor = "#050505";
+            document.body.style.boxShadow = "none";
+            
+            if (alarm) {
+                alarm.pause();
+                alarm.currentTime = 0;
+            }
+            isAlarmPlaying = false;
+        }
     }
-}
+
+    // Часы
+    setInterval(() => {
+        const clock = document.getElementById('clock');
+        if (clock) clock.innerText = new Date().toLocaleTimeString();
+    }, 1000);
+
+    // Основной цикл
     setInterval(syncPrism, 3000);
     syncPrism();
 </script>
@@ -226,6 +240,7 @@ function updateUI(state, label, color) {
 </body>
 
 </html>
+
 
 
 
