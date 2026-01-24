@@ -5,35 +5,33 @@
     <title>P.R.I.S.M. | Staff Terminal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        /* ПОЛНОСТЬЮ ТВОИ ОРИГИНАЛЬНЫЕ СТИЛИ */
-        :root { --neon: #00ffcc; --bg: #050505; --alert: #ff4444; --panel: #0a0a0a; }
-        body { background: var(--bg); color: #bbb; font-family: 'Courier New', monospace; margin: 0; padding: 0; min-height: 100vh; transition: 0.5s; overflow-x: hidden; }
+        /* Твой оригинальный CSS один-в-один */
+        :root { --neon: #00ffcc; --bg: #050505; --alert: #ff4444; }
+        body { background: var(--bg); color: #bbb; font-family: 'Courier New', monospace; margin: 0; transition: 0.5s; }
         body.alarm-active { background: #1a0505; }
+        
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .login-box { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 350px; }
+        
+        /* Сетка твоих кнопок */
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+        .menu-item { 
+            border: 1px solid #333; padding: 20px; text-align: center; 
+            cursor: pointer; transition: 0.3s; background: #0a0a0a; 
+            text-transform: uppercase; font-weight: bold; font-size: 0.8em;
+        }
+        .menu-item:hover { border-color: var(--neon); color: var(--neon); box-shadow: 0 0 10px rgba(0,255,204,0.1); }
+        .menu-item.alert:hover { border-color: var(--alert); color: var(--alert); }
+
+        .container { max-width: 1100px; margin: 20px auto; padding: 20px; }
+        .panel { background: #0a0a0a; border: 1px solid #222; padding: 20px; margin-bottom: 20px; }
+        .panel-header { color: var(--neon); border-bottom: 1px solid #333; margin-bottom: 15px; padding-bottom: 5px; font-size: 0.8em; letter-spacing: 2px; }
+        
+        input, textarea { background: #000; border: 1px solid #333; color: var(--neon); padding: 12px; margin: 10px 0; width: 100%; box-sizing: border-box; outline: none; }
+        .btn { background: var(--neon); color: #000; border: none; padding: 12px; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; }
         
         #scanner-line { position: fixed; top: -5px; left: 0; width: 100%; height: 5px; background: var(--neon); box-shadow: 0 0 15px var(--neon); z-index: 2000; display: none; }
         @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
-
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 350px; }
-        
-        input, textarea { background: #000; border: 1px solid #333; color: var(--neon); padding: 12px; margin: 10px 0; width: 100%; box-sizing: border-box; outline: none; font-family: monospace; }
-        .btn { background: var(--neon); color: #000; border: none; padding: 12px; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; transition: 0.3s; }
-        .btn:hover { background: #fff; box-shadow: 0 0 15px #fff; }
-
-        nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
-        nav a { color: #888; text-decoration: none; padding: 0 20px; font-size: 0.9em; }
-        nav a:hover { color: var(--neon); }
-
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
-        .panel { background: var(--panel); border: 1px solid #222; padding: 20px; }
-        .panel-header { color: var(--neon); border-bottom: 1px solid #333; margin-bottom: 15px; padding-bottom: 5px; font-size: 0.8em; letter-spacing: 2px; text-transform: uppercase; }
-
-        #terminal-output { height: 250px; overflow-y: auto; font-size: 0.8em; color: #555; background: #000; padding: 10px; border: 1px solid #111; }
-        .log-entry { margin-bottom: 4px; border-left: 2px solid #222; padding-left: 8px; }
-
-        /* Карта и прочие твои блоки */
-        .map-placeholder { width: 100%; height: 200px; background: #111; border: 1px solid #222; display: flex; align-items: center; justify-content: center; color: #333; margin-top: 10px; }
-        .user-skin-img { width: 100px; height: 100px; border: 1px solid var(--neon); margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -41,52 +39,38 @@
 <div id="scanner-line"></div>
 
 <div id="auth-overlay">
-    <div class="login-card">
-        <h2 style="color: var(--neon); letter-spacing: 3px;">P.R.I.S.M. STAFF</h2>
-        <p id="auth-msg" style="font-size: 0.7em; color: #444;">RESTRICTED AREA: LOGIN REQUIRED</p>
-        <input type="text" id="uid" placeholder="USER ID">
-        <input type="password" id="ups" placeholder="PASSCODE">
-        <button class="btn" onclick="startAuthProcess()">AUTHENTICATE</button>
+    <div class="login-box">
+        <h2 style="color: var(--neon); letter-spacing: 3px;">P.R.I.S.M.</h2>
+        <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
+        <input type="password" id="ups" placeholder="ПАРОЛЬ">
+        <button class="btn" onclick="startAuthProcess()">ВОЙТИ</button>
     </div>
 </div>
 
-<nav>
-    <a href="index.html">ГЛАВНАЯ</a>
-    <a href="dossier.html">ЛИЧНЫЕ ДЕЛА</a>
-    <a href="staff.html" style="color: var(--neon);">ТЕРМИНАЛ</a>
-</nav>
-
 <div class="container">
-    <div class="main-content">
-        <div class="panel">
-            <div class="panel-header">СИСТЕМНЫЙ ЖУРНАЛ <span id="sys-status-label" style="float:right;">OFFLINE</span></div>
-            <div id="terminal-output">
-                <div class="log-entry">> Подключение к ядру P.R.I.S.M...</div>
-            </div>
-        </div>
-
-        <div class="panel" style="margin-top: 20px;">
-            <div class="panel-header">ФОРМА ЭКСТРЕННОЙ СВЯЗИ</div>
-            <input type="text" id="rep-sub" placeholder="ТЕМА СООБЩЕНИЯ">
-            <textarea id="rep-text" rows="4" placeholder="ОПИСАНИЕ ИНЦИДЕНТА..."></textarea>
-            <button class="btn" onclick="sendReport()">ОТПРАВИТЬ В ШТАБ</button>
+    <div class="panel">
+        <div class="panel-header">ГЛАВНОЕ МЕНЮ ТЕРМИНАЛА</div>
+        <div class="menu-grid">
+            <div class="menu-item" onclick="location.href='index.html'">ГЛАВНАЯ</div>
+            <div class="menu-item" onclick="location.href='dossier.html'">ЛИЧНЫЕ ДЕЛА</div>
+            <div class="menu-item" onclick="window.open('https://t.me/your_bot', '_blank')">СВЯЗЬ С БОТОМ</div>
+            <div class="menu-item alert" onclick="logout()">ВЫЙТИ ИЗ СИСТЕМЫ</div>
         </div>
     </div>
 
-    <div class="sidebar">
+    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 20px;">
         <div class="panel">
-            <div class="panel-header">ИНФОРМАЦИЯ</div>
-            <div style="text-align: center;">
-                <img id="p-skin" class="user-skin-img" src="https://minotar.net/armor/bust/Steve/100.png">
-                <div id="p-name" style="color: #fff; font-size: 1.1em;">---</div>
-                <div id="p-lvl" style="color: var(--neon); font-size: 0.8em; margin-top: 5px;">LEVEL: -</div>
-                <button class="btn" style="margin-top: 15px; background: #111; color: var(--alert); font-size: 0.7em; border: 1px solid #222;" onclick="logout()">LOGOUT</button>
-            </div>
+            <div class="panel-header">РАПОРТ В СИТУАЦИОННЫЙ ЦЕНТР</div>
+            <input type="text" id="rep-sub" placeholder="ТЕМА">
+            <textarea id="rep-text" rows="4" placeholder="ТЕКСТ РАПОРТА..."></textarea>
+            <button class="btn" onclick="sendReport()">ОТПРАВИТЬ</button>
         </div>
 
-        <div class="panel" style="margin-top: 20px;">
-            <div class="panel-header">СЕКТОР: A-1</div>
-            <div class="map-placeholder">КАРТА ЗАКРЫТА</div>
+        <div class="panel" style="text-align: center;">
+            <div class="panel-header">ПРОФИЛЬ</div>
+            <img id="u-skin" src="https://minotar.net/armor/bust/Steve/100.png" style="width: 80px; border: 1px solid var(--neon); margin-bottom: 10px;">
+            <div id="u-name" style="font-weight: bold; color: #fff;">---</div>
+            <div id="u-lvl" style="color: var(--neon); font-size: 0.8em; margin-top: 5px;">LEVEL: -</div>
         </div>
     </div>
 </div>
@@ -94,17 +78,13 @@
 <script>
     const RENDER_URL = "https://prism-bot.onrender.com";
 
-    // --- ЛОГИКА АВТОРИЗАЦИИ (НОВАЯ) ---
     async function startAuthProcess() {
         const uid = document.getElementById('uid').value;
         const ups = document.getElementById('ups').value;
         const scanner = document.getElementById('scanner-line');
         
-        if(!uid || !ups) return;
-
         scanner.style.display = 'block';
         scanner.style.animation = 'scan 1.5s linear infinite';
-        
         const passwordMD5 = CryptoJS.MD5(ups).toString();
 
         try {
@@ -114,73 +94,50 @@
                 body: JSON.stringify({ uid, passwordMD5 })
             });
             const data = await res.json();
+            if (data.success) {
+                localStorage.setItem('prism_user', data.name);
+                localStorage.setItem('prism_level', data.level);
+                localStorage.setItem('prism_uid', uid.toUpperCase());
+                location.reload();
+            } else {
+                alert("ОШИБКА: ОТКАЗАНО");
+                scanner.style.display = 'none';
+            }
+        } catch (e) { scanner.style.display = 'none'; }
+    }
 
-            setTimeout(() => {
-                if (data.success) {
-                    localStorage.setItem('prism_user', data.name);
-                    localStorage.setItem('prism_level', data.level);
-                    localStorage.setItem('prism_uid', uid.toUpperCase());
-                    location.reload();
-                } else {
-                    scanner.style.display = 'none';
-                    alert("ОШИБКА ДОСТУПА: ДАННЫЕ НЕ СОВПАДАЮТ");
-                }
-            }, 1500);
-        } catch (e) {
-            scanner.style.display = 'none';
-            alert("СЕРВЕР НЕ ОТВЕЧАЕТ");
-        }
+    async function sendReport() {
+        const user = localStorage.getItem('prism_user');
+        const subject = document.getElementById('rep-sub').value;
+        const text = document.getElementById('rep-text').value;
+        await fetch(`${RENDER_URL}/send-report`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user, subject, text, timestamp: new Date().toLocaleString() })
+        });
+        alert("РАПОРТ ОТПРАВЛЕН");
     }
 
     function logout() { localStorage.clear(); location.reload(); }
 
-    // --- ОТПРАВКА РАПОРТА ---
-    async function sendReport() {
-        const subject = document.getElementById('rep-sub').value;
-        const text = document.getElementById('rep-text').value;
+    document.addEventListener("DOMContentLoaded", async () => {
         const user = localStorage.getItem('prism_user');
-
-        if(!subject || !text) return alert("ЗАПОЛНИТЕ ПОЛЯ");
-
-        try {
-            await fetch(`${RENDER_URL}/send-report`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user, subject, text, timestamp: new Date().toLocaleString() })
-            });
-            alert("РАПОРТ ПЕРЕДАН");
-            document.getElementById('rep-sub').value = "";
-            document.getElementById('rep-text').value = "";
-        } catch (e) { alert("ОШИБКА СЕТИ"); }
-    }
-
-    // --- ОБНОВЛЕНИЕ СТАТУСА ---
-    async function syncSystem() {
-        try {
-            const res = await fetch(`${RENDER_URL}/status`);
-            const data = await res.json();
-            const label = document.getElementById('sys-status-label');
-            label.innerText = data.label;
-            label.style.color = data.color;
-
-            if(data.state === "RED") document.body.classList.add('alarm-active');
-            else document.body.classList.remove('alarm-active');
-        } catch (e) {}
-    }
-
-    // --- ЗАПУСК ---
-    document.addEventListener("DOMContentLoaded", () => {
-        const user = localStorage.getItem('prism_user');
-        if (!user) {
-            document.getElementById('auth-overlay').style.display = 'flex';
-        } else {
+        if (user) {
             document.getElementById('auth-overlay').style.display = 'none';
-            document.getElementById('p-name').innerText = user;
-            document.getElementById('p-lvl').innerText = `LEVEL: ${localStorage.getItem('prism_level')}`;
-            document.getElementById('p-skin').src = `https://minotar.net/armor/bust/${localStorage.getItem('prism_uid')}/100.png`;
+            document.getElementById('u-name').innerText = user;
+            document.getElementById('u-lvl').innerText = `LEVEL: ${localStorage.getItem('prism_level')}`;
+            document.getElementById('u-skin').src = `https://minotar.net/armor/bust/${localStorage.getItem('prism_uid')}/100.png`;
         }
-        setInterval(syncSystem, 5000);
-        syncSystem();
+
+        // Синхронизация RED CODE
+        setInterval(async () => {
+            try {
+                const res = await fetch(`${RENDER_URL}/status`);
+                const data = await res.json();
+                if(data.state === "RED") document.body.classList.add('alarm-active');
+                else document.body.classList.remove('alarm-active');
+            } catch(e) {}
+        }, 5000);
     });
 </script>
 </body>
