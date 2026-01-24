@@ -179,43 +179,42 @@
 </div>
 
 <script>
-    // 1. Твоя рабочая ссылка
-    const API_URL = "https://script.google.com/macros/s/AKfycbwbKQqiQVVvJQjrFSHayG1pHa5i3ptgCwy_1tZgXlSQh_fiDQiGjR909CG31EOch4fJ8g/exec";
+    // --- КОНФИГУРАЦИЯ СЕРВЕРА ---
+    const RENDER_API = "https://твой-адрес-на-render.onrender.com"; // <--- ЗАМЕНИ НА СВОЮ ССЫЛКУ!
 
     let isAlarmPlaying = false;
     let audioUnlocked = false;
-    let volumeInterval = null; // Оставляем ОДНО объявление здесь
+    let volumeInterval = null;
 
+    // Разблокировка аудио (нужна из-за политики браузеров)
     document.body.addEventListener('click', () => {
         audioUnlocked = true;
-        console.log("Audio system: READY");
+        console.log("P.R.I.S.M. Audio: READY");
     }, { once: true });
 
+    // Обновление часов
     function updateClock() {
         const clockElement = document.getElementById('clock');
         if(clockElement) clockElement.innerText = new Date().toLocaleTimeString();
     }
     setInterval(updateClock, 1000);
 
-    function syncPrism() {
-        const oldScript = document.getElementById('prism-sync-script');
-        if (oldScript) oldScript.remove();
-
-        const script = document.createElement('script');
-        script.id = 'prism-sync-script';
-        script.src = API_URL + (API_URL.includes('?') ? '&' : '?') + 'callback=handleData&t=' + Date.now();
-        
-        script.onerror = () => {
-            console.error("Sync Error");
-            document.getElementById('status-text').innerText = "OFFLINE";
-        };
-        document.body.appendChild(script);
+    // ОСНОВНАЯ ФУНКЦИЯ СИНХРОНИЗАЦИИ
+    async function syncPrism() {
+        try {
+            const response = await fetch(`${RENDER_API}/status`);
+            if (!response.ok) throw new Error("Server Error");
+            
+            const data = await response.json();
+            updateUI(data.state, data.label, data.color);
+            
+        } catch (e) {
+            console.error("Sync Error:", e);
+            document.getElementById('status-text').innerText = "CONNECTION LOST";
+            document.getElementById('status-text').style.color = "gray";
+            document.getElementById('status-dot').style.backgroundColor = "gray";
+        }
     }
-
-    // Эта функция вызывается ответом от Google
-    window.handleData = function(data) {
-        updateUI(data.state, data.label, data.color);
-    };
 
     function updateUI(state, label, color) {
         const statusTxt = document.getElementById('status-text');
@@ -225,36 +224,43 @@
 
         if (!statusTxt || !statusDot) return;
 
+        // Обновляем текст и цвета
         statusTxt.innerText = label.toUpperCase();
         statusTxt.style.color = color;
         statusDot.style.backgroundColor = color;
         statusDot.style.boxShadow = `0 0 15px ${color}`;
 
+        // ЛОГИКА ТРЕВОГИ (КРАСНЫЙ КОД)
         if (state && state.toUpperCase() === "RED") {
+            // Включаем баннер, если он еще не включен
             if (alertBanner.style.display !== "block") {
                 const alertMsg = "ВНИМАНИЕ: ЗАФИКСИРОВАНО НАРУШЕНИЕ ПРОТОКОЛОВ P.R.I.S.M. СОХРАНЯЙТЕ СПОКОЙСТВИЕ. — ";
-                alertBanner.innerHTML = `<div class="alert-marquee">${alertMsg.repeat(5)}</div>`;
+                alertBanner.innerHTML = `<div class="alert-marquee">${alertMsg.repeat(10)}</div>`;
                 alertBanner.style.display = "block";
             }
             
+            // Меняем фон страницы
             document.body.style.backgroundColor = "#1a0000";
             document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
 
+            // Звук сирены
             if (audioUnlocked && alarm && !isAlarmPlaying) {
                 isAlarmPlaying = true;
-                alarm.volume = 0.1; 
-                alarm.play().catch(e => console.log("Audio blocked"));
+                alarm.volume = 0.05; 
+                alarm.play().catch(e => console.log("Audio blocked by browser"));
 
                 if (volumeInterval) clearInterval(volumeInterval);
                 volumeInterval = setInterval(() => {
-                    if (alarm.volume < 0.4) {
-                        alarm.volume = Math.min(0.4, alarm.volume + 0.01);
+                    if (alarm.volume < 0.3) {
+                        alarm.volume = Math.min(0.3, alarm.volume + 0.02);
                     } else {
                         clearInterval(volumeInterval);
                     }
-                }, 200);
+                }, 300);
             }
-        } else {
+        } 
+        // ВОЗВРАТ В ШТАТНЫЙ РЕЖИМ
+        else {
             alertBanner.style.display = "none";
             alertBanner.innerHTML = "";
             document.body.style.backgroundColor = "#050505";
@@ -269,6 +275,7 @@
         }
     }
 
+    // Запуск цикла
     setInterval(syncPrism, 3000);
     syncPrism();
     updateClock();
@@ -277,6 +284,7 @@
 </body>
 
 </html>
+
 
 
 
