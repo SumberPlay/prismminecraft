@@ -171,13 +171,20 @@ function renderDashboard(user) {
     
     const container = document.getElementById('buttons-container');
     container.innerHTML = '<button class="btn" onclick="alert(\'Доступно в полной версии\')">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+    
 
     if (user.role === "scientific") {
         container.innerHTML += '<button class="btn">📂 АРХИВ АНОМАЛИЙ</button>';
+        container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
+        
     } else if (user.role === "military") {
         container.innerHTML += '<button class="btn">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
+        container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
     } else if (user.role === "council") {
-        container.innerHTML += '<button class="btn btn-council">⚖️ ПРОТОКОЛ ОБНУЛЕНИЯ</button>';
+        container.innerHTML += '<button class="btn">📂 АРХИВ АНОМАЛИЙ</button>';
+        container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
+        container.innerHTML += '<button class="btn">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
+        container.innerHTML += '<button class="btn btn-council">⚖️ ПРОТОКОЛЫ СОВЕТА</button>';
     }
 }
 
@@ -230,3 +237,4 @@ window.onload = function() {
 </script>
 </body>
 </html>
+
