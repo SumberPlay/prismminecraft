@@ -224,57 +224,56 @@
 
     let volumeInterval; // Переменная для контроля нарастания
 
+let volumeInterval; // Переменная для контроля громкости
+let isAlarmPlaying = false;
+
 function updateUI(state, label, color) {
     const statusTxt = document.getElementById('status-text');
     const statusDot = document.getElementById('status-dot');
     const alertBanner = document.getElementById('emergency-alert');
     const alarm = document.getElementById('alarm-sound');
 
-    // Базовые настройки текста
+    // 1. ОБНОВЛЯЕМ ЦЕНТРАЛЬНЫЙ СТАТУС (из таблицы)
+    statusTxt.innerText = label.toUpperCase();
     statusTxt.style.color = color;
     statusDot.style.backgroundColor = color;
     statusDot.style.boxShadow = `0 0 15px ${color}`;
 
     if (state && state.toUpperCase() === "RED") {
-        // ВКЛЮЧАЕМ БЕГУЩУЮ СТРОКУ
-        // Повторяем текст несколько раз, чтобы не было пустых дырок
-        const repeatedText = (label.toUpperCase() + " — ").repeat(10);
-        statusTxt.innerHTML = `<div class="marquee"><span>${repeatedText}</span></div>`;
+        // 2. ВКЛЮЧАЕМ ВЕРХНЮЮ БЕГУЩУЮ СТРОКУ
+        const alertMsg = "ВНИМАНИЕ: ЗАФИКСИРОВАНО НАРУШЕНИЕ ПРОТОКОЛОВ P.R.I.S.M. СОХРАНЯЙТЕ СПОКОЙСТВИЕ. СОТРУДНИКАМ СРОЧНО ПРИСТУПИТЬ К СТАБИЛИЗАЦИИ СИТУАЦИИ. — ";
         
+        // innerHTML нужен, чтобы вставить div с анимацией
+        alertBanner.innerHTML = `<div class="alert-marquee">${alertMsg.repeat(3)}</div>`;
         alertBanner.style.display = "block";
-        document.body.style.backgroundColor = "#1a0000";
         
-        // Логика звука (плавное нарастание)
+        // Меняем фон на тревожный
+        document.body.style.backgroundColor = "#1a0000";
+        document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
+
+        // 3. ЛОГИКА ЗВУКА (Плавное нарастание с 0.1 до 0.4)
         if (audioUnlocked && alarm && !isAlarmPlaying) {
             isAlarmPlaying = true;
             alarm.volume = 0.1; 
-            alarm.play().catch(e => console.log("Sound pending click"));
+            alarm.play().catch(e => console.log("Требуется клик для активации звука"));
 
             clearInterval(volumeInterval);
             volumeInterval = setInterval(() => {
-                if (alarm.volume < 0.4) {
-                    alarm.volume = Math.min(0.4, alarm.volume + 0.01);
+                if (alarm.volume < 0.3) {
+                    // Прибавляем по 0.01 каждые 200мс (разгон за 6 секунд)
+                    alarm.volume = Math.min(0.3, alarm.volume + 0.01);
                 } else {
                     clearInterval(volumeInterval);
                 }
-            }, 200);
+            }, 600);
         }
     } else {
-        // ОБЫЧНЫЙ ТЕКСТ (STABLE)
-        statusTxt.innerHTML = label.toUpperCase(); 
-        
+        // 4. РЕЖИМ STABLE / ВЫКЛЮЧЕНИЕ ТРЕВОГИ
         alertBanner.style.display = "none";
-        document.body.style.backgroundColor = "#050505";
+        alertBanner.innerHTML = ""; // Очищаем текст
         
-        if (alarm) {
-            clearInterval(volumeInterval);
-            alarm.pause();
-            alarm.currentTime = 0;
-            alarm.volume = 0.1;
-        }
-        isAlarmPlaying = false;
-    }
-}
+        document.body.style.backgroundColor = "#050505";
+        document.body.style.boxShadow = "
 
     // Запуск цикла
     setInterval(syncPrism, 3000);
@@ -285,6 +284,7 @@ function updateUI(state, label, color) {
 </body>
 
 </html>
+
 
 
 
