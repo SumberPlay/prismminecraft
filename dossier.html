@@ -1,56 +1,50 @@
-const RENDER_URL = "https://prism-bot.onrender.com";
-
-// Новая функция входа через API
-async function startAuthProcess(type) {
-    if (type === 'guest') {
-        localStorage.setItem('prism_level', 1);
-        localStorage.setItem('prism_user', 'ГОСТЬ');
-        location.reload();
-        return;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>P.R.I.S.M. | Dossier</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        :root { --neon: #00ffcc; --bg: #050505; --alert: #ff4444; }
+        body { background: var(--bg); color: #bbb; font-family: monospace; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: #0a0a0a; border: 1px solid #222; padding: 15px; position: relative; min-height: 120px; display: flex; }
+        .locked { filter: blur(8px); opacity: 0.3; pointer-events: none; }
+        .lock-msg { position: absolute; top: 40%; left: 0; width: 100%; text-align: center; color: var(--alert); font-weight: bold; z-index: 5; }
+        .photo { width: 80px; height: 80px; border: 1px solid var(--neon); margin-right: 15px; }
+        .name { color: var(--neon); font-size: 1.1em; }
+        .bio { font-size: 0.8em; color: #666; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1 style="border-bottom: 1px solid var(--neon)">PERSONNEL RECORDS</h1>
+    <div id="dossier-grid" class="grid"></div>
+<script>
+    const RENDER_URL = "https://prism-bot.onrender.com";
+    async function loadDossier() {
+        const level = parseInt(localStorage.getItem('prism_level')) || 0;
+        const grid = document.getElementById('dossier-grid');
+        try {
+            const res = await fetch(`${RENDER_URL}/get-external-staff`);
+            const staff = await res.json();
+            staff.forEach(p => {
+                const isLocked = level < p.level;
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    ${isLocked ? `<div class="lock-msg">LEVEL ${p.level} REQUIRED</div>` : ''}
+                    <div class="${isLocked ? 'locked' : ''}" style="display:flex; width:100%">
+                        <img class="photo" src="https://minotar.net/armor/bust/${p.skin}/100.png">
+                        <div>
+                            <div class="name">${p.name}</div>
+                            <div class="bio">${p.bio}</div>
+                        </div>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        } catch (e) { console.error("Sync Error"); }
     }
-
-    const uid = document.getElementById('uid').value;
-    const ups = document.getElementById('ups').value;
-    const passwordMD5 = CryptoJS.MD5(ups).toString();
-
-    const res = await fetch(`${RENDER_URL}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid, passwordMD5 })
-    });
-    const data = await res.json();
-
-    if (data.success) {
-        localStorage.setItem('prism_level', data.level);
-        localStorage.setItem('prism_user', data.name);
-        location.reload();
-    } else {
-        alert("ОТКАЗАНО: Неверный ID или пароль");
-    }
-}
-
-// Загрузка всех сотрудников из бота
-async function loadExternalPlayers(userLevel) {
-    const container = document.getElementById('dossier-container');
-    container.innerHTML = ''; // Очищаем перед загрузкой
-    
-    const response = await fetch(`${RENDER_URL}/get-external-staff`);
-    const players = await response.json();
-
-    players.forEach(p => {
-        const isLocked = userLevel < p.level;
-        const card = document.createElement('div');
-        card.className = 'player-card';
-        card.innerHTML = `
-            <div class="lock-text" style="${isLocked ? 'display:flex' : 'none'}">LEVEL ${p.level} REQUIRED</div>
-            <div class="content-wrap ${isLocked ? 'locked' : ''}" style="display:flex; width:100%;">
-                <img src="https://minotar.net/armor/bust/${p.skin}/100.png" class="photo">
-                <div class="info">
-                    <div class="name">${p.name}</div>
-                    <div class="status status-active">СТАТУС: В СЕТИ</div>
-                    <div class="bio">${p.bio}</div>
-                </div>
-            </div>`;
-        container.appendChild(card);
-    });
-}
+    loadDossier();
+</script>
+</body>
+</html>
