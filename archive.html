@@ -164,81 +164,80 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const userLevel = parseInt(sessionStorage.getItem('prism_level')) || 0;
-        document.getElementById('access-display').innerText = userLevel;
+    // 1. Берем уровень из sessionStorage (важно для синхронизации с логином)
+    const userLevel = parseInt(sessionStorage.getItem('prism_level')) || 0;
+    document.getElementById('access-display').innerText = userLevel;
+    
+    const entries = document.querySelectorAll('.object-entry');
+
+    entries.forEach((entry, index) => {
+        const threatElement = entry.querySelector('.threat-level');
+        const descElement = entry.querySelector('.object-desc');
         
-        const entries = document.querySelectorAll('.object-entry');
+        if (!threatElement || !descElement) return;
 
-        entries.forEach((entry, index) => {
-            const threatElement = entry.querySelector('.threat-level');
-            const descElement = entry.querySelector('.object-desc');
-            
-            if (!threatElement || !descElement) return;
+        const threatText = threatElement.innerText;
+        const originalText = descElement.innerText;
 
-            const threatText = threatElement.innerText;
-            const originalText = descElement.innerText;
+        // 2. ФИЛЬТРАЦИЯ (Сначала скрываем, потом запускаем логику)
+        if (threatText.includes("КРИТИЧЕСКИЙ") && userLevel < 5) {
+            entry.style.display = "none"; // Просто скрываем, чтобы не ломать индексы
+            return;
+        } 
+        
+        if (threatText.includes("УМЕРЕННЫЙ") && userLevel < 3) {
+            descElement.innerHTML = "<span style='color:var(--alert-red);'>[ДАННЫЕ ЗАСЕКРЕЧЕНЫ: НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОСТУПА]</span>";
+            return;
+        }
 
-            // 1. Фильтрация по уровню
-            if (threatText.includes("КРИТИЧЕСКИЙ") && userLevel < 5) {
-                entry.remove(); 
-                return;
-            } 
-            
-            if (threatText.includes("УМЕРЕННЫЙ") && userLevel < 3) {
-                descElement.innerHTML = "<span style='color:var(--alert-red);'>[ДАННЫЕ ЗАСЕКРЕЧЕНЫ ПО ПРОТОКОЛУ P.R.I.S.M. УРОВЕНЬ ДОСТУПА НЕДОСТАТОЧЕН]</span>";
-                return;
-            }
+        // 3. ЭФФЕКТ ПЕЧАТИ
+        descElement.innerText = ""; 
+        descElement.innerHTML = '<span class="text-holder"></span><span class="cursor"></span>';
+        const textHolder = descElement.querySelector('.text-holder');
+        const cursor = descElement.querySelector('.cursor');
 
-            // 2. Эффект печати
-            descElement.innerText = ""; 
-            descElement.innerHTML = '<span class="text-holder"></span><span class="cursor"></span>';
-            const textHolder = descElement.querySelector('.text-holder');
-            const cursor = descElement.querySelector('.cursor');
-
-            setTimeout(() => {
-                let i = 0;
-                const interval = setInterval(() => {
+        setTimeout(() => {
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i < originalText.length) {
                     textHolder.innerText += originalText.charAt(i);
                     i++;
-                    if (i >= originalText.length) {
-                        clearInterval(interval);
-                        if(cursor) cursor.remove();
-                        
-                        // Если объект критический — запускаем глитчи после печати
-                        if (threatText.includes("КРИТИЧЕСКИЙ")) {
-                            startGlitches(textHolder);
-                        }
+                } else {
+                    clearInterval(interval);
+                    if (cursor) cursor.remove();
+                    
+                    // Запуск глитчей только для критических объектов после печати
+                    if (threatText.includes("КРИТИЧЕСКИЙ")) {
+                        startGlitches(textHolder);
                     }
-                }, 20); 
-            }, index * 500); // Сократил задержку между объектами
-        });
+                }
+            }, 25); 
+        }, index * 400); // Плавная очередь появления
     });
+});
 
-    // Функция создания глитчей (случайных искажений)
-    function startGlitches(element) {
-        const originalContent = element.innerText;
-        const symbols = "█▓▒░/X#<>_&%$";
+function startGlitches(element) {
+    const originalContent = element.innerText;
+    const symbols = "█▓▒░/X#<>_&%$";
 
-        setInterval(() => {
-            if (Math.random() > 0.92) { // Шанс сбоя 8%
-                let textArray = originalContent.split("");
-                let pos = Math.floor(Math.random() * textArray.length);
-                
-                // Вставляем глитч-символ
-                let glitchChar = symbols[Math.floor(Math.random() * symbols.length)];
-                textArray[pos] = `<span class="glitch-char">${glitchChar}</span>`;
-                
-                element.innerHTML = textArray.join("");
+    setInterval(() => {
+        if (Math.random() > 0.90) { 
+            let textArray = originalContent.split("");
+            let pos = Math.floor(Math.random() * textArray.length);
+            let glitchChar = symbols[Math.floor(Math.random() * symbols.length)];
+            
+            textArray[pos] = `<span class="glitch-char">${glitchChar}</span>`;
+            element.innerHTML = textArray.join("");
 
-                // Возвращаем текст обратно через 120мс
-                setTimeout(() => {
-                    element.innerText = originalContent;
-                }, 120);
-            }
-        }, 150);
-    }
+            setTimeout(() => {
+                element.innerHTML = originalContent;
+            }, 100);
+        }
+    }, 200);
+}
 </script>
 
 </body>
 </html>
+
 
