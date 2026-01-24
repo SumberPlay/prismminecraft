@@ -164,7 +164,7 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const userLevel = parseInt(localStorage.getItem('prism_level')) || 0;
+        const userLevel = parseInt(sessionStorage.getItem('prism_level')) || 0;
         document.getElementById('access-display').innerText = userLevel;
         
         const entries = document.querySelectorAll('.object-entry');
@@ -241,3 +241,4 @@
 
 </body>
 </html>
+
