@@ -192,18 +192,11 @@
             <div class="warning-box">
                 <strong>ПРОТОКОЛ БЕЗОПАСНОСТИ:</strong><br>${p.danger}
             </div>
-            <button class="btn-initiate" onclick="initiateProtocol('${p.id}')">Инициировать протокол ${p.id}</button>
         `;
         log(`Selected: ${p.id}`);
     }
 
-    function initiateProtocol(id) {
-        const confirmStr = prompt(`Для подтверждения введите код авторизации (любой текст):`);
-        if (confirmStr) {
-            log(`ACTION: Protocol ${id} INITIATED by Council.`);
-            alert(`Протокол ${id} запущен. Система переходит в режим исполнения.`);
-        }
-    }
+
 
     function log(msg) {
         const logger = document.getElementById('console-log');
@@ -231,4 +224,5 @@
 
 </body>
 </html>
+
 
