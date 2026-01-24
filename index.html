@@ -4,109 +4,115 @@
     <meta charset="UTF-8">
     <title>P.R.I.S.M. | Public Portal</title>
     <style>
-        :root { 
-            --neon-green: #00ffcc; 
-            --alert-red: #ff4444; 
-            --bg-dark: #050505; 
-            --panel-bg: #111; 
-        }
-        body { background: var(--bg-dark); color: #d1d1d1; font-family: 'Courier New', monospace; margin: 0; overflow-x: hidden; }
-        
-        /* Эффект шума старого монитора */
-        body::before {
-            content: " ";
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, transparent 1px);
-            pointer-events: none; z-index: 1000;
-        }
+    :root { 
+        --neon-green: #00ffcc; 
+        --alert-red: #ff4444; 
+        --bg-dark: #050505; 
+        --panel-bg: #111; 
+    }
 
-        nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
-        nav a { color: #888; text-decoration: none; text-transform: uppercase; padding: 0 20px; transition: 0.3s; }
-        nav a:hover { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); }
-
-        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
-        
-        /* Виджет статуса */
-        .status-bar {
-            border: 1px solid #333; padding: 20px; display: flex; 
-            justify-content: space-between; align-items: center;
-            background: linear-gradient(90deg, #0a1a1a 0%, #050505 100%);
-            margin-bottom: 30px;
-        }
-
-        .status-indicator {
-            display: flex; align-items: center; gap: 15px;
-        }
-
-        .dot {
-            width: 12px; height: 12px; border-radius: 50%;
-            background: var(--neon-green);
-            box-shadow: 0 0 10px var(--neon-green);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
-        /* Экстренное оповещение */
-        #emergency-alert {
-            display: none;
-            position: fixed; top: 0; left: 0; width: 100%;
-            background: var(--alert-red); color: #000;
-            padding: 10px; text-align: center; font-weight: bold;
-            z-index: 2000; letter-spacing: 2px;
-            animation: slideDown 0.5s ease;
-        }
-
-        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
-
-        .card { background: var(--panel-bg); border: 1px solid #222; padding: 25px; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
-        .btn {
-            background: transparent; border: 1px solid var(--neon-green);
-            color: var(--neon-green); padding: 10px 25px; cursor: pointer;
-            text-transform: uppercase; font-weight: bold; transition: 0.3s;
-        }
-        .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 15px var(--neon-green); }
-
-        .counter-box { text-align: center; font-size: 0.8em; color: #666; }
-        .counter-num { display: block; font-size: 2.5em; color: var(--neon-green); }
-        body::after {
-    content: " ";
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 2px;
-    background: rgba(0, 255, 204, 0.1);
-    opacity: 0.5;
-    z-index: 9999;
-    pointer-events: none;
-    animation: scanline 8s linear infinite;
-}
-
-@keyframes scanline {
-    0% { top: -10%; }
-    100% { top: 110%; }
-}
-/* Контейнер для бегущей строки */
-.marquee {
-    width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    position: relative;
-}
-
-/* Анимация движения */
-.marquee span {
-    display: inline-block;
-    padding-left: 100%;
-    animation: marquee-lane 10s linear infinite;
-}
-
-@keyframes marquee-lane {
-    0%   { transform: translate(0, 0); }
-    100% { transform: translate(-100%, 0); }
-}
+    body { 
+        background: var(--bg-dark); 
+        color: #d1d1d1; 
+        font-family: 'Courier New', monospace; 
+        margin: 0; 
+        overflow-x: hidden; 
+        transition: background-color 0.5s ease;
+    }
     
-    </style>
+    /* Эффект шума старого монитора */
+    body::before {
+        content: " ";
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, transparent 1px);
+        pointer-events: none; z-index: 1000;
+    }
+
+    /* Сканирующая линия */
+    body::after {
+        content: " ";
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 2px;
+        background: rgba(0, 255, 204, 0.1);
+        opacity: 0.5;
+        z-index: 9999;
+        pointer-events: none;
+        animation: scanline 8s linear infinite;
+    }
+
+    nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
+    nav a { color: #888; text-decoration: none; text-transform: uppercase; padding: 0 20px; transition: 0.3s; }
+    nav a:hover { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); }
+
+    .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+    
+    /* Виджет статуса */
+    .status-bar {
+        border: 1px solid #333; padding: 20px; display: flex; 
+        justify-content: space-between; align-items: center;
+        background: linear-gradient(90deg, #0a1a1a 0%, #050505 100%);
+        margin-bottom: 30px;
+    }
+
+    .status-indicator { display: flex; align-items: center; gap: 15px; }
+
+    .dot {
+        width: 12px; height: 12px; border-radius: 50%;
+        background: var(--neon-green);
+        box-shadow: 0 0 10px var(--neon-green);
+        animation: pulse 2s infinite;
+    }
+
+    /* ФИКС БЕГУЩЕЙ СТРОКИ ТРЕВОГИ */
+    #emergency-alert {
+        display: none;
+        position: fixed; 
+        top: 0; left: 0; 
+        width: 100%;
+        background: var(--alert-red); 
+        color: #000;
+        padding: 12px 0; 
+        text-align: center; 
+        font-weight: bold;
+        z-index: 2000; 
+        letter-spacing: 2px;
+        
+        white-space: nowrap; /* Запрет переноса на новую строку */
+        overflow: hidden;    /* Прячем лишний текст */
+        border-bottom: 2px solid #000;
+    }
+
+    .alert-marquee {
+        display: inline-block;
+        padding-left: 100%;
+        animation: alert-scroll 20s linear infinite;
+    }
+
+    /* Анимации */
+    @keyframes alert-scroll {
+        0%   { transform: translateX(0); }
+        100% { transform: translateX(-100%); }
+    }
+
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    
+    @keyframes scanline { 0% { top: -10%; } 100% { top: 110%; } }
+
+    /* Остальные элементы интерфейса */
+    .card { background: var(--panel-bg); border: 1px solid #222; padding: 25px; margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    
+    .btn {
+        background: transparent; border: 1px solid var(--neon-green);
+        color: var(--neon-green); padding: 10px 25px; cursor: pointer;
+        text-transform: uppercase; font-weight: bold; transition: 0.3s;
+    }
+    .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 15px var(--neon-green); }
+
+    .counter-box { text-align: center; font-size: 0.8em; color: #666; }
+    .counter-num { display: block; font-size: 2.5em; color: var(--neon-green); }
+
+</style>
 </head>
 <body>
 <audio id="alarm-sound" loop>
@@ -271,6 +277,7 @@
 </body>
 
 </html>
+
 
 
 
