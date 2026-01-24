@@ -17,7 +17,7 @@
         nav a { color: #888; text-decoration: none; text-transform: uppercase; padding: 0 20px; }
         nav a:hover { color: var(--neon-green); }
         .container { max-width: 800px; margin: 50px auto; padding: 0 20px; }
-        .card { background: var(--panel-bg); border: 1px solid #222; padding: 30px; }
+        .card { background: var(--panel-bg); border: 1px solid #222; padding: 30px; margin-bottom: 20px; }
         
         input { 
             background: #000; border: 1px solid #333; color: var(--neon-green); 
@@ -31,13 +31,20 @@
         }
         .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 10px var(--neon-green); }
         
-        /* Особый стиль для Высшего Совета */
         .btn-council { border-color: var(--gold); color: var(--gold); }
         .btn-council:hover { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
 
         .role-tag { font-size: 0.8em; color: #666; text-transform: uppercase; letter-spacing: 2px; }
         #staff-content { display: none; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 30px; }
+        
+        textarea {
+            width: 100%; height: 100px; background: #000; color: #fff; border: 1px solid #333; 
+            padding: 10px; font-family: 'Courier New', monospace; box-sizing: border-box; 
+            resize: none; margin-top: 10px; outline: none;
+        }
+        textarea:focus { border-color: var(--neon-green); }
+        #reportStatus { font-size: 0.75em; margin-top: 10px; text-align: center; min-height: 1.2em; }
     </style>
 </head>
 <body>
@@ -49,114 +56,149 @@
 
 <div class="container">
     <div id="login-zone">
-        <h2 style="text-align: center;">АВТОРИЗАЦИЯ ТЕРМИНАЛА</h2>
+        <h2 style="text-align: center; letter-spacing: 3px;">АВТОРИЗАЦИЯ ТЕРМИНАЛА</h2>
         <div class="card">
             <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
             <input type="password" id="ups" placeholder="ПАРОЛЬ">
-            <button class="btn" onclick="checkAuth()">ВХОД</button>
-            <p id="err" style="color: var(--alert-red); display: none; text-align: center;">ОШИБКА: ДОСТУП ЗАПРЕЩЕН</p>
+            <button class="btn" onclick="checkAuth()">ВХОД В СИСТЕМУ</button>
+            <p id="err" style="color: var(--alert-red); display: none; text-align: center; font-weight: bold;">ДОСТУП ЗАПРЕЩЕН: НЕВЕРНЫЕ ДАННЫЕ</p>
         </div>
     </div>
 
     <div id="staff-content">
-        <div class="role-tag" id="user-role">Role: Undefined</div>
-        <h2 id="greet" style="margin-top: 5px;">ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
-        <hr border="0" style="border-bottom: 1px solid #222; margin-bottom: 20px;">
+        <div class="role-tag" id="user-role">Access Level: --</div>
+        <h2 id="greet" style="margin-top: 5px; color: #fff;">ЗАГРУЗКА...</h2>
+        <hr style="border: 0; border-bottom: 1px solid #333; margin-bottom: 20px;">
 
-        <div class="grid" id="buttons-container">
-            </div>
+        <div class="grid" id="buttons-container"></div>
 
-        <button onclick="logout()" style="background:none; border:none; color:#444; margin-top:40px; cursor:pointer; width: 100%;">[ЗАВЕРШИТЬ СЕАНС]</button>
+        <div class="card" style="border: 1px dashed #444; background: #080808;">
+            <h3 style="color: var(--neon-green); margin: 0 0 10px 0; font-size: 1em;">📝 ЭЛЕКТРОННЫЙ РАПОРТ</h3>
+            <p style="font-size: 0.7em; color: #666; margin: 0;">Данные будут переданы в штаб мгновенно.</p>
+            <textarea id="reportText" placeholder="Опишите ситуацию или введите отчет..."></textarea>
+            <button onclick="sendReport()" class="btn" style="margin-top: 15px; font-size: 0.85em; padding: 12px;">ОТПРАВИТЬ В ШТАБ</button>
+            <div id="reportStatus"></div>
+        </div>
+
+        <button onclick="logout()" style="background:none; border:none; color:#444; margin-top:40px; cursor:pointer; width: 100%; font-family: inherit;">[ ЗАВЕРШИТЬ СЕАНС СВЯЗИ ]</button>
     </div>
 </div>
 
 <script>
-    const RENDER_URL = "https://prism-bot.onrender.com";
+    // --- КОНФИГУРАЦИЯ ---
+    const scriptURL = "https://script.google.com/macros/s/AKfycbyus0-Ji2zZY9QRsnX1P2iuANunJbBntS7FOVWimM_ZHf0po7GNajCC44zpeiRMMfpu9g/exec"; // <--- ВСТАВЬ СВОЮ ССЫЛКУ СЮДА!
 
-    // --- ПРОВЕРКА СЕССИИ ПРИ ЗАГРУЗКЕ ---
-    window.onload = function() {
-        const savedUser = sessionStorage.getItem('prism_user_data');
-        if (savedUser) {
-            renderDashboard(JSON.parse(savedUser));
-        }
-    };
+const staffDB = {
+    "M4SK": { pass: "5e03fcd2d70a976a6b026374da5da3f9", role: "scientific", level: 3, name: "МэнсиКейн, НИД" },
+    "KRMP": { pass: "1bf502b835ee007957e558cbb1959ecb", role: "military", level: 2, name: "Кримпи, глава ВГР" },
+    "SUMBR": { pass: "8aaa688aadaf78796f5f620a4897eeb3", role: "council", level: 5, name: "Самбер, Высший Совет" },
+    "MRYZE": { pass: "b0eee0a274f64e6f5792b85c93321159", role: "council", level: 5, name: "Юз, Высший Совет" }
+};
 
-    async function checkAuth() {
-        const uid = document.getElementById('uid').value;
-        const ups = document.getElementById('ups').value;
-        
-        if (!uid || !ups) return showError();
+window.onload = function() {
+    const savedUID = sessionStorage.getItem('prism_uid');
+    if (savedUID && staffDB[savedUID]) {
+        renderDashboard(staffDB[savedUID]);
+    }
+};
 
-        const passwordMD5 = CryptoJS.MD5(ups).toString();
+function checkAuth() {
+    const id = document.getElementById('uid').value.toUpperCase().trim();
+    const ps = document.getElementById('ups').value;
+    const user = staffDB[id];
 
-        try {
-            const res = await fetch(`${RENDER_URL}/api/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid, passwordMD5 })
-            });
-            const data = await res.json();
+    if (user) {
+        const hashedInput = CryptoJS.MD5(ps).toString();
+        if (user.pass === hashedInput) {
+            // Сохраняем данные для сессии
+            sessionStorage.setItem('prism_uid', id); 
+            // ПЕРЕДАЕМ УРОВЕНЬ ДОСТУПА В LOCALSTORAGE ДЛЯ АРХИВА
+            localStorage.setItem('prism_level', user.level);
+            
+            renderDashboard(user);
+        } else { showError(); }
+    } else { showError(); }
+}
 
-            if (data.success) {
-                // Сохраняем все данные пользователя (включая роль и уровень) в сессию
-                sessionStorage.setItem('prism_uid', uid.toUpperCase());
-                sessionStorage.setItem('prism_user_data', JSON.stringify(data));
-                renderDashboard(data);
-            } else {
-                showError();
-            }
-        } catch (e) {
-            console.error("Connection error:", e);
-            showError();
-        }
+function showError() {
+    document.getElementById('err').style.display = 'block';
+    setTimeout(() => { document.getElementById('err').style.display = 'none'; }, 3000);
+}
+
+function renderDashboard(user) {
+    // Дублируем сохранение уровня при рендере (на всякий случай)
+    localStorage.setItem('prism_level', user.level);
+
+    document.getElementById('login-zone').style.display = 'none';
+    document.getElementById('staff-content').style.display = 'block';
+    document.getElementById('greet').innerText = user.name;
+    document.getElementById('user-role').innerText = "Access Level: " + user.role.toUpperCase() + " (Lvl " + user.level + ")";
+    
+    const container = document.getElementById('buttons-container');
+    container.innerHTML = ""; 
+
+    // Кнопка досье (для всех)
+    container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
+
+    if (user.role === "scientific") {
+        container.innerHTML += '<button class="btn" onclick="nav(\'archive\')">📂 АРХИВ АНОМАЛИЙ</button>';
+        container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
+        container.innerHTML += '<button class="btn" onclick="nav(\'nid\')">🧪 ПРОТОКОЛЫ НИД</button>';
+    } 
+    else if (user.role === "military") {
+        container.innerHTML += '<button class="btn" onclick="nav(\'military_prot\')">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
+        container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
+    } 
+    else if (user.role === "council") {
+        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'archive\')">📂 ВЕСЬ АРХИВ</button>';
+        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'map\')">🗺️ ВСЕ КОМПЛЕКСЫ</button>';
+        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'nid\')">🧪 НИД (ЧТЕНИЕ)</button>';
+        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'military_prot\')">🛡️ ОБОРОНА (ЧТЕНИЕ)</button>';
+        container.innerHTML += '<button class="btn btn-council" style="grid-column: span 2;" onclick="nav(\'override\')">⚖️ ПРОТОКОЛ ОБНУЛЕНИЯ</button>';
+    }
+}
+
+async function sendReport() {
+    const text = document.getElementById('reportText').value.trim();
+    const uid = sessionStorage.getItem('prism_uid') || "Unknown";
+    const statusMsg = document.getElementById('reportStatus');
+
+    if (!text) {
+        statusMsg.innerText = "❌ ОШИБКА: ПУСТОЙ ТЕКСТ";
+        statusMsg.style.color = "var(--alert-red)";
+        return;
     }
 
-    function showError() {
-        document.getElementById('err').style.display = 'block';
-        setTimeout(() => { document.getElementById('err').style.display = 'none'; }, 3000);
+    statusMsg.innerText = "⚡ ОТПРАВКА...";
+    statusMsg.style.color = "#888";
+
+    const finalUrl = `${scriptURL.trim()}?action=report&uid=${encodeURIComponent(uid)}&text=${encodeURIComponent(text)}`;
+
+    try {
+        await fetch(finalUrl, { method: 'GET', mode: 'no-cors', cache: 'no-cache' });
+        statusMsg.style.color = "var(--neon-green)";
+        statusMsg.innerText = "✅ РАПОРТ ОТПРАВЛЕН В ШТАБ";
+        document.getElementById('reportText').value = ""; 
+    } catch (e) {
+        statusMsg.style.color = "var(--alert-red)";
+        statusMsg.innerText = "⚠️ ОШИБКА СЕТИ";
     }
+}
 
-    function renderDashboard(user) {
-        document.getElementById('login-zone').style.display = 'none';
-        document.getElementById('staff-content').style.display = 'block';
-        document.getElementById('greet').innerText = user.name;
-        document.getElementById('user-role').innerText = "Допуск: " + user.role;
-        const container = document.getElementById('buttons-container');
-        container.innerHTML = ""; 
+function logout() {
+    sessionStorage.clear();
+    localStorage.removeItem('prism_level'); // Очищаем уровень для архива
+    location.reload(); 
+}
 
-        const role = user.role;
-
-        // Твоя оригинальная генерация кнопок
-        if (role === "scientific") {
-            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
-            container.innerHTML += '<button class="btn" onclick="nav(\'archive\')">📂 АРХИВ АНОМАЛИЙ</button>';
-            container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
-            container.innerHTML += '<button class="btn" onclick="nav(\'nid\')">🧪 ПРОТОКОЛЫ НИД</button>';
-        } 
-        else if (role === "military") {
-            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
-            container.innerHTML += '<button class="btn" onclick="nav(\'military_prot\')">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
-            container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
-        } 
-        else if (role === "council") {
-            container.innerHTML += '<button class="btn" onclick="location.href=\'profile.html\'">👤 ЛИЧНОЕ ДОСЬЕ</button>';
-            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'archive\')">📂 ВЕСЬ АРХИВ</button>';
-            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'map\')">🗺️ ВСЕ КОМПЛЕКСЫ</button>';
-            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'nid\')">🧪 НИД (ЧТЕНИЕ)</button>';
-            container.innerHTML += '<button class="btn btn-council" onclick="nav(\'military_prot\')">🛡️ ОБОРОНА (ЧТЕНИЕ)</button>';
-            container.innerHTML += '<button class="btn btn-council" style="grid-column: span 2;" onclick="nav(\'override\')">⚖️ ПРОТОКОЛ ОБНУЛЕНИЯ</button>';
-        }
-    }
-
-    function logout() {
-        sessionStorage.clear();
-        location.reload(); 
-    }
-
-    function nav(page) {
-        location.href = page + ".html";
-    }
+function nav(page) {
+    location.href = page + ".html";
+}
 </script>
-
 </body>
 </html>
+
+
+
+
+

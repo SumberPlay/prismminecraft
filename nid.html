@@ -8,27 +8,12 @@
             --science-blue: #00a2ff; 
             --bg-dark: #050505; 
             --panel-bg: #111; 
-            --alert-red: #ff4444;
         }
-        body { 
-            background: var(--bg-dark); 
-            color: #d1d1d1; 
-            font-family: 'Courier New', monospace; 
-            margin: 0; 
-            transition: 0.5s;
-        }
-        
-        /* Эффект при тревоге */
-        body.lockdown { 
-            background: #000a1a; 
-            filter: hue-rotate(-20deg);
-        }
-
+        body { background: var(--bg-dark); color: #d1d1d1; font-family: 'Courier New', monospace; margin: 0; }
         nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
-        nav a { color: #888; text-decoration: none; text-transform: uppercase; padding: 0 20px; transition: 0.3s; }
-        nav a:hover { color: var(--science-blue); }
+        nav a { color: #888; text-decoration: none; text-transform: uppercase; padding: 0 20px; }
         
-        .container { max-width: 900px; margin: 50px auto; padding: 0 20px; position: relative; }
+        .container { max-width: 900px; margin: 50px auto; padding: 0 20px; }
         
         .header-nid { 
             border-left: 5px solid var(--science-blue); 
@@ -36,32 +21,23 @@
             margin-bottom: 40px;
         }
         
-        h2 { color: var(--science-blue); letter-spacing: 3px; margin-bottom: 5px; }
+        h2 { color: var(--science-blue); letter-spacing: 3px; }
         
-        #lockdown-msg { 
-            display: none; 
-            color: var(--alert-red); 
-            font-weight: bold; 
-            margin-bottom: 20px; 
-            border: 1px solid var(--alert-red); 
-            padding: 10px;
-            text-align: center;
-            animation: blink 1s infinite;
-        }
-
         .protocol-card { 
             background: var(--panel-bg); 
             border: 1px solid #222; 
             padding: 25px; 
             margin-bottom: 20px;
             position: relative;
-            transition: 0.3s;
         }
 
         .protocol-card::before {
-            content: "SECURE DATA";
-            position: absolute; top: 10px; right: 15px;
-            font-size: 0.6em; color: #333;
+            content: "RESEARCH DATA";
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 0.6em;
+            color: #333;
         }
 
         .status-active { color: #00ff00; font-size: 0.8em; }
@@ -84,11 +60,6 @@
         }
 
         .back-link { color: var(--science-blue); text-decoration: none; display: inline-block; margin-top: 20px; }
-        
-        @keyframes blink { 50% { opacity: 0; } }
-
-        /* Стиль для заблокированных данных */
-        .lockdown .protocol-card { opacity: 0.3; pointer-events: none; filter: blur(2px); }
     </style>
 </head>
 <body>
@@ -96,16 +67,12 @@
 <nav>
     <a href="index.html">Главная</a>
     <a href="staff.html">Терминал</a>
-    <a href="assets.html">Карта объектов</a>
 </nav>
 
 <div class="container">
-    <div id="lockdown-msg">ПРОТОКОЛ LOCKDOWN: ДОСТУП К НАУЧНЫМ ДАННЫМ ОГРАНИЧЕН ДО СТАБИЛИЗАЦИИ</div>
-
     <div class="header-nid">
         <h2>ДЕПАРТАМЕНТ НИД</h2>
         <p>Протоколы исследований негуманоидных форм жизни и материи</p>
-        <div id="sync-info" style="font-size: 0.7em; color: #444;">СВЯЗЬ С ЛАБОРАТОРИЕЙ: УСТАНОВЛЕНА</div>
     </div>
 
     <div class="protocol-card">
@@ -136,40 +103,10 @@
         <p style="color: #666;">Данный протокол временно приостановлен после инцидента в Секторе-12.</p>
     </div>
 
+    
+
     <a href="staff.html" class="back-link">&larr; Вернуться в терминал</a>
 </div>
 
-<script>
-    const RENDER_API = "https://prism-bot.onrender.com"; // ЗАМЕНИ НА СВОЮ
-
-    async function checkSystemStatus() {
-        try {
-            const res = await fetch(`${RENDER_API}/status`);
-            const data = await res.json();
-            
-            const body = document.body;
-            const msg = document.getElementById('lockdown-msg');
-            const syncInfo = document.getElementById('sync-info');
-
-            syncInfo.innerText = `СВЯЗЬ С ЛАБОРАТОРИЕЙ: ${data.label}`;
-            syncInfo.style.color = data.color;
-
-            if (data.state === "RED") {
-                body.classList.add('lockdown');
-                msg.style.display = "block";
-            } else {
-                body.classList.remove('lockdown');
-                msg.style.display = "none";
-            }
-        } catch (e) {
-            document.getElementById('sync-info').innerText = "СВЯЗЬ ПОТЕРЯНА";
-        }
-    }
-
-    setInterval(checkSystemStatus, 4000);
-    checkSystemStatus();
-</script>
-
 </body>
 </html>
-

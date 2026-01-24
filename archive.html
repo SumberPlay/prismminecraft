@@ -17,19 +17,18 @@
             font-family: 'Courier New', monospace; 
             margin: 0; 
             line-height: 1.6;
-            overflow-x: hidden;
         }
 
         /* Эффект шума монитора */
         body::before {
             content: " ";
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, transparent 1px);
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, transparent 1px);
             pointer-events: none; z-index: 1000;
         }
 
         nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
-        nav a { color: #888; text-decoration: none; text-transform: uppercase; padding: 0 20px; font-size: 0.9em; }
+        nav a { color: #888; text-decoration: none; text-transform: uppercase; padding: 0 20px; }
         nav a:hover { color: var(--neon-green); }
 
         .container { max-width: 1000px; margin: 50px auto; padding: 0 20px; position: relative; z-index: 10; }
@@ -53,7 +52,7 @@
             background: #1a1a1a;
             border: 1px solid var(--neon-green);
             object-fit: cover;
-            filter: grayscale(1) contrast(1.2);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.1);
         }
 
         .object-data { flex: 1; }
@@ -70,36 +69,25 @@
             text-transform: uppercase;
         }
 
+        /* Цвета уровней угрозы */
         .green { background: #00cc00; }
         .yellow { background: #cccc00; }
-        .red { background: var(--alert-red); animation: blink-red 1s infinite; }
+        .red { background: var(--alert-red); animation: blink 1s infinite; }
 
-        @keyframes blink-red { 50% { opacity: 0.7; box-shadow: 0 0 10px var(--alert-red); } }
+        @keyframes blink { 50% { opacity: 0.7; } }
 
         .object-desc { 
             background: rgba(0,0,0,0.3); 
-            padding: 15px; 
+            padding: 10px; 
             border-left: 2px solid #333;
-            min-height: 60px;
-            position: relative;
+            min-height: 50px;
         }
 
-        /* Глитч-стиль */
-        .glitch-char {
-            color: var(--alert-red);
-            text-shadow: 2px 0px var(--neon-green);
-            animation: jitter 0.1s infinite;
-        }
-
-        @keyframes jitter {
-            0% { transform: translate(0,0); }
-            50% { transform: translate(-1px, 1px); }
-            100% { transform: translate(1px, -1px); }
-        }
-
+        /* Каретка печати */
         .cursor {
             display: inline-block;
-            width: 8px; height: 15px;
+            width: 8px;
+            height: 15px;
             background: var(--neon-green);
             margin-left: 5px;
             animation: blink-cursor 0.8s infinite;
@@ -114,9 +102,8 @@
             text-decoration: none;
             border: 1px dashed #333;
             padding: 10px 20px;
-            transition: 0.3s;
         }
-        .back-btn:hover { color: var(--neon-green); border-color: var(--neon-green); background: rgba(0,255,204,0.05); }
+        .back-btn:hover { color: var(--neon-green); border-color: var(--neon-green); }
     </style>
 </head>
 <body>
@@ -128,7 +115,7 @@
 
 <div class="container">
     <h2>АРХИВ АНОМАЛИЙ</h2>
-    <p style="color: #555;">[СИСТЕМА МОНИТОРИНГА: АКТИВНА | ДОСТУП: УРОВЕНЬ <span id="access-display">0</span>]</p>
+    <p style="color: #555;">[ДОСТУП ОГРАНИЧЕН УРОВНЕМ СОТРУДНИКА]</p>
 
     <div class="card" id="archive-container">
         <div class="object-entry">
@@ -136,7 +123,7 @@
             <div class="object-data">
                 <div class="object-id">#001 "КОНЕЦ"</div>
                 <div class="threat-level yellow">КЛАСС УГРОЗЫ: УМЕРЕННЫЙ</div>
-                <div class="object-desc">Класс работы - Омега. Явление, при котором со временем каждый мир подлежит забвению. Имеет разные уровни воздействия - от исчезновения части существ до полного уничтожения.</div>
+                <div class="object-desc">Класс работы - Омега. <br>Явление, при котором со временем каждый мир подлежит забвению. Имеет разные уровни воздействия - от исчезновения части существ до полного уничтожения.</div>
             </div>
         </div>
 
@@ -145,16 +132,16 @@
             <div class="object-data">
                 <div class="object-id">#002 "РАЗЛОМ"</div>
                 <div class="threat-level green">КЛАСС УГРОЗЫ: БЕЗОПАСНЫЙ</div>
-                <div class="object-desc">Класс работы - Бета. Разлом - пространственная брешь, позволяющая перемещаться между разными мирами. Выделяют энергию. Рекомендуется дальнейшее изучение явления.</div>
+                <div class="object-desc">Класс работы - Бета. Разлом - пространственная брешь, позволяющая перемещаться между разными мирами. Выделяют энергию. Рекоммендуется дальнейшее изучение явления.</div>
             </div>
         </div>
 
         <div class="object-entry">
             <img src="https://via.placeholder.com/250x200?text=OBJECT+003" class="object-image">
             <div class="object-data">
-                <div class="object-id">#003 "МАРТИ"</div>
+                <div class="object-id">#003 "Марти"</div>
                 <div class="threat-level red">КЛАСС УГРОЗЫ: КРИТИЧЕСКИЙ</div>
-                <div class="object-desc">ВНИМАНИЕ: Описание доступно только Высшему Совету. Объект 003 — существо, не подчиняющееся никаким законам пространства-времени. Кодовое название - Марти. Способен вызывать локальные искажения реальности.</div>
+                <div class="object-desc">ВНИМАНИЕ: Описание доступно только Высшему Совету. Объект 003 — существо, не подчиняющееся никаким законом пространства-времени. Кодовое название - Марти.</div>
             </div>
         </div>
     </div>
@@ -164,80 +151,50 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-    // 1. Берем уровень из sessionStorage (важно для синхронизации с логином)
-    const userLevel = parseInt(sessionStorage.getItem('prism_level')) || 0;
-    document.getElementById('access-display').innerText = userLevel;
-    
-    const entries = document.querySelectorAll('.object-entry');
+        // Получаем уровень доступа
+        const userLevel = parseInt(localStorage.getItem('prism_level')) || 0;
+        const entries = document.querySelectorAll('.object-entry');
 
-    entries.forEach((entry, index) => {
-        const threatElement = entry.querySelector('.threat-level');
-        const descElement = entry.querySelector('.object-desc');
-        
-        if (!threatElement || !descElement) return;
-
-        const threatText = threatElement.innerText;
-        const originalText = descElement.innerText;
-
-        // 2. ФИЛЬТРАЦИЯ (Сначала скрываем, потом запускаем логику)
-        if (threatText.includes("КРИТИЧЕСКИЙ") && userLevel < 5) {
-            entry.style.display = "none"; // Просто скрываем, чтобы не ломать индексы
-            return;
-        } 
-        
-        if (threatText.includes("УМЕРЕННЫЙ") && userLevel < 3) {
-            descElement.innerHTML = "<span style='color:var(--alert-red);'>[ДАННЫЕ ЗАСЕКРЕЧЕНЫ: НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОСТУПА]</span>";
-            return;
-        }
-
-        // 3. ЭФФЕКТ ПЕЧАТИ
-        descElement.innerText = ""; 
-        descElement.innerHTML = '<span class="text-holder"></span><span class="cursor"></span>';
-        const textHolder = descElement.querySelector('.text-holder');
-        const cursor = descElement.querySelector('.cursor');
-
-        setTimeout(() => {
-            let i = 0;
-            const interval = setInterval(() => {
-                if (i < originalText.length) {
-                    textHolder.innerText += originalText.charAt(i);
-                    i++;
-                } else {
-                    clearInterval(interval);
-                    if (cursor) cursor.remove();
-                    
-                    // Запуск глитчей только для критических объектов после печати
-                    if (threatText.includes("КРИТИЧЕСКИЙ")) {
-                        startGlitches(textHolder);
-                    }
-                }
-            }, 25); 
-        }, index * 400); // Плавная очередь появления
-    });
-});
-
-function startGlitches(element) {
-    const originalContent = element.innerText;
-    const symbols = "█▓▒░/X#<>_&%$";
-
-    setInterval(() => {
-        if (Math.random() > 0.90) { 
-            let textArray = originalContent.split("");
-            let pos = Math.floor(Math.random() * textArray.length);
-            let glitchChar = symbols[Math.floor(Math.random() * symbols.length)];
+        entries.forEach((entry, index) => {
+            const threatElement = entry.querySelector('.threat-level');
+            const descElement = entry.querySelector('.object-desc');
             
-            textArray[pos] = `<span class="glitch-char">${glitchChar}</span>`;
-            element.innerHTML = textArray.join("");
+            if (!threatElement || !descElement) return;
+
+            const threatText = threatElement.innerText;
+            const originalText = descElement.innerText;
+
+            // 1. Фильтрация по уровню
+            if (threatText.includes("КРИТИЧЕСКИЙ") && userLevel < 5) {
+                entry.remove(); 
+                return;
+            } 
+            
+            if (threatText.includes("УМЕРЕННЫЙ") && userLevel < 3) {
+                descElement.innerHTML = "<span style='color:var(--alert-red);'>[ДАННЫЕ ЗАСЕКРЕЧЕНЫ ПО ПРОТОКОЛУ P.R.I.S.M. УРОВЕНЬ ДОСТУПА НЕДОСТАТОЧЕН]</span>";
+                return;
+            }
+
+            // 2. Эффект печати для разрешенных объектов
+            descElement.innerText = ""; 
+            descElement.innerHTML = '<span class="text-holder"></span><span class="cursor"></span>';
+            const textHolder = descElement.querySelector('.text-holder');
+            const cursor = descElement.querySelector('.cursor');
 
             setTimeout(() => {
-                element.innerHTML = originalContent;
-            }, 100);
-        }
-    }, 200);
-}
+                let i = 0;
+                const interval = setInterval(() => {
+                    textHolder.innerText += originalText.charAt(i);
+                    i++;
+                    if (i >= originalText.length) {
+                        clearInterval(interval);
+                        cursor.remove(); // Убираем курсор после завершения
+                    }
+                }, 25); 
+            }, index * 1000); 
+        });
+    });
 </script>
 
 </body>
 </html>
-
-
