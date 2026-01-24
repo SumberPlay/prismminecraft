@@ -154,7 +154,7 @@
 
 <script>
     // 1. Твоя рабочая ссылка (уже вставлена)
-    const API_URL = "https://script.google.com/macros/s/AKfycbyzFzJjDFxTHFHXYqlYrov6NQfPqKfnM6zppNDyzRWguFH6b43n0upA93ClXURvOclZXQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwbKQqiQVVvJQjrFSHayG1pHa5i3ptgCwy_1tZgXlSQh_fiDQiGjR909CG31EOch4fJ8g/exec";
 
     let isAlarmPlaying = false;
     let audioUnlocked = false;
@@ -169,30 +169,29 @@
     }
     setInterval(updateClock, 1000);
 
-    async function syncPrism() {
-        try {
-            // Добавляем режим cors и обработку редиректов
-            const response = await fetch(API_URL, {
-                method: 'GET',
-                mode: 'cors', 
-                redirect: 'follow'
-            });
+    function syncPrism() {
+        // Удаляем старый скрипт, если он был
+        const oldScript = document.getElementById('prism-sync-script');
+        if (oldScript) oldScript.remove();
 
-            if (!response.ok) throw new Error("API Connection Failed");
+        // Создаем новый элемент скрипта для JSONP
+        const script = document.createElement('script');
+        script.id = 'prism-sync-script';
+        // Добавляем параметр callback=handleData
+        script.src = API_URL + (API_URL.includes('?') ? '&' : '?') + 'callback=handleData&t=' + Date.now();
+        
+        script.onerror = () => {
+            console.error("Ошибка сети");
+            document.getElementById('status-text').innerText = "OFFLINE";
+        };
+        
+        document.body.appendChild(script);
+    }
 
-            const data = await response.json();
-            
-            // Если данные пришли — обновляем UI
-            if (data && data.state) {
-                updateUI(data.state, data.label, data.color);
-                console.log("Sync success:", data.state);
-            }
-
-        } catch (error) {
-            console.error("Sync Error:", error);
-            // Пробуем альтернативный метод, если fetch не сработал из-за CORS
-            fallbackSync();
-        }
+    // Эта функция примет данные от Google
+    function handleData(data) {
+        console.log("Данные получены:", data);
+        updateUI(data.state, data.label, data.color);
     }
 
     // Запасной метод на случай капризов CORS
@@ -246,5 +245,6 @@
 </body>
 
 </html>
+
 
 
