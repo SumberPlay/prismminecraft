@@ -18,9 +18,11 @@
         margin: 0; 
         overflow-x: hidden; 
         transition: background-color 0.5s ease;
+        /* Резервируем место снизу, чтобы строка не перекрывала контент */
+        padding-bottom: 50px; 
     }
-    
-    /* Эффект шума старого монитора */
+
+    /* Эффект шума монитора */
     body::before {
         content: " ";
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -45,7 +47,7 @@
     nav a:hover { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); }
 
     .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
-    
+
     /* Виджет статуса */
     .status-bar {
         border: 1px solid #333; padding: 20px; display: flex; 
@@ -63,45 +65,41 @@
         animation: pulse 2s infinite;
     }
 
-    /* ФИКС БЕГУЩЕЙ СТРОКИ ТРЕВОГИ */
+    /* БЕГУЩАЯ СТРОКА ТЕПЕРЬ ВНИЗУ */
     #emergency-alert {
         display: none;
         position: fixed; 
-        top: 0; left: 0; 
+        bottom: 0; /* Перенесли вниз */
+        left: 0; 
         width: 100%;
         background: var(--alert-red); 
         color: #000;
         padding: 12px 0; 
-        text-align: center; 
         font-weight: bold;
         z-index: 2000; 
         letter-spacing: 2px;
-        
-        white-space: nowrap; /* Запрет переноса на новую строку */
-        overflow: hidden;    /* Прячем лишний текст */
-        border-bottom: 2px solid #000;
+        white-space: nowrap;
+        overflow: hidden;
+        border-top: 2px solid #000; /* Линия теперь сверху строки */
     }
 
     .alert-marquee {
         display: inline-block;
         padding-left: 100%;
-        animation: alert-scroll 20s linear infinite;
+        animation: alert-scroll 90s linear infinite; 
     }
 
-    /* Анимации */
     @keyframes alert-scroll {
         0%   { transform: translateX(0); }
         100% { transform: translateX(-100%); }
     }
 
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-    
     @keyframes scanline { 0% { top: -10%; } 100% { top: 110%; } }
 
-    /* Остальные элементы интерфейса */
     .card { background: var(--panel-bg); border: 1px solid #222; padding: 25px; margin-bottom: 20px; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    
+
     .btn {
         background: transparent; border: 1px solid var(--neon-green);
         color: var(--neon-green); padding: 10px 25px; cursor: pointer;
@@ -111,14 +109,15 @@
 
     .counter-box { text-align: center; font-size: 0.8em; color: #666; }
     .counter-num { display: block; font-size: 2.5em; color: var(--neon-green); }
-
 </style>
 </head>
 <body>
+
 <audio id="alarm-sound" loop>
     <source src="alarm.mp3" type="audio/mpeg">
 </audio>
-<div id="emergency-alert">ВНИМАНИЕ: ЗАФИКСИРОВАНО НАРУШЕНИЕ ПРОТОКОЛОВ P.R.I.S.M. СОХРАНЯЙТЕ СПОКОЙСТВИЕ. СОТРУДНИКАМ СРОЧНО ПРИСТУПИТЬ К СТАБИЛИЗАЦИИ СИТУАЦИИ.</div>
+
+<div id="emergency-alert"></div>
 
 <nav>
     <a href="index.html">ГЛАВНАЯ</a>
@@ -137,7 +136,7 @@
             <div class="dot" id="status-dot"></div>
             <div>
                 <div style="font-size: 0.7em; color: #666;">ТЕКУЩИЙ СТАТУС</div>
-                <div id="status-text" style="font-weight: bold;">LEVEL: NORMAL</div>
+                <div id="status-text" style="font-weight: bold;">LOADING...</div>
             </div>
         </div>
         <div style="text-align: right;">
@@ -153,42 +152,29 @@
         </div>
         <div class="card counter-box">
             ДНЕЙ БЕЗ ПРОРЫВА
-            <span class="counter-num" id="days-count">[Данные удалены]</span>
+            <span class="counter-num" id="days-count">342</span>
         </div>
     </div>
 
     <div class="card">
         <h3 style="color: var(--neon-green); border-bottom: 1px solid #222; padding-bottom: 10px;">ПУБЛИЧНЫЕ СВОДКИ</h3>
-        <p><b>[22.01.2026]</b> Новые данные на текущий момент не зафиксированы.</p>
-    
-    </div>
-
-    <div class="card">
-        <h3 style="color: var(--neon-green); border-bottom: 1px solid #222; padding-bottom: 10px;">ОБЩАЯ ИНФОРМАЦИЯ</h3>
-        <p>P.R.I.S.M была создана для защиты людей от существ и объектов, представляющих угрозу для существования. Мы изучаем всех существ и объекты, чтобы обезвредить угрозу ещё до её появления.</p>
-    
+        <p><b>[24.01.2026]</b> Система мониторинга работает в штатном режиме. Аномалий не обнаружено.</p>
     </div>
 
     <div class="card" style="text-align: center;">
         <h3>ПРИСОЕДИНЯЙТЕСЬ К НАМ</h3>
-        <p>Выдающиеся навыки. Железная дисциплина. Полная конфиденциальность.</p>
-        <button class="btn" onclick="location.href='staff.html'">ЛИЧНЫЙ КАБИНЕТ</button>
+        <button class="btn" onclick="location.href='staff.html'">ВХОД ДЛЯ ПЕРСОНАЛА</button>
     </div>
-
-    <button onclick="triggerEmergency()" style="opacity: 0.1; background: none; border: none; cursor: pointer; color: #fff;">.</button>
 </div>
 
 <script>
-    // 1. Твоя рабочая ссылка
-    const API_URL = "https://script.google.com/macros/s/AKfycbwbKQqiQVVvJQjrFSHayG1pHa5i3ptgCwy_1tZgXlSQh_fiDQiGjR909CG31EOch4fJ8g/exec";
+    const RENDER_API = "https://prism-bot.onrender.com"; 
 
     let isAlarmPlaying = false;
     let audioUnlocked = false;
-    let volumeInterval = null; // Оставляем ОДНО объявление здесь
 
     document.body.addEventListener('click', () => {
         audioUnlocked = true;
-        console.log("Audio system: READY");
     }, { once: true });
 
     function updateClock() {
@@ -197,25 +183,18 @@
     }
     setInterval(updateClock, 1000);
 
-    function syncPrism() {
-        const oldScript = document.getElementById('prism-sync-script');
-        if (oldScript) oldScript.remove();
-
-        const script = document.createElement('script');
-        script.id = 'prism-sync-script';
-        script.src = API_URL + (API_URL.includes('?') ? '&' : '?') + 'callback=handleData&t=' + Date.now();
-        
-        script.onerror = () => {
-            console.error("Sync Error");
-            document.getElementById('status-text').innerText = "OFFLINE";
-        };
-        document.body.appendChild(script);
+    async function syncPrism() {
+        try {
+            const response = await fetch(`${RENDER_API}/status`);
+            const data = await response.json();
+            updateUI(data.state, data.label, data.color);
+        } catch (e) {
+            console.error("Sync Error:", e);
+            const statusTxt = document.getElementById('status-text');
+            statusTxt.innerText = "OFFLINE";
+            statusTxt.style.color = "gray";
+        }
     }
-
-    // Эта функция вызывается ответом от Google
-    window.handleData = function(data) {
-        updateUI(data.state, data.label, data.color);
-    };
 
     function updateUI(state, label, color) {
         const statusTxt = document.getElementById('status-text');
@@ -223,45 +202,29 @@
         const alertBanner = document.getElementById('emergency-alert');
         const alarm = document.getElementById('alarm-sound');
 
-        if (!statusTxt || !statusDot) return;
-
         statusTxt.innerText = label.toUpperCase();
         statusTxt.style.color = color;
         statusDot.style.backgroundColor = color;
         statusDot.style.boxShadow = `0 0 15px ${color}`;
 
-        if (state && state.toUpperCase() === "RED") {
+        if (state === "RED") {
             if (alertBanner.style.display !== "block") {
-                const alertMsg = "ВНИМАНИЕ: ЗАФИКСИРОВАНО НАРУШЕНИЕ ПРОТОКОЛОВ P.R.I.S.M. СОХРАНЯЙТЕ СПОКОЙСТВИЕ. — ";
-                alertBanner.innerHTML = `<div class="alert-marquee">${alertMsg.repeat(5)}</div>`;
+                const alertMsg = " ВНИМАНИЕ: ЗАФИКСИРОВАНО НАРУШЕНИЕ ПРОТОКОЛОВ P.R.I.S.M. СОХРАНЯЙТЕ СПОКОЙСТВИЕ. СОТРУДНИКАМ СРОЧНО ПРИСТУПИТЬ К СТАБИЛИЗАЦИИ СИТУАЦИИ. — ";
+                alertBanner.innerHTML = `<div class="alert-marquee">${alertMsg.repeat(15)}</div>`;
                 alertBanner.style.display = "block";
             }
-            
             document.body.style.backgroundColor = "#1a0000";
-            document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
 
             if (audioUnlocked && alarm && !isAlarmPlaying) {
                 isAlarmPlaying = true;
-                alarm.volume = 0.1; 
-                alarm.play().catch(e => console.log("Audio blocked"));
-
-                if (volumeInterval) clearInterval(volumeInterval);
-                volumeInterval = setInterval(() => {
-                    if (alarm.volume < 0.4) {
-                        alarm.volume = Math.min(0.4, alarm.volume + 0.01);
-                    } else {
-                        clearInterval(volumeInterval);
-                    }
-                }, 200);
+                alarm.volume = 0.2;
+                alarm.play();
             }
         } else {
             alertBanner.style.display = "none";
             alertBanner.innerHTML = "";
             document.body.style.backgroundColor = "#050505";
-            document.body.style.boxShadow = "none";
-            
             if (alarm) {
-                if (volumeInterval) clearInterval(volumeInterval);
                 alarm.pause();
                 alarm.currentTime = 0;
             }
@@ -269,24 +232,9 @@
         }
     }
 
-    setInterval(syncPrism, 3000);
+    setInterval(syncPrism, 4000);
     syncPrism();
     updateClock();
 </script>
-
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
