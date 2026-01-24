@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>P.R.I.S.M. | Control Terminal</title>
+    <title>P.R.I.S.M. | Public Portal</title>
     <style>
         :root { 
             --neon-green: #00ffcc; 
@@ -10,164 +10,204 @@
             --bg-dark: #050505; 
             --panel-bg: #111; 
         }
-        body { 
-            background: var(--bg-dark); 
-            color: #d1d1d1; 
-            font-family: 'Courier New', monospace; 
-            margin: 0; 
-            overflow: hidden;
-            transition: background-color 0.8s;
-        }
-
-        /* Сканирующая линия (эффект терминала) */
-        body::after {
+        body { background: var(--bg-dark); color: #d1d1d1; font-family: 'Courier New', monospace; margin: 0; overflow-x: hidden; }
+        
+        /* Эффект шума старого монитора */
+        body::before {
             content: " ";
-            position: fixed; top: 0; left: 0; width: 100%; height: 2px;
-            background: rgba(0, 255, 204, 0.1);
-            z-index: 9999; pointer-events: none;
-            animation: scanline 8s linear infinite;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, transparent 1px);
+            pointer-events: none; z-index: 1000;
         }
-        @keyframes scanline { 0% { top: -10%; } 100% { top: 110%; } }
 
         nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
         nav a { color: #888; text-decoration: none; text-transform: uppercase; padding: 0 20px; transition: 0.3s; }
         nav a:hover { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); }
 
-        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
         
+        /* Виджет статуса */
         .status-bar {
-            border: 1px solid #333; padding: 25px; display: flex; 
+            border: 1px solid #333; padding: 20px; display: flex; 
             justify-content: space-between; align-items: center;
-            background: rgba(10, 26, 26, 0.8);
-            position: relative;
+            background: linear-gradient(90deg, #0a1a1a 0%, #050505 100%);
+            margin-bottom: 30px;
+        }
+
+        .status-indicator {
+            display: flex; align-items: center; gap: 15px;
         }
 
         .dot {
-            width: 15px; height: 15px; border-radius: 50%;
+            width: 12px; height: 12px; border-radius: 50%;
             background: var(--neon-green);
-            box-shadow: 0 0 15px var(--neon-green);
-            display: inline-block; margin-right: 10px;
+            box-shadow: 0 0 10px var(--neon-green);
+            animation: pulse 2s infinite;
         }
 
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* Экстренное оповещение */
         #emergency-alert {
             display: none;
             position: fixed; top: 0; left: 0; width: 100%;
             background: var(--alert-red); color: #000;
             padding: 10px; text-align: center; font-weight: bold;
-            z-index: 2000; animation: blink 1s infinite;
+            z-index: 2000; letter-spacing: 2px;
+            animation: slideDown 0.5s ease;
         }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        .card { background: var(--panel-bg); border: 1px solid #222; padding: 30px; margin-top: 20px; text-align: center; }
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+
+        .card { background: var(--panel-bg); border: 1px solid #222; padding: 25px; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         
-        #status-text { font-size: 1.5em; font-weight: bold; letter-spacing: 2px; }
-
         .btn {
             background: transparent; border: 1px solid var(--neon-green);
-            color: var(--neon-green); padding: 12px 30px; cursor: pointer;
-            text-transform: uppercase; font-weight: bold; transition: 0.3s; margin-top: 20px;
+            color: var(--neon-green); padding: 10px 25px; cursor: pointer;
+            text-transform: uppercase; font-weight: bold; transition: 0.3s;
         }
-        .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 20px var(--neon-green); }
-        
-        .hint { font-size: 0.7em; color: #444; margin-top: 10px; }
+        .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 15px var(--neon-green); }
+
+        .counter-box { text-align: center; font-size: 0.8em; color: #666; }
+        .counter-num { display: block; font-size: 2.5em; color: var(--neon-green); }
+        body::after {
+    content: " ";
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 2px;
+    background: rgba(0, 255, 204, 0.1);
+    opacity: 0.5;
+    z-index: 9999;
+    pointer-events: none;
+    animation: scanline 8s linear infinite;
+}
+
+@keyframes scanline {
+    0% { top: -10%; }
+    100% { top: 110%; }
+}
     </style>
 </head>
-<body onclick="enableAudio()"> <div id="emergency-alert">КРИТИЧЕСКАЯ ОШИБКА: НАРУШЕНИЕ УСЛОВИЙ СОДЕРЖАНИЯ!</div>
+<body>
+
+<div id="emergency-alert">ВНИМАНИЕ: ЗАФИКСИРОВАНО НАРУШЕНИЕ УСЛОВИЙ СОДЕРЖАНИЯ В СЕКТОРЕ-7. СОБЛЮДАЙТЕ ПРАВИЛА ТИШИНЫ.</div>
 
 <nav>
-    <a href="#">ГЛАВНАЯ</a>
-    <a href="staff.html">ТЕРМИНАЛ</a>
+    <a href="index.html">ГЛАВНАЯ</a>
+    <a href="dossier.html">ЛИЧНЫЕ ДЕЛА</a>
+    <a href="staff.html">ТЕРМИНАЛ СОТРУДНИКА</a>
 </nav>
 
 <div class="container">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="letter-spacing: 10px; color: var(--neon-green);">P.R.I.S.M.</h1>
+    <div style="text-align: center; margin-bottom: 50px;">
+        <h1 style="letter-spacing: 15px; color: var(--neon-green); margin: 0;">P.R.I.S.M.</h1>
+        <p style="color: #444;">PROACTIVE REACTION, IMMEDIATE SOLUTION & MINIMIZATION OF ANOMALIES.</p>
     </div>
 
     <div class="status-bar">
-        <div>
-            <div id="status-dot" class="dot"></div>
-            <span id="status-text">INITIALIZING...</span>
+        <div class="status-indicator">
+            <div class="dot" id="status-dot"></div>
+            <div>
+                <div style="font-size: 0.7em; color: #666;">ТЕКУЩИЙ СТАТУС</div>
+                <div id="status-text" style="font-weight: bold;">LEVEL: NORMAL</div>
+            </div>
         </div>
         <div style="text-align: right;">
-            <div style="font-size: 0.8em; color: #555;">SYSTEM TIME</div>
+            <div style="font-size: 0.7em; color: #666;">СИНХРОНИЗАЦИЯ</div>
             <div id="clock">00:00:00</div>
         </div>
     </div>
 
-    <div class="card">
-        <h3>ОПЕРАТИВНАЯ СВОДКА</h3>
-        <p id="description">Ожидание синхронизации с базой данных P.R.I.S.M...</p>
-        <div class="hint">Нажмите в любом месте страницы, чтобы активировать аудио-систему</div>
+    <div class="grid">
+        <div class="card counter-box">
+            ОБЪЕКТОВ ПОД НАБЛЮДЕНИЕМ
+            <span class="counter-num">20</span>
+        </div>
+        <div class="card counter-box">
+            ДНЕЙ БЕЗ ПРОРЫВА
+            <span class="counter-num" id="days-count">[Данные удалены]</span>
+        </div>
     </div>
+
+    <div class="card">
+        <h3 style="color: var(--neon-green); border-bottom: 1px solid #222; padding-bottom: 10px;">ПУБЛИЧНЫЕ СВОДКИ</h3>
+        <p><b>[22.01.2026]</b> Новые данные на текущий момент не зафиксированы.</p>
+    
+    </div>
+
+    <div class="card">
+        <h3 style="color: var(--neon-green); border-bottom: 1px solid #222; padding-bottom: 10px;">ОБЩАЯ ИНФОРМАЦИЯ</h3>
+        <p>P.R.I.S.M была создана для защиты людей от существ и объектов, представляющих угрозу для существования. Мы изучаем всех существ и объекты, чтобы обезвредить угрозу ещё до её появления.</p>
+    
+    </div>
+
+    <div class="card" style="text-align: center;">
+        <h3>ПРИСОЕДИНЯЙТЕСЬ К НАМ</h3>
+        <p>Выдающиеся навыки. Железная дисциплина. Полная конфиденциальность.</p>
+        <button class="btn" onclick="location.href='staff.html'">ЛИЧНЫЙ КАБИНЕТ</button>
+    </div>
+
+    <button onclick="triggerEmergency()" style="opacity: 0.1; background: none; border: none; cursor: pointer; color: #fff;">.</button>
 </div>
 
-<audio id="alarm-sound" loop>
-    <source src="alarm.mp3" type="audio/mpeg">
-</audio>
-
 <script>
-    // !!! ВСТАВЬ СЮДА СВОЮ ССЫЛКУ ИЗ APPS SCRIPT (ПОСЛЕ НОВОГО ДЕПЛОЯ) !!!
-    const API_URL = "https://script.google.com/macros/s/AKfycbyzFzJjDFxTHFHXYqlYrov6NQfPqKfnM6zppNDyzRWguFH6b43n0upA93ClXURvOclZXQ/exec";
+    const SHEET_ID = "1ezQZE3dRLtlkQ06qJ1SxY1cHfCklPat154ZHrSgU8II";
+    // Используем ссылку ПУБЛИКАЦИИ (Файл -> Поделиться -> Опубликовать в интернете -> CSV)
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?output=csv`;
 
-    let isAlarmPlaying = false;
-    let audioUnlocked = false;
-
-    // Разблокировка аудио (нужна из-за политики браузеров)
-    function enableAudio() {
-        audioUnlocked = true;
-        console.log("Audio system activated");
+    function updateClock() {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
     }
+    setInterval(updateClock, 1000);
 
     async function syncPrism() {
         try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error("API Offline");
-            
-            const data = await response.json();
-            updateUI(data.state, data.label, data.color);
+            // Анти-кэш t=Date.now()
+            const response = await fetch(`${CSV_URL}&t=${Date.now()}`);
+            if (!response.ok) throw new Error("CORS or Access Error");
 
+            const text = await response.text();
+            const rows = text.trim().split('\n');
+            
+            // Чистим данные от кавычек Google
+            const cols = rows[0].split(',').map(c => c.replace(/^["']|["']$/g, '').trim());
+
+            if (cols.length >= 3) {
+                const [state, label, color] = cols;
+                updateUI(state, label, color);
+            }
         } catch (error) {
-            console.error("Sync Error:", error);
-            document.getElementById('status-text').innerText = "SYSTEM OFFLINE";
+            console.error("Ошибка синхронизации:", error);
+            document.getElementById('status-text').innerText = "OFFLINE";
             document.getElementById('status-text').style.color = "gray";
         }
     }
 
     function updateUI(state, label, color) {
-        const txt = document.getElementById('status-text');
-        const dot = document.getElementById('status-dot');
-        const alert = document.getElementById('emergency-alert');
-        const alarm = document.getElementById('alarm-sound');
+        const statusTxt = document.getElementById('status-text');
+        const statusDot = document.getElementById('status-dot');
+        const alertBanner = document.getElementById('emergency-alert');
 
-        txt.innerText = label.toUpperCase();
-        txt.style.color = color;
-        dot.style.backgroundColor = color;
-        dot.style.boxShadow = `0 0 15px ${color}`;
+        statusTxt.innerText = label.toUpperCase();
+        statusTxt.style.color = color;
+        statusDot.style.backgroundColor = color;
+        statusDot.style.boxShadow = `0 0 15px ${color}`;
 
-        if (state === "RED") {
-            alert.style.display = "block";
+        if (state.toUpperCase() === "RED") {
+            alertBanner.style.display = "block";
             document.body.style.backgroundColor = "#1a0000";
-            if (audioUnlocked && !isAlarmPlaying) {
-                alarm.play().catch(e => console.log("Audio play blocked"));
-                isAlarmPlaying = true;
-            }
+            document.body.style.boxShadow = "inset 0 0 100px rgba(255, 0, 0, 0.4)";
         } else {
-            alert.style.display = "none";
+            alertBanner.style.display = "none";
             document.body.style.backgroundColor = "#050505";
-            alarm.pause();
-            alarm.currentTime = 0;
-            isAlarmPlaying = false;
+            document.body.style.boxShadow = "none";
         }
     }
-
-    // Часы и интервалы
-    setInterval(() => {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-    }, 1000);
 
     setInterval(syncPrism, 3000);
     syncPrism();
 </script>
+
 </body>
+
 </html>
