@@ -110,10 +110,42 @@
     const RENDER_API = "https://prism-bot.onrender.com"; // <--- ТВОЯ ССЫЛКА
 
     const staffDB = {
-        "M4SK": { name: "МэнсиКейн", dept: "Научный Департамент", level: "L3", spec: "Аномалии", joined: "2024", role: "scientific" },
-        "KRMP": { name: "Кримпи", dept: "Военная Группа", level: "L3", spec: "Тактика", joined: "2023", role: "military" },
-        "SUMBR": { name: "Самбер", dept: "Высший Совет", level: "L5", spec: "Куратор", joined: "2020", role: "council" },
-        "MRYZE": { name: "Юз", dept: "Высший Совет", level: "L5", spec: "Стратег", joined: "2020", role: "council" }
+        "M4SK": { 
+            name: "МэнсиКейн",
+            mc_name: "MancyKane",
+            dept: "Научный Департамент",
+            level: "L3",
+            spec: "Аномалии",
+            joined: "2024",
+            role: "scientific"
+        },
+        "KRMP": { 
+            name: "Кримпи",
+            mc_name: "Krimpi",
+            dept: "Военная Группа",
+            level: "L3",
+            spec: "Тактика",
+            joined: "2023",
+            role: "military"
+        },
+        "SUMBR": {
+            name: "Самбер",
+            mc_name: "SumberTheCreator",
+            dept: "Высший Совет",
+            level: "L5",
+            spec: "Куратор",
+            joined: "2020",
+            role: "council"
+        },
+        "MRYZE": { 
+            name: "Юз",
+            mc_name: "MrYuze",
+            dept: "Высший Совет",
+            level: "L5",
+            spec: "Стратег",
+            joined: "2020",
+            role: "council"
+        }
     };
 
     // 1. Синхронизация статуса (RED CODE)
@@ -155,8 +187,9 @@
         document.getElementById('spec').innerText = user.spec;
         document.getElementById('joined').innerText = user.joined;
 
-        // Ставим фото из Minecraft по нику
-        document.getElementById('user-photo').src = `https://minotar.net/armor/bust/${uid}/120.png`;
+       // Заменяем старую строку на эту:
+        const skinName = user.mc_name || uid; 
+        document.getElementById('user-photo').src = `https://minotar.net/armor/bust/${skinName}/120.png`;
 
         // Тема совета
         if (user.role === 'council') {
@@ -169,4 +202,5 @@
 
 </body>
 </html>
+
 
