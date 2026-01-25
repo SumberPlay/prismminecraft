@@ -3,272 +3,255 @@
 <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <meta charset="UTF-8">
-    <title>P.R.I.S.M. | Staff Portal</title>
+    <title>P.R.I.S.M. | Терминал ОС</title>
     <style>
         :root { 
-            --neon-green: #00ffcc; 
-            --alert-red: #ff4444; 
-            --gold: #ffd700;
+            --term-green: #00ff41; 
+            --term-dim: #003b00;
+            --alert-red: #ff0000; 
             --bg-dark: #050505; 
-            --panel-bg: #111; 
         }
+
         body { 
             background: var(--bg-dark); 
-            color: #d1d1d1; 
+            color: var(--term-green); 
             font-family: 'Courier New', monospace; 
             margin: 0; 
-            transition: background 0.5s;
+            overflow-x: hidden;
+            text-transform: uppercase;
         }
+
+        /* Эффект ЭЛТ-монитора */
+        body::before {
+            content: " ";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none; z-index: 1000;
+        }
+
+        .cursor { display: inline-block; width: 8px; height: 1.2em; background: var(--term-green); animation: blink 1s infinite; vertical-align: middle; margin-left: 5px; }
+        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+        nav { border-bottom: 1px solid var(--term-green); padding: 15px; background: #000; }
+        nav a { color: var(--term-green); text-decoration: none; margin-right: 25px; font-size: 0.9em; opacity: 0.7; transition: 0.3s; }
+        nav a:hover { opacity: 1; text-shadow: 0 0 8px var(--term-green); }
+        nav a::before { content: "[ "; }
+        nav a::after { content: " ]"; }
+
+        .container { max-width: 850px; margin: 40px auto; padding: 25px; border: 1px solid var(--term-dim); position: relative; box-shadow: inset 0 0 20px #000; }
         
-        /* Стили для режима тревоги */
-        body.alarm-mode { background: #1a0505; }
-        body.alarm-mode .card { border-color: var(--alert-red); box-shadow: 0 0 15px rgba(255, 68, 68, 0.1); }
-
-        nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
-        nav a { color: #888; text-decoration: none; text-transform: uppercase; padding: 0 20px; font-size: 0.9em; }
-        nav a:hover { color: var(--neon-green); }
-
-        .container { max-width: 800px; margin: 50px auto; padding: 0 20px; }
-        .card { background: var(--panel-bg); border: 1px solid #222; padding: 30px; margin-bottom: 20px; position: relative; }
-        
-        #system-status-indicator {
-            text-align: center; font-size: 0.8em; margin-bottom: 20px; letter-spacing: 2px; font-weight: bold;
-        }
-
-        input { 
-            background: #000; border: 1px solid #333; color: var(--neon-green); 
-            padding: 15px; width: 100%; margin-bottom: 20px; box-sizing: border-box; outline: none;
-        }
-        input:focus { border-color: var(--neon-green); }
+        .card { border: 1px solid var(--term-dim); background: rgba(0, 20, 0, 0.2); padding: 25px; margin-bottom: 20px; position: relative; }
+        .card::before { content: "БЛОК_ДАННЫХ"; position: absolute; top: -8px; left: 15px; background: var(--bg-dark); padding: 0 10px; font-size: 0.7em; color: var(--term-dim); }
 
         .btn { 
-            background: #1a1a1a; border: 1px solid var(--neon-green); color: var(--neon-green); 
-            padding: 15px; width: 100%; cursor: pointer; font-weight: bold; 
-            text-transform: uppercase; transition: 0.3s; margin-bottom: 10px;
+            background: transparent; border: 1px solid var(--term-green); color: var(--term-green); 
+            padding: 12px; width: 100%; cursor: pointer; font-family: inherit;
+            text-align: left; transition: 0.2s; margin-bottom: 10px; font-size: 0.9em;
         }
-        .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 10px var(--neon-green); }
+        .btn::before { content: "> ВЫПОЛНИТЬ: "; opacity: 0.6; }
+        .btn:hover { background: var(--term-green); color: #000; box-shadow: 0 0 15px var(--term-green); }
         
-        .btn-council { border-color: var(--gold); color: var(--gold); }
-        .btn-council:hover { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
+        .btn-council { border-color: #ffd700; color: #ffd700; }
+        .btn-council:hover { background: #ffd700; color: #000; box-shadow: 0 0 15px #ffd700; }
 
-        .role-tag { font-size: 0.8em; color: #666; text-transform: uppercase; letter-spacing: 2px; }
-        #staff-content { display: none; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 30px; }
-        
-        textarea {
-            width: 100%; height: 100px; background: #000; color: #fff; border: 1px solid #333; 
-            padding: 10px; font-family: 'Courier New', monospace; box-sizing: border-box; 
-            resize: none; margin-top: 10px; outline: none;
+        input, textarea { 
+            background: #000; border: 1px solid var(--term-dim); color: var(--term-green); 
+            padding: 15px; width: 100%; box-sizing: border-box; outline: none;
+            font-family: inherit; margin-bottom: 15px; font-size: 1.1em;
         }
-        textarea:focus { border-color: var(--neon-green); }
-        #reportStatus { font-size: 0.75em; margin-top: 10px; text-align: center; min-height: 1.2em; }
+
+        #incident-box { border: 2px solid var(--alert-red); padding: 20px; margin: 20px 0; background: rgba(50, 0, 0, 0.3); animation: flash 2s infinite; }
+        @keyframes flash { 0% { border-color: var(--alert-red); } 50% { border-color: transparent; } 100% { border-color: var(--alert-red); } }
+
+        .ascii-art { font-size: 8px; line-height: 1; white-space: pre; margin-bottom: 30px; color: var(--term-green); text-shadow: 0 0 5px var(--term-green); }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="index.html">Главная</a>
-    <a href="archive.html">Архив</a>
+    <a href="index.html">ГЛАВНАЯ_ДИРЕКТОРИЯ</a>
+    <a href="archive.html">ДОСТУП_К_АРХИВУ</a>
 </nav>
 
 <div class="container">
-    <div id="system-status-indicator">СВЯЗЬ С ЦЕНТРОМ: <span id="sync-val">ПОДКЛЮЧЕНИЕ...</span></div>
+    <div id="system-status-indicator" style="font-size: 0.7em; opacity: 0.6; margin-bottom: 10px;">
+        СТАТУС_СВЯЗИ: <span id="sync-val">СИНХРОНИЗАЦИЯ...</span>
+    </div>
 
     <div id="login-zone">
-        <h2 style="text-align: center; letter-spacing: 3px;">АВТОРИЗАЦИЯ ТЕРМИНАЛА</h2>
+        <div class="ascii-art">
+ ██████╗ ██████╗ ██╗███████╗███╗   ███╗
+ ██╔══██╗██╔══██╗██║██╔════╝████╗ ████║
+ ██████╔╝██████╔╝██║███████╗██╔████╔██║
+ ██╔═══╝ ██╔══██╗██║╚════██║██║╚██╔╝██║
+ ██║     ██║  ██║██║███████║██║ ╚═╝ ██║
+ ╚═╝     ╚═╝  ╚═╝╚═╝╚══════╝╚═╝     ╚═╝</div>
+        <h3 id="login-title">ТРЕБУЕТСЯ_АВТОРИЗАЦИЯ<span class="cursor"></span></h3>
         <div class="card">
-            <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
-            <input type="password" id="ups" placeholder="ПАРОЛЬ">
-            <button class="btn" onclick="checkAuth()">ВХОД В СИСТЕМУ</button>
-            <p id="err" style="color: var(--alert-red); display: none; text-align: center; font-weight: bold;">ДОСТУП ЗАПРЕЩЕН</p>
+            <input type="text" id="uid" placeholder="ID_СОТРУДНИКА">
+            <input type="password" id="ups" placeholder="КЛЮЧ_ДОСТУПА">
+            <button class="btn" onclick="checkAuth()">ЗАПУСТИТЬ_ПРОТОКОЛ_ВХОДА</button>
+            <p id="err" style="color: var(--alert-red); display: none; font-size: 0.8em;">[!] ОШИБКА: ОТКАЗАНО_В_ДОСТУПЕ</p>
         </div>
     </div>
 
-    <div id="staff-content">
-        <div class="role-tag" id="user-role">Access Level: --</div>
-        <h2 id="greet" style="margin-top: 5px; color: #fff;">ЗАГРУЗКА...</h2>
-        <hr style="border: 0; border-bottom: 1px solid #333; margin-bottom: 20px;">
-
-        <div id="incident-box" style="display: none; border: 1px solid #ff4444; background: rgba(255, 68, 68, 0.1); padding: 15px; margin: 20px 0; color: #ff4444;">
-            <span style="font-size: 0.8em; opacity: 0.7;">[!] ПРИЧИНА ТРЕВОГИ:</span>
-            <div id="incident-reason" style="font-weight: bold; font-size: 1.2em; margin-top: 5px;"></div>
+    <div id="staff-content" style="display: none;">
+        <div id="user-role" style="font-size: 0.8em; color: var(--term-dim);">УРОВЕНЬ_ДОПУСКА: 0</div>
+        <h2 id="greet" style="margin-top: 5px; min-height: 1.2em;"></h2><span id="greet-cursor" class="cursor"></span>
+        
+        <div id="incident-box" style="display: none;">
+            [ ТРЕВОГА ] КРИТИЧЕСКИЙ_СБОЙ: <span id="incident-reason"></span>
         </div>
 
-        <div class="grid" id="buttons-container"></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0;" id="buttons-container"></div>
 
-        <div class="card" style="border: 1px dashed #444; background: #080808;">
-            <h3 style="color: var(--neon-green); margin: 0 0 10px 0; font-size: 1em;">📝 ЭЛЕКТРОННЫЙ РАПОРТ</h3>
-            <p style="font-size: 0.75em; color: #666; margin-bottom: 10px;">Прямая передача данных в Telegram-бот штаба.</p>
-            <textarea id="reportText" placeholder="Введите текст сообщения..."></textarea>
-            <button onclick="sendReport()" class="btn" style="margin-top: 15px; font-size: 0.85em;">ОТПРАВИТЬ В ШТАБ</button>
+        <div class="card">
+            <h3 style="font-size: 0.9em; margin-bottom: 15px;">ПОДАЧА_ОПЕРАТИВНОГО_РАПОРТА</h3>
+            <textarea id="reportText" placeholder="ВВЕДИТЕ_ДАННЫЕ_ЛОГА..."></textarea>
+            <button onclick="sendReport()" class="btn">ПЕРЕДАТЬ_ПАКЕТ_ДАННЫХ</button>
             <div id="reportStatus"></div>
         </div>
 
-        <button onclick="logout()" style="background:none; border:none; color:#444; margin-top:40px; cursor:pointer; width: 100%; font-family: inherit;">[ ЗАВЕРШИТЬ СЕАНС СВЯЗИ ]</button>
+        <button onclick="logout()" style="background:none; border:none; color:var(--term-dim); margin-top:40px; cursor:pointer; width: 100%; font-family: inherit; font-size: 0.7em;">
+            >> РАЗОРВАТЬ_СОЕДИНЕНИЕ_ВЫХОД
+        </button>
     </div>
 </div>
 
 <script>
 const RENDER_API = "https://prism-bot.onrender.com";
-
-// Аудио-настройки сирены
 const alarmSound = new Audio('alarm.mp3');
 alarmSound.loop = true;
-alarmSound.volume = 0.2;
 let isAlarmPlaying = false;
 
 const staffDB = {
-    "M4SK": { pass: "5e03fcd2d70a976a6b026374da5da3f9", role: "scientific", level: 3, name: "МэнсиКейн, НИД" },
-    "KRMP": { pass: "1bf502b835ee007957e558cbb1959ecb", role: "military", level: 2, name: "Кримпи, глава ВГР" },
-    "SUMBR": { pass: "8aaa688aadaf78796f5f620a4897eeb3", role: "council", level: 5, name: "Самбер, Высший Совет" },
-    "MRYZE": { pass: "b0eee0a274f64e6f5792b85c93321159", role: "council", level: 5, name: "Юз, Высший Совет" }
+    "M4SK": { pass: "5e03fcd2d70a976a6b026374da5da3f9", role: "scientific", level: 3, name: "МЭНСИ_КЕЙН, НИД" },
+    "KRMP": { pass: "1bf502b835ee007957e558cbb1959ecb", role: "military", level: 2, name: "КРИМПИ, ГЛАВА_ВГР" },
+    "SUMBR": { pass: "8aaa688aadaf78796f5f620a4897eeb3", role: "council", level: 5, name: "САМБЕР, СОВЕТ_PRISM" },
+    "MRYZE": { pass: "b0eee0a274f64e6f5792b85c93321159", role: "council", level: 5, name: "МР_ЮЗ, СОВЕТ_PRISM" }
 };
 
-// 1. СИНХРОНИЗАЦИЯ С БОТОМ
+function typeText(elementId, text, speed = 50, callback) {
+    const element = document.getElementById(elementId);
+    element.innerText = "";
+    let i = 0;
+    function type() {
+        if (i < text.length) {
+            element.innerText += text.charAt(i);
+            i++;
+            setTimeout(type, speed);
+        } else if (callback) {
+            callback();
+        }
+    }
+    type();
+}
+
 async function syncSystem() {
     try {
         const response = await fetch(`${RENDER_API}/status`);
         const data = await response.json();
-        
         const syncVal = document.getElementById('sync-val');
         syncVal.innerText = data.label;
         syncVal.style.color = data.color;
 
-        const incidentBox = document.getElementById('incident-box');
-        const incidentReason = document.getElementById('incident-reason');
-
         if (data.state === "RED") {
-            document.body.classList.add('alarm-mode');
-            
-            // Если пользователь авторизован — запускаем звук
+            document.body.style.color = "var(--alert-red)";
             if (sessionStorage.getItem('prism_uid') && !isAlarmPlaying) {
-                alarmSound.play().catch(e => console.log("Sound pending interaction..."));
+                alarmSound.play().catch(()=>{});
                 isAlarmPlaying = true;
             }
-
             if (data.reason) {
-                incidentBox.style.display = "block";
-                incidentReason.innerText = data.reason.toUpperCase();
+                document.getElementById('incident-box').style.display = "block";
+                document.getElementById('incident-reason').innerText = data.reason.toUpperCase();
             }
         } else {
-            document.body.classList.remove('alarm-mode');
-            incidentBox.style.display = "none";
-            
-            // Выключаем звук
+            document.body.style.color = "var(--term-green)";
+            document.getElementById('incident-box').style.display = "none";
             alarmSound.pause();
-            alarmSound.currentTime = 0;
             isAlarmPlaying = false;
         }
     } catch (e) {
-        document.getElementById('sync-val').innerText = "OFFLINE";
-        document.getElementById('sync-val').style.color = "gray";
-        alarmSound.pause();
-        isAlarmPlaying = false;
+        document.getElementById('sync-val').innerText = "СВЯЗЬ_ПОТЕРЯНА";
     }
 }
 
-// 2. АВТОРИЗАЦИЯ
 function checkAuth() {
     const id = document.getElementById('uid').value.toUpperCase().trim();
     const ps = document.getElementById('ups').value;
     const user = staffDB[id];
 
-    if (user) {
-        const hashedInput = CryptoJS.MD5(ps).toString(); 
-
-        if (user.pass === hashedInput) {
-            sessionStorage.setItem('prism_uid', id); 
-            sessionStorage.setItem('prism_level', user.level); 
-            renderDashboard(user);
-            
-            // Пытаемся включить звук сразу после клика на кнопку "Вход", если уже тревога
-            if (document.body.classList.contains('alarm-mode') && !isAlarmPlaying) {
-                alarmSound.play().catch(() => {});
-                isAlarmPlaying = true;
-            }
-        } else { 
-            showError(); 
-        }
-    } else { 
-        showError(); 
+    if (user && CryptoJS.MD5(ps).toString() === user.pass) {
+        sessionStorage.setItem('prism_uid', id);
+        renderDashboard(user);
+    } else {
+        document.getElementById('err').style.display = 'block';
+        setTimeout(() => document.getElementById('err').style.display = 'none', 3000);
     }
 }
 
-function showError() {
-    document.getElementById('err').style.display = 'block';
-    setTimeout(() => { document.getElementById('err').style.display = 'none'; }, 3000);
-}
-
-// 3. ОТРИСОВКА ИНТЕРФЕЙСА
 function renderDashboard(user) {
     document.getElementById('login-zone').style.display = 'none';
     document.getElementById('staff-content').style.display = 'block';
-    document.getElementById('greet').innerText = user.name;
-    document.getElementById('user-role').innerText = `Access Level: ${user.role.toUpperCase()} (Lvl ${user.level})`;
+    document.getElementById('user-role').innerText = `ДОПУСК: УРОВЕНЬ_${user.level} // РОЛЬ: ${user.role.toUpperCase()}`;
     
+    typeText('greet', `ДОБРО_ПОЖАЛОВАТЬ: ${user.name}`, 40);
+
     const container = document.getElementById('buttons-container');
-    container.innerHTML = ""; 
+    container.innerHTML = "";
+    
+    const actions = [
+        { name: "ЛИЧНОЕ_ДОСЬЕ", link: "profile" },
+        { name: "КАРТА_ОБЪЕКТА", link: "map" }
+    ];
 
-    container.innerHTML += '<button class="btn" onclick="nav(\'profile\')">👤 ЛИЧНОЕ ДОСЬЕ</button>';
-    container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
-
-    if (user.role === "scientific") {
-        container.innerHTML += '<button class="btn" onclick="nav(\'archive\')">📂 АРХИВ АНОМАЛИЙ</button>';
-    } 
-    else if (user.role === "military") {
-        container.innerHTML += '<button class="btn" onclick="nav(\'military_prot\')">🛡️ ВОЕННЫЕ ПРОТОКОЛЫ</button>';
-    } 
-    else if (user.role === "council") {
-        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'archive\')">📂 ВЕСЬ АРХИВ</button>';
-        container.innerHTML += '<button class="btn btn-council" onclick="nav(\'military_prot\')">🛡️ ОБОРОНА</button>';
-        container.innerHTML += '<button class="btn btn-council" style="grid-column: span 2;" onclick="nav(\'override\')">⚖️ ПРОТОКОЛЫ СОВЕТА</button>';
+    if (user.role === "scientific") actions.push({ name: "АРХИВ_АНОМАЛИЙ", link: "archive" });
+    if (user.role === "military") actions.push({ name: "ВОЕННЫЕ_ПРОТОКОЛЫ", link: "military_prot" });
+    if (user.role === "council") {
+        actions.push({ name: "ПОЛНЫЙ_АРХИВ", link: "archive", class: "btn-council" });
+        actions.push({ name: "СЕТЬ_ОБОРОНЫ", link: "military_prot", class: "btn-council" });
+        actions.push({ name: "КОНТРОЛЬ_СОВЕТА", link: "override", class: "btn-council" });
     }
-}
 
-function nav(page) {
-    window.location.href = page + ".html";
+    actions.forEach(act => {
+        const b = document.createElement('button');
+        b.className = `btn ${act.class || ''}`;
+        b.innerText = act.name;
+        b.onclick = () => window.location.href = act.link + ".html";
+        container.appendChild(b);
+    });
 }
 
 async function sendReport() {
     const text = document.getElementById('reportText').value.trim();
-    const uid = sessionStorage.getItem('prism_uid') || "Unknown";
-    const statusMsg = document.getElementById('reportStatus');
-
+    const uid = sessionStorage.getItem('prism_uid') || "НЕИЗВЕСТНО";
+    const status = document.getElementById('reportStatus');
     if (!text) return;
 
-    statusMsg.innerText = "⚡ ОТПРАВКА...";
-    statusMsg.style.color = "#888";
-    
+    status.innerText = "> ЗАГРУЗКА_НА_СЕРВЕР...";
     try {
-        const response = await fetch(`${RENDER_API}/send-report`, {
+        const res = await fetch(`${RENDER_API}/send-report`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                user: uid, 
-                subject: "Staff Terminal Report", 
-                text: text,
-                timestamp: new Date().toLocaleString()
-            })
+            body: JSON.stringify({ user: uid, text: text, timestamp: new Date().toLocaleString() })
         });
-
-        if (response.ok) {
-            statusMsg.style.color = "var(--neon-green)";
-            statusMsg.innerText = "✅ РАПОРТ ДОСТАВЛЕН В ШТАБ";
+        if (res.ok) {
+            status.innerText = "> УСПЕХ: ДАННЫЕ_ПЕРЕДАНЫ";
             document.getElementById('reportText').value = "";
         } else { throw new Error(); }
     } catch (e) {
-        statusMsg.style.color = "var(--alert-red)";
-        statusMsg.innerText = "⚠️ ОШИБКА СЕТИ (СЕРВЕР OFFLINE)";
+        status.innerText = "> ОШИБКА: СБОЙ_ПЕРЕДАЧИ";
     }
 }
 
 function logout() {
     sessionStorage.clear();
-    location.reload(); 
+    location.reload();
 }
 
-// СТАРТ
-setInterval(syncSystem, 3000);
+setInterval(syncSystem, 4000);
 syncSystem();
 
 window.onload = function() {
@@ -278,4 +261,3 @@ window.onload = function() {
 </script>
 </body>
 </html>
-
