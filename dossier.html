@@ -6,39 +6,62 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         :root { --neon: #00ffcc; --bg: #050505; --alert: #ff4444; --panel: #0a0a0a; }
+        
         body { 
             background: var(--bg); color: #bbb; font-family: 'Courier New', monospace; 
             margin: 0; padding: 0; min-height: 100vh; transition: background 0.3s;
             overflow-x: hidden;
         }
-        body.alarm-active { background: #1a0505; }
-        body.error-flash { background: #440000 !important; } /* Вспышка ошибки */
 
-        body.alarm-active .player-card { border-color: var(--alert); }
-        
+        /* Состояние до авторизации - полная темнота */
+        .container, nav { 
+            display: none; 
+            opacity: 0;
+            transition: opacity 1s ease-in;
+        }
+
+        body.authorized .container, 
+        body.authorized nav { 
+            display: block; 
+        }
+
+        body.authorized.visible .container,
+        body.authorized.visible nav {
+            opacity: 1;
+        }
+
+        body.alarm-active { background: #1a0505; }
+        body.error-flash { background: #440000 !important; }
+
         #scanner-line {
             position: fixed; top: -10px; left: 0; width: 100%; height: 4px;
             background: var(--neon); box-shadow: 0 0 20px var(--neon);
-            z-index: 3000; pointer-events: none; opacity: 0;
+            z-index: 6000; pointer-events: none; opacity: 0;
         }
         @keyframes scan-anim { 
             0% { top: 0%; opacity: 1; } 
             100% { top: 100%; opacity: 1; } 
         }
 
+        /* Глухой черный оверлей */
         #auth-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.98); z-index: 1000;
+            background: #000; z-index: 5000;
             display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.8s ease-out;
         }
-        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 350px; position: relative; transition: 0.3s; }
+
+        .login-card { 
+            border: 1px solid var(--neon); padding: 40px; background: #000; 
+            text-align: center; width: 350px; position: relative; 
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.1);
+        }
+
         input { background: #000; border: 1px solid #333; color: var(--neon); padding: 12px; margin: 10px 0; width: 100%; box-sizing: border-box; outline: none; }
         
         .btn { background: var(--neon); color: #000; border: none; padding: 12px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; text-transform: uppercase; transition: 0.3s; font-family: inherit; }
         .btn:hover { background: #fff; box-shadow: 0 0 15px #fff; }
-        
         .btn-secondary { background: none; color: #555; border: 1px solid #333; }
-        .btn-secondary:hover { border-color: #888; color: #888; }
 
         nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
         nav a { color: #888; text-decoration: none; padding: 0 20px; font-size: 0.9em; }
@@ -68,7 +91,7 @@
 <div id="auth-overlay">
     <div class="login-card" id="login-card">
         <h2 id="auth-title" style="color: var(--neon); letter-spacing: 3px;">P.R.I.S.M. DATA</h2>
-        <p id="sub-title" style="font-size: 0.7em; color: #555;">ОЖИДАНИЕ АВТОРИЗАЦИИ...</p>
+        <p id="sub-title" style="font-size: 0.7em; color: #555;">СИСТЕМА ЗАБЛОКИРОВАНА. ВВЕДИТЕ ID.</p>
         
         <div id="auth-form">
             <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
@@ -113,30 +136,6 @@
             </div>
         </div>
 
-        <div class="player-card" data-level="2">
-            <div class="lock-text">LEVEL 2 REQUIRED</div>
-            <div class="content-wrap" style="display:flex; width:100%;">
-                <img src="https://minotar.net/armor/bust/Alex/100.png" class="photo">
-                <div class="info">
-                    <div class="name">Служба Безопасности</div>
-                    <div class="status-active">СТАТУС: НА ПОСТУ</div>
-                    <div class="bio">Охрана периметра. Имеют право на ношение оружия и задержание нарушителей.</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="player-card" data-level="4">
-            <div class="lock-text">LEVEL 4 REQUIRED</div>
-            <div class="content-wrap" style="display:flex; width:100%;">
-                <img src="https://minotar.net/armor/bust/Scientist/100.png" class="photo">
-                <div class="info">
-                    <div class="name">Кураторы Объектов</div>
-                    <div class="status-active">СТАТУС: В ТЕРМИНАЛЕ</div>
-                    <div class="bio">Старший научный состав. Управление экспериментами и работа с ОУ.</div>
-                </div>
-            </div>
-        </div>
-
         <div class="player-card" data-level="5">
             <div class="lock-text">LEVEL 5 REQUIRED</div>
             <div class="content-wrap" style="display:flex; width:100%;">
@@ -165,11 +164,14 @@
         try {
             const res = await fetch(`${RENDER_URL}/status`);
             const data = await res.json();
-            document.getElementById('sync-status').innerText = data.label;
-            document.getElementById('sync-status').style.color = data.color;
+            const el = document.getElementById('sync-status');
+            if(el) {
+                el.innerText = data.label;
+                el.style.color = data.color;
+            }
             if (data.state === "RED") document.body.classList.add('alarm-active');
             else document.body.classList.remove('alarm-active');
-        } catch (e) { document.getElementById('sync-status').innerText = "OFFLINE"; }
+        } catch (e) { if(document.getElementById('sync-status')) document.getElementById('sync-status').innerText = "OFFLINE"; }
     }
 
     function startAuthProcess(type) {
@@ -177,6 +179,7 @@
         const title = document.getElementById('auth-title');
         const form = document.getElementById('auth-form');
         const card = document.getElementById('login-card');
+        const overlay = document.getElementById('auth-overlay');
 
         line.style.animation = "scan-anim 1.5s linear infinite";
         title.innerText = "АНАЛИЗ ДАННЫХ...";
@@ -184,10 +187,11 @@
         form.style.pointerEvents = "none";
 
         setTimeout(() => {
+            let success = false;
             if (type === 'guest') {
                 localStorage.setItem('prism_level', 1);
                 localStorage.setItem('prism_user', 'ГОСТЬ');
-                location.reload();
+                success = true;
             } else {
                 const id = document.getElementById('uid').value.toUpperCase();
                 const ps = document.getElementById('ups').value;
@@ -196,57 +200,47 @@
                 if (user && CryptoJS.MD5(ps).toString() === user.pass) {
                     localStorage.setItem('prism_level', user.level);
                     localStorage.setItem('prism_user', user.name);
-                    location.reload();
-                } else { 
-                    // Эффект ошибки
-                    document.body.classList.add('error-flash');
-                    card.style.borderColor = "var(--alert)";
-                    title.innerText = "ОШИБКА ДОСТУПА";
-                    title.style.color = "var(--alert)";
-                    
-                    setTimeout(() => {
-                        document.body.classList.remove('error-flash');
-                        alert("СИСТЕМА: ЛИЧНОСТЬ НЕ ПОДТВЕРЖДЕНА. ТЕРМИНАЛ ЗАБЛОКИРОВАН."); 
-                        location.reload();
-                    }, 500);
+                    success = true;
                 }
             }
-        }, 1500);
-    }
 
-    async function loadExternalPlayers(userLevel) {
-        const container = document.getElementById('dossier-container');
-        try {
-            const response = await fetch(`${RENDER_URL}/get-external-staff`);
-            const players = await response.json();
-            players.forEach(p => {
-                const isLocked = userLevel < p.level;
-                const card = document.createElement('div');
-                card.className = 'player-card';
-                card.innerHTML = `
-                    <div class="lock-text" style="${isLocked ? 'display:flex' : 'none'}">LEVEL ${p.level} REQUIRED</div>
-                    <div class="content-wrap ${isLocked ? 'locked' : ''}" style="display:flex; width:100%;">
-                        <img src="https://minotar.net/armor/bust/${p.skin}/100.png" class="photo">
-                        <div class="info">
-                            <div class="name">${p.name}</div>
-                            <div class="status-active">СТАТУС: В СЕТИ</div>
-                            <div class="bio">${p.bio}</div>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        } catch (e) { console.error("Ошибка загрузки"); }
+            if (success) {
+                overlay.style.opacity = "0";
+                setTimeout(() => {
+                    overlay.style.display = "none";
+                    renderPage();
+                }, 800);
+            } else { 
+                document.body.classList.add('error-flash');
+                card.style.borderColor = "var(--alert)";
+                title.innerText = "ОШИБКА ДОСТУПА";
+                title.style.color = "var(--alert)";
+                setTimeout(() => {
+                    document.body.classList.remove('error-flash');
+                    location.reload();
+                }, 500);
+            }
+        }, 1500);
     }
 
     function renderPage() {
         const level = parseInt(localStorage.getItem('prism_level'));
         if (!level) {
             document.getElementById('auth-overlay').style.display = 'flex';
+            document.body.classList.remove('authorized');
             return;
         }
+
         document.getElementById('auth-overlay').style.display = 'none';
-        document.getElementById('exit-container').innerHTML = `<button class="btn-exit-top" onclick="localStorage.clear();location.reload();">EXIT SYSTEM</button>`;
+        document.body.classList.add('authorized');
+        
+        // Плавное проявление контента
+        setTimeout(() => {
+            document.body.classList.add('visible');
+        }, 50);
+
+        document.getElementById('exit-container').innerHTML = 
+            `<button class="btn-exit-top" onclick="localStorage.clear();location.reload();">EXIT SYSTEM</button>`;
         
         document.querySelectorAll('.player-card').forEach(card => {
             const req = parseInt(card.getAttribute('data-level'));
@@ -255,13 +249,14 @@
                 card.querySelector('.lock-text').style.display = 'flex';
             }
         });
-        loadExternalPlayers(level);
+        
+        // Загрузка внешних данных если есть
+        syncStatus();
     }
 
     document.addEventListener("DOMContentLoaded", () => {
         renderPage();
         setInterval(syncStatus, 5000);
-        syncStatus();
     });
 </script>
 </body>
