@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P.R.I.S.M. | СХОД-ХРАНИЛИЩЕ</title>
+    <title>P.R.I.S.M. | STORAGE ACCESS</title>
     <style>
         :root {
             --neon: #00ffcc;
@@ -30,7 +30,7 @@
             pointer-events: none; z-index: 1000;
         }
 
-        .container { max-width: 900px; margin: 50px auto; padding: 20px; }
+        .container { max-width: 800px; margin: 80px auto; padding: 20px; }
 
         .header {
             border-left: 4px solid var(--neon);
@@ -38,9 +38,52 @@
             margin-bottom: 40px;
         }
 
-        h1 { color: var(--neon); letter-spacing: 5px; margin: 0; font-size: 1.5em; }
+        h1 { color: var(--neon); letter-spacing: 5px; margin: 0; font-size: 1.4em; }
 
-        /* Сетка выбора и файлов */
+        /* Форма входа */
+        .login-form {
+            background: rgba(0, 20, 15, 0.4);
+            padding: 30px;
+            border: 1px solid var(--dim);
+        }
+
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 0.8em; margin-bottom: 5px; color: var(--dim); }
+        
+        input {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--dim);
+            padding: 12px;
+            color: var(--neon);
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        input:focus { border-color: var(--neon); }
+
+        .btn {
+            background: none;
+            border: 1px solid var(--neon);
+            color: var(--neon);
+            padding: 10px 25px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn:hover { background: var(--neon); color: #000; }
+
+        .btn-guest {
+            border-color: #444;
+            color: #444;
+            margin-top: 20px;
+            font-size: 0.8em;
+        }
+
+        /* Список файлов */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -50,23 +93,12 @@
         .card {
             border: 1px solid var(--dim);
             padding: 20px;
-            background: rgba(0,0,0,0.5);
             cursor: pointer;
             transition: 0.3s;
         }
 
-        .card:hover {
-            border-color: var(--neon);
-            box-shadow: 0 0 10px var(--dim);
-        }
-
-        .card.locked {
-            opacity: 0.4;
-            border-style: dashed;
-        }
-
-        .card.locked:hover { border-color: var(--alert); }
-
+        .card:hover { border-color: var(--neon); background: rgba(0,255,204,0.05); }
+        .card.locked { opacity: 0.3; border-style: dashed; }
         .card-name { color: #eee; font-weight: bold; margin-bottom: 5px; }
         .card-info { font-size: 0.7em; color: var(--dim); }
 
@@ -74,29 +106,14 @@
         #reader {
             display: none;
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); z-index: 2000; padding: 40px;
-            box-sizing: border-box;
+            background: var(--bg); z-index: 2000; padding: 40px; box-sizing: border-box;
+            overflow-y: auto;
         }
 
         .reader-wrap { max-width: 700px; margin: 0 auto; }
-        .reader-title { color: var(--neon); font-size: 2em; margin-bottom: 10px; }
-        .reader-meta { font-size: 0.8em; color: var(--dim); margin-bottom: 30px; border-bottom: 1px solid var(--dim); padding-bottom: 10px; }
-        .reader-text { color: #ccc; line-height: 1.6; white-space: pre-wrap; font-size: 1.1em; }
-
-        .btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            border: 1px solid var(--neon);
-            color: var(--neon);
-            cursor: pointer;
-            background: none;
-            text-transform: uppercase;
-            font-family: inherit;
-        }
-
-        .btn:hover { background: var(--neon); color: #000; }
-        .btn-guest { border-color: #555; color: #555; margin-top: 40px; }
+        .reader-meta { font-size: 0.8em; color: var(--dim); border-bottom: 1px solid var(--dim); padding-bottom: 10px; margin-bottom: 20px; }
+        .reader-title { color: var(--neon); font-size: 1.8em; margin-bottom: 15px; }
+        .reader-text { color: #ccc; line-height: 1.6; white-space: pre-wrap; }
     </style>
 </head>
 <body>
@@ -105,21 +122,31 @@
 
 <div id="screen-auth" class="container">
     <div class="header">
-        <h1>IDENT_INTERNAL_NETWORK</h1>
-        <p>ВЫБЕРИТЕ ПРОФИЛЬ ДЛЯ АВТОРИЗАЦИИ</p>
+        <h1>TERMINAL_ACCESS_REQUIRED</h1>
+        <p>ПРЕДЪЯВИТЕ УДОСТОВЕРЕНИЕ ЛИЧНОСТИ</p>
     </div>
-    <div class="grid" id="auth-list">
+    
+    <div class="login-form">
+        <div class="input-group">
+            <label>STAFF_ID</label>
+            <input type="text" id="inp-id" autocomplete="off" placeholder="Введите ID...">
         </div>
-    <button class="btn btn-guest" onclick="enterAsGuest()">[ ВОЙТИ КАК ГОСТЬ (L1) ]</button>
+        <div class="input-group">
+            <label>ACCESS_KEY</label>
+            <input type="password" id="inp-pass" placeholder="Введите пароль...">
+        </div>
+        <button class="btn" onclick="attemptLogin()">АВТОРИЗАЦИЯ</button>
+        <br>
+        <button class="btn btn-guest" onclick="enterAsGuest()">[ ВОЙТИ КАК ГОСТЬ (L1) ]</button>
+    </div>
 </div>
 
 <div id="screen-storage" class="container" style="display:none;">
     <div class="header">
-        <h1>DATA_STORAGE_V4</h1>
-        <p>ОПЕРАТОР: <span id="op-name" style="color:var(--neon)"></span></p>
+        <h1>DATA_ARCHIVE_V4</h1>
+        <p>ДОСТУП ПРЕДОСТАВЛЕН: <span id="op-name" style="color:var(--neon)"></span></p>
     </div>
-    <div class="grid" id="file-list">
-        </div>
+    <div class="grid" id="file-list"></div>
     <button class="btn" onclick="location.reload()" style="margin-top:40px; border-color:var(--alert); color:var(--alert)">[ ВЫХОД ]</button>
 </div>
 
@@ -128,39 +155,20 @@
         <div id="r-meta" class="reader-meta"></div>
         <div id="r-title" class="reader-title"></div>
         <div id="r-text" class="reader-text"></div>
-        <button class="btn" onclick="closeReader()">[ НАЗАД К СПИСКУ ]</button>
+        <button class="btn" onclick="closeReader()">[ ЗАКРЫТЬ ]</button>
     </div>
 </div>
 
 <script>
     const API_URL = "https://prism-bot.onrender.com";
-    // ПРЯМАЯ ССЫЛКА НА ТВОЙ JSON НА GITHUB
     const GITHUB_JSON = "https://raw.githubusercontent.com/SumberPlay/prismminecraft/main/data/archive.json"; 
 
-    // 1. ЗАГРУЗКА СПИСКА СОТРУДНИКОВ (из твоего playerDB через сервер)
-    async function loadAuth() {
-        try {
-            const res = await fetch(`${API_URL}/get-staff`);
-            const db = await res.json();
-            const list = document.getElementById('auth-list');
+    // 1. АВТОРИЗАЦИЯ СОТРУДНИКА
+    async function attemptLogin() {
+        const id = document.getElementById('inp-id').value.toUpperCase();
+        const pass = document.getElementById('inp-pass').value;
 
-            Object.keys(db).forEach(id => {
-                const user = db[id];
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `<div class="card-name">${user.name}</div><div class="card-info">${user.dept}</div>`;
-                card.onclick = () => login(id);
-                list.appendChild(card);
-            });
-        } catch (e) {
-            document.getElementById('auth-list').innerHTML = "ОШИБКА СВЯЗИ С ТЕРМИНАЛОМ";
-        }
-    }
-
-    // 2. ЛОГИКА ВХОДА
-    async function login(id) {
-        const pass = prompt("ВВЕДИТЕ КЛЮЧ ДОСТУПА:");
-        if(!pass) return;
+        if(!id || !pass) return alert("ЗАПОЛНИТЕ ВСЕ ПОЛЯ");
 
         try {
             const res = await fetch(`${API_URL}/login`, {
@@ -169,25 +177,26 @@
                 body: JSON.stringify({ id, pass })
             });
             const data = await res.json();
+            
             if(data.success) {
                 startSession(data);
             } else {
-                alert("ОТКАЗАНО: НЕВЕРНЫЙ КЛЮЧ");
+                alert("ОШИБКА: НЕДОПУСТИМАЯ КОМБИНАЦИЯ ID/KEY");
             }
-        } catch (e) { alert("ОШИБКА СЕРВЕРА"); }
+        } catch (e) { alert("КРИТИЧЕСКАЯ ОШИБКА СЕРВЕРА"); }
     }
 
+    // 2. ГОСТЕВОЙ ВХОД
     function enterAsGuest() {
-        startSession({ name: "GUEST_USER", level: 1, role: "VISITOR" });
+        startSession({ name: "VISITOR_GUEST", level: 1 });
     }
 
     function startSession(user) {
         sessionStorage.setItem('p_lvl', user.level);
-        sessionStorage.setItem('p_name', user.name);
         
         document.getElementById('screen-auth').style.display = 'none';
         document.getElementById('screen-storage').style.display = 'block';
-        document.getElementById('op-name').innerText = `${user.name} (LVL_${user.level})`;
+        document.getElementById('op-name').innerText = `${user.name} (L${user.level})`;
         
         loadFiles();
     }
@@ -207,8 +216,8 @@
                 const card = document.createElement('div');
                 card.className = `card ${locked ? 'locked' : ''}`;
                 card.innerHTML = `
-                    <div class="card-info">${file.date} | L${file.level}</div>
-                    <div class="card-name">${locked ? 'ДАННЫЕ_ЗАБЛОКИРОВАНЫ' : file.title}</div>
+                    <div class="card-info">${file.date} | REQ: L${file.level}</div>
+                    <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : file.title}</div>
                 `;
                 card.onclick = () => {
                     if(locked) alert("ОШИБКА: НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОПУСКА");
@@ -216,16 +225,15 @@
                 };
                 list.appendChild(card);
             });
-        } catch (e) { list.innerHTML = "ОШИБКА ЧТЕНИЯ АРХИВА"; }
+        } catch (e) { list.innerHTML = "ОШИБКА ПОДКЛЮЧЕНИЯ К АРХИВУ"; }
     }
 
-    // 4. ЧТЕНИЕ
+    // 4. РИДЕР
     function openReader(file) {
         document.getElementById('reader').style.display = 'block';
         document.getElementById('r-title').innerText = file.title;
-        document.getElementById('r-meta').innerText = `ID: ${file.id} | DATE: ${file.date} | CLEARANCE: L${file.level}`;
+        document.getElementById('r-meta').innerText = `LOG_ID: ${file.id} | DATE: ${file.date} | ACCESS: L${file.level}`;
         
-        // Эффект печати
         const textEl = document.getElementById('r-text');
         textEl.innerText = "";
         let i = 0;
@@ -233,7 +241,7 @@
             if (i < file.content.length) {
                 textEl.innerText += file.content.charAt(i);
                 i++;
-                setTimeout(type, 15);
+                setTimeout(type, 10);
             }
         }
         type();
@@ -242,9 +250,6 @@
     function closeReader() {
         document.getElementById('reader').style.display = 'none';
     }
-
-    // Старт
-    loadAuth();
 </script>
 
 </body>
