@@ -54,13 +54,14 @@
     <div class="dossier-grid" id="dossier-container"></div>
 </div>
 
+
 <script>
     const RENDER_URL = "https://prism-bot.onrender.com";
 
     async function tryLogin(type) {
         if (type === 'guest') {
-            localStorage.setItem('prism_level', 1);
-            localStorage.setItem('prism_user', 'ГОСТЬ');
+            sessionStorage.setItem('prism_level', 1);
+            sessionStorage.setItem('prism_user', 'ГОСТЬ');
             location.reload();
             return;
         }
@@ -77,11 +78,11 @@
 
             if (response.ok) {
                 const data = await response.json();
-                localStorage.setItem('prism_level', data.level);
-                localStorage.setItem('prism_user', data.name);
-                localStorage.setItem('prism_uid', id);
+                sessionStorage.setItem('prism_level', data.level);
+                sessionStorage.setItem('prism_user', data.name);
+                sessionStorage.setItem('prism_uid', id);
                 
-                // Лог в ТГ
+                // Лог в ТГ (без ожидания ответа, чтобы не тормозить вход)
                 fetch(`${RENDER_URL}/auth-log`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -98,48 +99,68 @@
     }
 
     async function renderPage() {
-        const myLevel = parseInt(localStorage.getItem('prism_level'));
-        if (!myLevel) return;
+        const myLevel = parseInt(sessionStorage.getItem('prism_level'));
+        if (isNaN(myLevel)) return;
 
         document.getElementById('auth-overlay').style.display = 'none';
         document.body.classList.add('authorized');
 
-        const res = await fetch(`${RENDER_URL}/get-staff`);
-        const db = await res.json();
-        const container = document.getElementById('dossier-container');
-        
-        for (let id in db) {
-            const p = db[id];
-            const isLocked = myLevel < p.level;
-            const card = document.createElement('div');
-            card.className = 'player-card';
+        try {
+            const res = await fetch(`${RENDER_URL}/get-staff`);
+            const db = await res.json();
+            const container = document.getElementById('dossier-container');
+            container.innerHTML = ''; // Очистка перед загрузкой
+            
+            // Используем Object.entries для более надежного перебора
+            for (const [id, p] of Object.entries(db)) {
+                const isLocked = myLevel < p.level;
+                const card = document.createElement('div');
+                card.className = 'player-card';
 
-            card.innerHTML = `
-                ${isLocked ? `<div class="lock-text">L${p.level} REQUIRED</div>` : ''}
-                <div class="${isLocked ? 'locked' : ''}" style="display:flex; width:100%;">
-                    <img src="https://minotar.net/armor/bust/${isLocked ? 'Steve' : p.mc_name}/100.png" class="photo">
-                    <div class="info">
-                        <div class="name">${p.name}</div>
-                        <div style="font-size:0.7em; color:#00ff00;">ОТДЕЛ: ${p.dept}</div>
-                        <div class="bio" id="bio-${id}">ЗАГРУЗКА БИО...</div>
+                card.innerHTML = `
+                    ${isLocked ? `<div class="lock-text">L${p.level} REQUIRED</div>` : ''}
+                    <div class="${isLocked ? 'locked' : ''}" style="display:flex; width:100%;">
+                        <img src="https://minotar.net/armor/bust/${isLocked ? 'Steve' : p.mc_name}/100.png" class="photo">
+                        <div class="info">
+                            <div class="name">${p.name}</div>
+                            <div style="font-size:0.7em; color:#00ff00;">ОТДЕЛ: ${p.dept}</div>
+                            <div class="bio" id="bio-${id}">ЗАГРУЗКА...</div>
+                        </div>
                     </div>
-                </div>
-            `;
-            container.appendChild(card);
+                `;
+                container.appendChild(card);
 
-            if (!isLocked) {
-                const bioRes = await fetch(`${RENDER_URL}/get-bio/${id}`);
-                const bioData = await bioRes.json();
-                document.getElementById(`bio-${id}`).innerText = bioData.bio;
-            } else {
-                document.getElementById(`bio-${id}`).innerText = "[ДАННЫЕ ЗАБЛОКИРОВАНЫ]";
+                // Загружаем био отдельно для каждой карточки
+                if (!isLocked) {
+                    fetch(`${RENDER_URL}/get-bio/${id}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            const bioEl = document.getElementById(`bio-${id}`);
+                            if (bioEl) bioEl.innerText = data.bio;
+                        })
+                        .catch(() => {
+                            const bioEl = document.getElementById(`bio-${id}`);
+                            if (bioEl) bioEl.innerText = "ОШИБКА ЗАГРУЗКИ";
+                        });
+                } else {
+                    document.getElementById(`bio-${id}`).innerText = "[ДАННЫЕ ЗАБЛОКИРОВАНЫ]";
+                }
             }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('dossier-container').innerHTML = "ОШИБКА ЗАГРУЗКИ ДАННЫХ";
         }
     }
 
-    function logout() { localStorage.clear(); location.reload(); }
+    function logout() { sessionStorage.clear(); location.reload(); }
 
-    window.onload = () => { if(localStorage.getItem('prism_level')) renderPage(); };
+    // Используем DOMContentLoaded вместо window.onload для скорости
+    document.addEventListener("DOMContentLoaded", () => {
+        if (sessionStorage.getItem('prism_level')) {
+            renderPage();
+        }
+    });
 </script>
 </body>
 </html>
+
