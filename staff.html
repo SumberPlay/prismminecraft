@@ -66,6 +66,7 @@
         @keyframes flash { 0% { border-color: var(--alert-red); } 50% { border-color: transparent; } 100% { border-color: var(--alert-red); } }
 
         .ascii-art { font-size: 8px; line-height: 1; white-space: pre; margin-bottom: 30px; color: var(--term-green); text-shadow: 0 0 5px var(--term-green); }
+        #reportStatus { font-size: 0.8em; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -135,6 +136,7 @@ const staffDB = {
 
 function typeText(elementId, text, speed = 50, callback) {
     const element = document.getElementById(elementId);
+    if (!element) return;
     element.innerText = "";
     let i = 0;
     function type() {
@@ -184,7 +186,9 @@ function checkAuth() {
     const user = staffDB[id];
 
     if (user && CryptoJS.MD5(ps).toString() === user.pass) {
+        // СОХРАНЯЕМ ДАННЫЕ В СЕССИЮ
         sessionStorage.setItem('prism_uid', id);
+        sessionStorage.setItem('prism_level', user.level); // Ключевая строка для Архива!
         renderDashboard(user);
     } else {
         document.getElementById('err').style.display = 'block';
@@ -256,7 +260,11 @@ syncSystem();
 
 window.onload = function() {
     const savedUID = sessionStorage.getItem('prism_uid');
-    if (savedUID && staffDB[savedUID]) renderDashboard(staffDB[savedUID]);
+    if (savedUID && staffDB[savedUID]) {
+        // Убеждаемся, что уровень тоже в сессии при обновлении
+        sessionStorage.setItem('prism_level', staffDB[savedUID].level);
+        renderDashboard(staffDB[savedUID]);
+    }
 };
 </script>
 </body>
