@@ -173,89 +173,88 @@
 <script>
     const RENDER_API = "https://prism-bot.onrender.com";
 
-    const staffDB = {
-        "M4SK": { 
-            name: "МэнсиКейн", mc_name: "MancyKane",
-            dept: "Научный Департамент", level: "L3", spec: "Аномалии",
-            joined: "03.01.2026", role: "scientific",
-            note: "Замечена повышенная активность при работе с Объектом #001. Рекомендовано наблюдение."
-        },
-        "KRMP": { 
-            name: "Кримпи", mc_name: "Krimpi",
-            dept: "Военная Группа", level: "L3", spec: "Тактика",
-            joined: "03.01.2026", role: "military",
-            note: "Прямое подчинение Совету в случае протокола 'ЗЕРО'."
-        },
-        "SUMBR": {
-            name: "Самбер", mc_name: "SumberTheCreator",
-            dept: "Высший Совет", level: "L5", spec: "Куратор",
-            joined: "С основания", role: "council",
-            note: "КЛЮЧ_ДОСТУПА: ВСЕ_СЕКТОРА. Инициирует протоколы очистки реальности."
-        },
-        "MRYZE": { 
-            name: "Юз", mc_name: "MrYuze",
-            dept: "Высший Совет", level: "L5", spec: "Стратег",
-            joined: "С основания", role: "council",
-            note: "КЛЮЧ_ДОСТУПА: ВСЕ_СЕКТОРА. Ответственный за внешние связи с Разломами."
-        }
-    };
-
     async function syncSystem() {
         try {
             const res = await fetch(`${RENDER_API}/status`);
             const data = await res.json();
             const val = document.getElementById('sync-val');
-            val.innerText = data.label;
-            val.style.color = data.color;
+            if(val) {
+                val.innerText = data.label;
+                val.style.color = data.color;
+            }
             if (data.state === "RED") document.body.classList.add('alarm-mode');
             else document.body.classList.remove('alarm-mode');
-        } catch (e) { document.getElementById('sync-val').innerText = "OFFLINE"; }
+        } catch (e) { 
+            if(document.getElementById('sync-val')) document.getElementById('sync-val').innerText = "OFFLINE"; 
+        }
     }
 
-    window.onload = function() {
+    async function loadDossier() {
         const uid = sessionStorage.getItem('prism_uid');
-        const user = staffDB[uid];
-
-        if (!user) {
+        if (!uid) {
             window.location.href = "staff.html";
             return;
         }
 
-        // Заполнение данных
-        document.getElementById('name').innerText = user.name;
-        document.getElementById('id-display').innerText = "ID_TOKEN: " + uid;
-        document.getElementById('dept').innerText = user.dept;
-        document.getElementById('level').innerText = user.level;
-        document.getElementById('spec').innerText = user.spec;
-        document.getElementById('joined').innerText = user.joined;
-        
-        // Фото сотрудника
-        const skin = user.mc_name || "MHF_Question";
-        document.getElementById('user-photo').src = `https://minotar.net/armor/bust/${skin}/120.png`;
+        try {
+            // Получаем актуальный список всех сотрудников с сервера
+            const res = await fetch(`${RENDER_API}/get-admin-staff`);
+            const db = await res.json();
+            const user = db[uid];
 
-        // Логика секретных примечаний
-        const userLevel = parseInt(sessionStorage.getItem('prism_level')) || 0;
-        if (userLevel >= 3) {
-            document.getElementById('note-text').innerText = user.note;
+            if (!user) {
+                console.error("Сотрудник не найден в базе");
+                window.location.href = "staff.html";
+                return;
+            }
+
+            // Заполнение данных из серверной базы
+            document.getElementById('name').innerText = user.name || "UNKNOWN";
+            document.getElementById('id-display').innerText = "ID_TOKEN: " + uid;
+            document.getElementById('dept').innerText = user.dept || "---";
+            document.getElementById('level').innerText = "L" + user.level;
+            
+            // Эти поля добавим как заглушки, если их нет в server.js
+            document.getElementById('spec').innerText = user.role === 'scientific' ? 'ИССЛЕДОВАНИЯ' : 'БЕЗОПАСНОСТЬ';
+            document.getElementById('joined').innerText = "2026.01.24"; 
+
+            // Фото (используем имя для скина или дефолт)
+            const skin = user.mc_name || "MHF_Question";
+            document.getElementById('user-photo').src = `https://minotar.net/armor/bust/${skin}/120.png`;
+
+            // Логика секретных примечаний
+            const myLevel = parseInt(sessionStorage.getItem('prism_level')) || 0;
+            if (myLevel >= 3) {
+                document.getElementById('note-text').innerText = user.note || "ЗАПИСИ ОТСУТСТВУЮТ";
+            }
+
+            // Стилизация для Совета (уровень 5)
+            if (user.level >= 5 || user.role === 'council') {
+                document.getElementById('main-card').classList.add('council-theme');
+                document.getElementById('photo-box').style.borderColor = "var(--gold)";
+                document.getElementById('name').classList.add('council-text');
+                document.getElementById('note-container').classList.add('council-note');
+                document.querySelectorAll('.value').forEach(el => el.classList.add('council-text'));
+                const scanner = document.querySelector('.scanner-line');
+                if(scanner) {
+                    scanner.style.background = "var(--gold)";
+                    scanner.style.boxShadow = "0 0 10px var(--gold)";
+                }
+            }
+        } catch (err) {
+            console.error("Ошибка загрузки профиля:", err);
+            document.getElementById('name').innerText = "ОШИБКА СВЯЗИ";
         }
+    }
 
-        // Стилизация для Совета
-        if (user.role === 'council') {
-            document.getElementById('main-card').classList.add('council-theme');
-            document.getElementById('photo-box').style.borderColor = "var(--gold)";
-            document.getElementById('name').classList.add('council-text');
-            document.getElementById('note-container').classList.add('council-note');
-            document.querySelectorAll('.value').forEach(el => el.classList.add('council-text'));
-            document.querySelectorAll('.scanner-line').forEach(el => {
-                el.style.background = "var(--gold)";
-                el.style.boxShadow = "0 0 10px var(--gold)";
-            });
-        }
-    };
-
-    setInterval(syncSystem, 4000);
-    syncSystem();
+    // Инициализация
+    document.addEventListener("DOMContentLoaded", () => {
+        loadDossier();
+        syncSystem();
+        setInterval(syncSystem, 4000);
+    });
 </script>
 
 </body>
 </html>
+
