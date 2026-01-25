@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P.R.I.S.M. | STORAGE ACCESS</title>
@@ -165,27 +166,20 @@
 
     // 1. АВТОРИЗАЦИЯ СОТРУДНИКА
     async function attemptLogin() {
-        const id = document.getElementById('inp-id').value.toUpperCase();
-        const pass = document.getElementById('inp-pass').value;
+    const id = document.getElementById('inp-id').value.toUpperCase();
+    const rawPass = document.getElementById('inp-pass').value;
 
-        if(!id || !pass) return alert("ЗАПОЛНИТЕ ВСЕ ПОЛЯ");
+    if(!id || !rawPass) return alert("ЗАПОЛНИТЕ ВСЕ ПОЛЯ");
 
-        try {
-            const res = await fetch(`${API_URL}/login`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id, pass })
-            });
-            const data = await res.json();
-            
-            if(data.success) {
-                startSession(data);
-            } else {
-                alert("ОШИБКА: НЕДОПУСТИМАЯ КОМБИНАЦИЯ ID/KEY");
-            }
-        } catch (e) { alert("КРИТИЧЕСКАЯ ОШИБКА СЕРВЕРА"); }
-    }
+    // Хешируем введенный пароль в MD5 перед отправкой на сервер
+    const pass = CryptoJS.MD5(rawPass).toString();
 
+    try {
+        const res = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id, pass }) // Теперь отправляем ХЕШ
+        });
     // 2. ГОСТЕВОЙ ВХОД
     function enterAsGuest() {
         startSession({ name: "VISITOR_GUEST", level: 1 });
