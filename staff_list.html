@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>P.R.I.S.M. | Реестр Сотрудников</title>
+    <title>P.R.I.S.M. | Административный Доступ</title>
     <style>
         :root { 
             --term-green: #00ff41; 
@@ -12,125 +12,150 @@
         }
 
         body { 
-            background: var(--bg-dark); 
-            color: var(--term-green); 
-            font-family: 'Courier New', monospace; 
-            margin: 0; 
+            background: var(--bg-dark); color: var(--term-green); 
+            font-family: 'Courier New', monospace; margin: 0; overflow: hidden;
             text-transform: uppercase;
         }
 
-        /* Эффект монитора */
-        body::before {
+        /* Эффект сканирующих линий */
+        body::after {
             content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 3px; pointer-events: none; z-index: 1000;
+            background-size: 100% 4px; pointer-events: none; z-index: 1000;
         }
 
-        nav { border-bottom: 1px solid var(--term-green); padding: 15px; }
-        nav a { color: var(--term-green); text-decoration: none; margin-right: 25px; font-size: 0.8em; }
+        .main-layout { display: flex; height: 100vh; border-top: 1px solid var(--term-dim); }
 
-        .container { max-width: 1000px; margin: 40px auto; padding: 20px; }
+        /* Левая панель: Список */
+        .sidebar { 
+            width: 300px; border-right: 1px solid var(--term-dim); 
+            overflow-y: auto; padding: 20px; background: rgba(0, 10, 0, 0.5);
+        }
+
+        .staff-item { 
+            padding: 10px; border: 1px solid var(--term-dim); margin-bottom: 10px;
+            cursor: pointer; transition: 0.3s; font-size: 0.8em;
+        }
+        .staff-item:hover { background: var(--term-dim); color: var(--term-green); }
+        .staff-item.active { border-color: var(--council-gold); background: rgba(255, 215, 0, 0.1); }
+
+        /* Правая панель: Терминал */
+        .terminal-view { flex-grow: 1; padding: 40px; overflow-y: auto; position: relative; }
         
-        .header { 
-            border: 1px solid var(--council-gold); 
-            padding: 15px; 
-            color: var(--council-gold); 
-            margin-bottom: 30px;
-            text-align: center;
-            box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.2);
-        }
+        .output-line { margin-bottom: 10px; line-height: 1.4; }
+        .gold-text { color: var(--council-gold); }
+        .dim-text { color: var(--term-dim); }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { border-bottom: 1px solid var(--term-green); padding: 10px; text-align: left; color: var(--term-dim); font-size: 0.8em; }
-        td { padding: 15px 10px; border-bottom: 1px solid rgba(0, 255, 65, 0.1); font-size: 0.9em; }
+        .cursor { display: inline-block; width: 10px; height: 1.2em; background: var(--term-green); animation: blink 1s infinite; }
+        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 
-        .lvl-tag { border: 1px solid var(--term-green); padding: 2px 5px; font-size: 0.8em; }
-        .lvl-5 { border-color: var(--council-gold); color: var(--council-gold); }
+        nav { padding: 15px; border-bottom: 1px solid var(--term-dim); display: flex; justify-content: space-between; }
+        nav a { color: var(--term-dim); text-decoration: none; font-size: 0.8em; }
+        nav a:hover { color: var(--term-green); }
 
-        .loading-text { text-align: center; animation: blink 1s infinite; }
-        @keyframes blink { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
-
-        .btn-back { 
-            display: inline-block; margin-top: 20px; color: var(--term-dim); 
-            text-decoration: none; font-size: 0.8em; border: 1px solid var(--term-dim); padding: 5px 10px;
-        }
-        .btn-back:hover { color: var(--term-green); border-color: var(--term-green); }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--term-dim); }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="staff.html"><< НАЗАД_В_ТЕРМИНАЛ</a>
+    <span>SYSTEM: PERSONNEL_RECON // ACCESS_LEVEL: 5</span>
+    <a href="staff.html">[ ВЕРНУТЬСЯ_В_МЕНЮ ]</a>
 </nav>
 
-<div class="container">
-    <div class="header">
-        <h2 style="margin:0;">ЦЕНТРАЛЬНЫЙ_РЕЕСТР_ПЕРСОНАЛА</h2>
-        <div style="font-size: 0.7em;">ДОСТУП: ВЫСШИЙ_СОВЕТ_P.R.I.S.M.</div>
+<div class="main-layout">
+    <div class="sidebar" id="staff-list">
+        <div class="dim-text">ЗАГРУЗКА_СПИСКА...</div>
     </div>
 
-    <div id="loading" class="loading-text">ПОЛУЧЕНИЕ_ДАННЫХ_ИЗ_БАЗЫ...</div>
-    
-    <table id="staffTable" style="display:none;">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>ИМЯ_СОТРУДНИКА</th>
-                <th>ОТДЕЛ</th>
-                <th>ДОПУСК</th>
-                <th>СТАТУС_ЛОГА</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            </tbody>
-    </table>
-
-    <a href="staff.html" class="btn-back">>> ВЕРНУТЬСЯ</a>
+    <div class="terminal-view" id="terminal">
+        <div id="terminal-content">
+            <div class="output-line">P.R.I.S.M. OS v.4.0.1</div>
+            <div class="output-line">ОЖИДАНИЕ ВЫБОРА ОБЪЕКТА...<span class="cursor"></span></div>
+        </div>
+    </div>
 </div>
+
+
 
 <script>
     const RENDER_API = "https://prism-bot.onrender.com";
+    let staffDB = {};
 
-    async function loadStaffList() {
-        // Проверка уровня доступа (только 5 уровень)
-        const level = parseInt(sessionStorage.getItem('prism_level'));
-        if (level < 5) {
-            document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:100px;'>ОТКАЗАНО_В_ДОСТУПЕ: УРОВЕНЬ_5_REQUIRED</h1>";
+    async function init() {
+        // Проверка допуска
+        if (parseInt(sessionStorage.getItem('prism_level')) < 5) {
+            document.body.innerHTML = "<h1 style='color:red; padding:50px;'>ACCESS_DENIED</h1>";
             setTimeout(() => window.location.href = "staff.html", 2000);
             return;
         }
 
         try {
-            const response = await fetch(`${RENDER_API}/get-staff`);
-            const staffData = await response.json();
-            
-            const tableBody = document.getElementById('tableBody');
-            const loading = document.getElementById('loading');
-            const table = document.getElementById('staffTable');
-
-            Object.keys(staffData).forEach(id => {
-                const user = staffData[id];
-                const row = document.createElement('tr');
-                
-                row.innerHTML = `
-                    <td style="color: var(--term-dim)">#${id}</td>
-                    <td style="color: var(--term-green)">${user.name}</td>
-                    <td>${user.dept}</td>
-                    <td><span class="lvl-tag ${user.level >= 5 ? 'lvl-5' : ''}">L${user.level}</span></td>
-                    <td style="font-size: 0.7em; color: #555;">${user.bio.substring(0, 30)}...</td>
-                `;
-                tableBody.appendChild(row);
-            });
-
-            loading.style.display = 'none';
-            table.style.display = 'table';
-
+            const res = await fetch(`${RENDER_API}/get-staff`);
+            staffDB = await res.json();
+            renderList();
         } catch (e) {
-            document.getElementById('loading').innerText = "ОШИБКА_СИНХРОНИЗАЦИИ_БАЗЫ";
+            document.getElementById('staff-list').innerText = "ОШИБКА_СВЯЗИ";
         }
     }
 
-    document.addEventListener("DOMContentLoaded", loadStaffList);
+    function renderList() {
+        const list = document.getElementById('staff-list');
+        list.innerHTML = '<div class="dim-text" style="margin-bottom:15px;">РЕЕСТР_СОТРУДНИКОВ:</div>';
+        
+        Object.keys(staffDB).forEach(id => {
+            const item = document.createElement('div');
+            item.className = 'staff-item';
+            item.innerHTML = `[ID: ${id}] ${staffDB[id].name}`;
+            item.onclick = () => showDossier(id, item);
+            list.appendChild(item);
+        });
+    }
+
+    function showDossier(id, element) {
+        // Подсветка в списке
+        document.querySelectorAll('.staff-item').forEach(i => i.classList.remove('active'));
+        element.classList.add('active');
+
+        const user = staffDB[id];
+        const terminal = document.getElementById('terminal-content');
+        
+        // Очистка и эффект "печати"
+        terminal.innerHTML = `<div class="output-line">ЗАПРОС ДАННЫХ: ОБЪЕКТ_${id}...</div>`;
+        
+        const lines = [
+            `> ИМЯ: ${user.name}`,
+            `> ДОПУСКА_УРОВЕНЬ: ${user.level}`,
+            `> ПОДРАЗДЕЛЕНИЕ: ${user.dept}`,
+            `> ИГРОВОЙ_ИДЕНТИФИКАТОР: ${user.mc_name || 'NOT_FOUND'}`,
+            `-------------------------------------------`,
+            `> ПРИМЕЧАНИЕ_СОВЕТА:`,
+            `<span class="gold-text">${user.bio}</span>`,
+            `-------------------------------------------`,
+            `СТАТУС: СИНХРОНИЗИРОВАНО`
+        ];
+
+        let i = 0;
+        function printNextLine() {
+            if (i < lines.length) {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'output-line';
+                lineDiv.innerHTML = lines[i];
+                terminal.appendChild(lineDiv);
+                i++;
+                setTimeout(printNextLine, 100);
+            } else {
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                terminal.appendChild(cursor);
+            }
+        }
+        
+        setTimeout(printNextLine, 300);
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
 </script>
 
 </body>
