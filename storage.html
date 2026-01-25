@@ -236,17 +236,27 @@
         const list = document.getElementById('file-list');
         const myLvl = parseInt(sessionStorage.getItem('p_lvl'));
         
+        // Показываем статус загрузки
+        list.innerHTML = "<div style='color:var(--dim)'>СИНХРОНИЗАЦИЯ С АРХИВОМ...</div>";
+        
         try {
-            const res = await fetch(`${GITHUB_JSON}?t=${Date.now()}`);
+            // Используем fetch с параметром cache: "no-store"
+            const res = await fetch(`${GITHUB_JSON}?v=${new Date().getTime()}`, {
+                cache: "no-store"
+            });
+            
+            if (!res.ok) throw new Error("Файл не найден");
+            
             const files = await res.json();
             list.innerHTML = "";
 
+            // Сортируем: новые сверху (предполагаем наличие поля date или id)
             files.reverse().forEach(file => {
                 const locked = myLvl < file.level;
                 const card = document.createElement('div');
                 card.className = `card ${locked ? 'locked' : ''}`;
                 card.innerHTML = `
-                    <div class="card-info">${file.date} | REQ: L${file.level}</div>
+                    <div class="card-info">${file.date || '00.00.00'} | REQ: L${file.level}</div>
                     <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : file.title}</div>
                 `;
                 card.onclick = () => {
@@ -256,9 +266,9 @@
                 list.appendChild(card);
             });
         } catch (e) { 
-            list.innerHTML = "ОШИБКА ПОДКЛЮЧЕНИЯ К АРХИВУ."; 
+            console.error("Archive Error:", e);
+            list.innerHTML = "ОШИБКА ДОСТУПА: АРХИВ НЕ ОТВЕЧАЕТ ИЛИ ПОВРЕЖДЕН."; 
         }
-    }
 
     function openReader(file) {
         document.getElementById('reader').style.display = 'block';
