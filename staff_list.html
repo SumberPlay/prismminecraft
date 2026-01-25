@@ -17,7 +17,6 @@
             text-transform: uppercase;
         }
 
-        /* Эффект сканирующих линий */
         body::after {
             content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
@@ -26,7 +25,6 @@
 
         .main-layout { display: flex; height: 100vh; border-top: 1px solid var(--term-dim); }
 
-        /* Левая панель: Список */
         .sidebar { 
             width: 300px; border-right: 1px solid var(--term-dim); 
             overflow-y: auto; padding: 20px; background: rgba(0, 10, 0, 0.5);
@@ -39,7 +37,6 @@
         .staff-item:hover { background: var(--term-dim); color: var(--term-green); }
         .staff-item.active { border-color: var(--council-gold); background: rgba(255, 215, 0, 0.1); }
 
-        /* Правая панель: Терминал */
         .terminal-view { flex-grow: 1; padding: 40px; overflow-y: auto; position: relative; }
         
         .output-line { margin-bottom: 10px; line-height: 1.4; }
@@ -77,26 +74,26 @@
     </div>
 </div>
 
-
-
 <script>
     const RENDER_API = "https://prism-bot.onrender.com";
     let staffDB = {};
 
     async function init() {
         // Проверка допуска
-        if (parseInt(sessionStorage.getItem('prism_level')) < 5) {
-            document.body.innerHTML = "<h1 style='color:red; padding:50px;'>ACCESS_DENIED</h1>";
+        const level = sessionStorage.getItem('prism_level');
+        if (!level || parseInt(level) < 5) {
+            document.body.innerHTML = "<h1 style='color:red; padding:50px;'>ACCESS_DENIED // INSUFFICIENT_LEVEL</h1>";
             setTimeout(() => window.location.href = "staff.html", 2000);
             return;
         }
 
         try {
-            const res = await fetch(`${RENDER_API}/get-staff`);
+            // ИЗМЕНЕНО: теперь стучимся в специальный эндпоинт для админов
+            const res = await fetch(`${RENDER_API}/get-admin-staff`);
             staffDB = await res.json();
             renderList();
         } catch (e) {
-            document.getElementById('staff-list').innerText = "ОШИБКА_СВЯЗИ";
+            document.getElementById('staff-list').innerText = "ОШИБКА_СВЯЗИ_С_СЕРВЕРОМ";
         }
     }
 
@@ -114,27 +111,25 @@
     }
 
     function showDossier(id, element) {
-        // Подсветка в списке
         document.querySelectorAll('.staff-item').forEach(i => i.classList.remove('active'));
         element.classList.add('active');
 
         const user = staffDB[id];
         const terminal = document.getElementById('terminal-content');
         
-        // Очистка и эффект "печати"
-        terminal.innerHTML = `<div class="output-line">ЗАПРОС ДАННЫХ: ОБЪЕКТ_${id}...</div>`;
+        terminal.innerHTML = `<div class="output-line">ЗАПРОС ДАННЫХ: СОТРУДНИК_${id}...</div>`;
         
         const lines = [
-            `> ИМЯ: ${user.name}`,
-            `> ДОПУСКА_УРОВЕНЬ: ${user.level}`,
-            `> ПОДРАЗДЕЛЕНИЕ: ${user.dept}`,
-            `> ИГРОВОЙ_ИДЕНТИФИКАТОР: ${user.mc_name || 'NOT_FOUND'}`,
+            `> ИМЯ: ${user.name || 'UNKNOWN'}`,
+            `> ДОПУСКА_УРОВЕНЬ: L${user.level || '0'}`,
+            `> ПОДРАЗДЕЛЕНИЕ: ${user.dept || 'ОТДЕЛ_НЕ_УКАЗАН'}`,
+            `> РОЛЬ_В_СИСТЕМЕ: ${user.role || 'GUEST'}`,
             `-------------------------------------------`,
-            `> ПРИМЕЧАНИЕ_СОВЕТА:`,
-            `<span class="gold-text">${user.bio}</span>`,
-            `<span class="gold-text">${user.note}</span>`,
+            `> ЛИЧНОЕ_ДЕЛО / ПРИМЕЧАНИЕ:`,
+            `<span class="gold-text">${user.bio || 'БИОГРАФИЯ_ЗАСЕКРЕЧЕНА'}</span>`,
+            `<span class="gold-text">ЗАМЕТКА: ${user.note || 'ОТСУТСТВУЕТ'}</span>`,
             `-------------------------------------------`,
-            `СТАТУС: СИНХРОНИЗИРОВАНО`
+            `СТАТУС: ДАННЫЕ_ПОЛУЧЕНЫ_ИЗ_STAFF_DB`
         ];
 
         let i = 0;
@@ -145,7 +140,7 @@
                 lineDiv.innerHTML = lines[i];
                 terminal.appendChild(lineDiv);
                 i++;
-                setTimeout(printNextLine, 100);
+                setTimeout(printNextLine, 80); // Чуть быстрее печать
             } else {
                 const cursor = document.createElement('span');
                 cursor.className = 'cursor';
