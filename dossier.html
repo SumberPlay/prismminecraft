@@ -8,13 +8,14 @@
         :root { --neon: #00ffcc; --bg: #050505; --alert: #ff4444; --panel: #0a0a0a; }
         body { 
             background: var(--bg); color: #bbb; font-family: 'Courier New', monospace; 
-            margin: 0; padding: 0; min-height: 100vh; transition: background 0.5s;
+            margin: 0; padding: 0; min-height: 100vh; transition: background 0.3s;
             overflow-x: hidden;
         }
         body.alarm-active { background: #1a0505; }
+        body.error-flash { background: #440000 !important; } /* Вспышка ошибки */
+
         body.alarm-active .player-card { border-color: var(--alert); }
         
-        /* Линия сканера */
         #scanner-line {
             position: fixed; top: -10px; left: 0; width: 100%; height: 4px;
             background: var(--neon); box-shadow: 0 0 20px var(--neon);
@@ -30,7 +31,7 @@
             background: rgba(0,0,0,0.98); z-index: 1000;
             display: flex; align-items: center; justify-content: center;
         }
-        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 350px; position: relative; }
+        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 350px; position: relative; transition: 0.3s; }
         input { background: #000; border: 1px solid #333; color: var(--neon); padding: 12px; margin: 10px 0; width: 100%; box-sizing: border-box; outline: none; }
         
         .btn { background: var(--neon); color: #000; border: none; padding: 12px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; text-transform: uppercase; transition: 0.3s; font-family: inherit; }
@@ -49,7 +50,7 @@
 
         .player-card { background: var(--panel); border: 1px solid #222; display: flex; padding: 20px; position: relative; overflow: hidden; transition: 0.3s; height: 140px; }
         .locked { filter: blur(10px) grayscale(1); pointer-events: none; opacity: 0.3; }
-        .lock-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--alert); font-weight: bold; z-index: 10; display: none; text-shadow: 0 0 10px var(--alert); letter-spacing: 2px; text-align: center; background: rgba(0,0,0,0.4); }
+        .lock-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--alert); font-weight: bold; z-index: 10; display: none; text-shadow: 0 0 10px var(--alert); letter-spacing: 2px; text-align: center; background: rgba(0,0,0,0.6); }
         
         .photo { width: 100px; height: 100px; border: 1px solid #333; margin-right: 20px; background: #111; object-fit: cover; }
         .name { color: var(--neon); font-size: 1.2em; margin-bottom: 5px; text-transform: uppercase; }
@@ -65,7 +66,7 @@
 <div id="scanner-line"></div>
 
 <div id="auth-overlay">
-    <div class="login-card">
+    <div class="login-card" id="login-card">
         <h2 id="auth-title" style="color: var(--neon); letter-spacing: 3px;">P.R.I.S.M. DATA</h2>
         <p id="sub-title" style="font-size: 0.7em; color: #555;">ОЖИДАНИЕ АВТОРИЗАЦИИ...</p>
         
@@ -107,7 +108,43 @@
                 <div class="info">
                     <div class="name">Младший персонал</div>
                     <div class="status-active">СТАТУС: В СЕТИ</div>
-                    <div class="bio">Рядовые сотрудники комплекса. Ограниченное знание об аномалиях.</div>
+                    <div class="bio">Рядовые сотрудники технического обслуживания. Базовый уровень допуска.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="player-card" data-level="2">
+            <div class="lock-text">LEVEL 2 REQUIRED</div>
+            <div class="content-wrap" style="display:flex; width:100%;">
+                <img src="https://minotar.net/armor/bust/Alex/100.png" class="photo">
+                <div class="info">
+                    <div class="name">Служба Безопасности</div>
+                    <div class="status-active">СТАТУС: НА ПОСТУ</div>
+                    <div class="bio">Охрана периметра. Имеют право на ношение оружия и задержание нарушителей.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="player-card" data-level="4">
+            <div class="lock-text">LEVEL 4 REQUIRED</div>
+            <div class="content-wrap" style="display:flex; width:100%;">
+                <img src="https://minotar.net/armor/bust/Scientist/100.png" class="photo">
+                <div class="info">
+                    <div class="name">Кураторы Объектов</div>
+                    <div class="status-active">СТАТУС: В ТЕРМИНАЛЕ</div>
+                    <div class="bio">Старший научный состав. Управление экспериментами и работа с ОУ.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="player-card" data-level="5">
+            <div class="lock-text">LEVEL 5 REQUIRED</div>
+            <div class="content-wrap" style="display:flex; width:100%;">
+                <img src="https://minotar.net/armor/bust/Herobrine/100.png" class="photo">
+                <div class="info">
+                    <div class="name">Высший Совет</div>
+                    <div class="status-active" style="color:var(--alert); border-color:var(--alert);">СТАТУС: CLASSIFIED</div>
+                    <div class="bio">Управление фондом P.R.I.S.M. Доступ ко всем протоколам обнуления.</div>
                 </div>
             </div>
         </div>
@@ -136,14 +173,14 @@
     }
 
     function startAuthProcess(type) {
-        // Визуальный эффект сканирования
         const line = document.getElementById('scanner-line');
         const title = document.getElementById('auth-title');
         const form = document.getElementById('auth-form');
+        const card = document.getElementById('login-card');
 
         line.style.animation = "scan-anim 1.5s linear infinite";
         title.innerText = "АНАЛИЗ ДАННЫХ...";
-        form.style.opacity = "0.5";
+        form.style.opacity = "0.3";
         form.style.pointerEvents = "none";
 
         setTimeout(() => {
@@ -155,16 +192,26 @@
                 const id = document.getElementById('uid').value.toUpperCase();
                 const ps = document.getElementById('ups').value;
                 const user = staffDB[id];
+                
                 if (user && CryptoJS.MD5(ps).toString() === user.pass) {
                     localStorage.setItem('prism_level', user.level);
                     localStorage.setItem('prism_user', user.name);
                     location.reload();
                 } else { 
-                    alert("ОТКАЗАНО В ДОСТУПЕ: СЕТЧАТКА НЕ СОВПАДАЕТ"); 
-                    location.reload();
+                    // Эффект ошибки
+                    document.body.classList.add('error-flash');
+                    card.style.borderColor = "var(--alert)";
+                    title.innerText = "ОШИБКА ДОСТУПА";
+                    title.style.color = "var(--alert)";
+                    
+                    setTimeout(() => {
+                        document.body.classList.remove('error-flash');
+                        alert("СИСТЕМА: ЛИЧНОСТЬ НЕ ПОДТВЕРЖДЕНА. ТЕРМИНАЛ ЗАБЛОКИРОВАН."); 
+                        location.reload();
+                    }, 500);
                 }
             }
-        }, 1500); // Задержка для эффекта сканера
+        }, 1500);
     }
 
     async function loadExternalPlayers(userLevel) {
