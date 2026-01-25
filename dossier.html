@@ -5,72 +5,45 @@
     <title>P.R.I.S.M. | Личные Дела</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        :root { --neon: #00ffcc; --bg: #050505; --alert: #ff4444; --panel: #0a0a0a; --term-dim: #003b00; }
-        
-        body { 
-            background: var(--bg); color: #bbb; font-family: 'Courier New', monospace; 
-            margin: 0; padding: 0; min-height: 100vh; text-transform: uppercase;
-        }
-
-        body::before {
-            content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 4px; pointer-events: none; z-index: 1000;
-        }
-
-        .container, nav { display: none; opacity: 0; transition: opacity 0.5s; }
+        :root { --neon: #00ffcc; --bg: #050505; --alert: #ff4444; --panel: #0a0a0a; }
+        body { background: var(--bg); color: #bbb; font-family: 'Courier New', monospace; margin: 0; text-transform: uppercase; }
+        body::before { content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 4px; pointer-events: none; z-index: 1000; }
+        .container, nav { display: none; opacity: 0; transition: 0.5s; }
         body.authorized .container, body.authorized nav { display: block; opacity: 1; }
-
-        #auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 5000; display: flex; align-items: center; justify-content: center;
-        }
-
-        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 350px; }
-        input { background: #000; border: 1px solid var(--term-dim); color: var(--neon); padding: 12px; margin: 10px 0; width: 100%; box-sizing: border-box; outline: none; font-family: inherit; }
-        
-        .btn { background: var(--neon); color: #000; border: none; padding: 12px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; text-transform: uppercase; font-family: inherit; transition: 0.3s; }
-        .btn:hover { background: #fff; }
-        .btn-secondary { background: none; color: #555; border: 1px solid #333; margin-top: 10px; }
-        
-        nav { background: #000; padding: 15px; border-bottom: 1px solid #333; text-align: center; }
-        nav a { color: #888; text-decoration: none; padding: 0 20px; font-size: 0.9em; }
-        nav a:hover { color: var(--neon); }
-        
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; align-items: center; justify-content: center; }
+        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 320px; }
+        input { background: #000; border: 1px solid #222; color: var(--neon); padding: 12px; margin: 10px 0; width: 100%; box-sizing: border-box; outline: none; font-family: inherit; }
+        .btn { background: var(--neon); color: #000; border: none; padding: 12px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; font-family: inherit; }
+        .btn-secondary { background: none; color: #555; border: 1px solid #333; }
+        nav { background: #000; padding: 15px; border-bottom: 1px solid #222; text-align: center; }
+        nav a { color: #555; text-decoration: none; padding: 0 15px; font-size: 0.8em; }
         .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
         .header { border-bottom: 2px solid var(--neon); padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
         .dossier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 25px; }
-
-        .player-card { background: var(--panel); border: 1px solid #222; display: flex; padding: 20px; position: relative; overflow: hidden; min-height: 140px; }
-        .locked { filter: blur(12px) grayscale(1); opacity: 0.2; pointer-events: none; }
-        .lock-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--alert); font-weight: bold; z-index: 10; text-shadow: 0 0 10px var(--alert); background: rgba(0,0,0,0.7); }
-        
-        .photo { width: 100px; height: 100px; border: 1px solid #333; margin-right: 20px; background: #111; }
-        .name { color: var(--neon); font-size: 1.2em; margin-bottom: 5px; }
-        .status-active { color: #00ff00; border-color: #00ff00; font-size: 0.7em; padding: 2px 8px; border: 1px solid; display: inline-block; margin-bottom: 10px;}
-        .bio { font-size: 0.85em; line-height: 1.4; color: #888; }
-        .btn-exit { background: none; border: 1px solid var(--alert); color: var(--alert); cursor: pointer; padding: 8px 15px; font-family: inherit; font-size: 0.8em; text-transform: uppercase; transition: 0.3s; }
-        .btn-exit:hover { background: var(--alert); color: #000; }
+        .player-card { background: var(--panel); border: 1px solid #222; display: flex; padding: 20px; position: relative; min-height: 120px; }
+        .locked { filter: blur(10px) grayscale(1); opacity: 0.3; }
+        .lock-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--alert); font-weight: bold; z-index: 10; background: rgba(0,0,0,0.7); }
+        .photo { width: 100px; height: 100px; border: 1px solid #333; margin-right: 20px; }
+        .name { color: var(--neon); font-size: 1.2em; }
+        .bio { font-size: 0.8em; color: #888; margin-top: 10px; }
+        .btn-exit { background: none; border: 1px solid var(--alert); color: var(--alert); cursor: pointer; padding: 8px 15px; font-family: inherit; font-size: 0.8em; }
     </style>
 </head>
 <body>
 
 <div id="auth-overlay">
     <div class="login-card">
-        <h2 style="color: var(--neon); letter-spacing: 2px;">TERMINAL ACCESS</h2>
-        <div id="auth-form">
-            <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
-            <input type="password" id="ups" placeholder="КЛЮЧ ДОСТУПА">
-            <button class="btn" onclick="tryLogin('admin')">ВХОД</button>
-            <button class="btn btn-secondary" onclick="tryLogin('guest')">ГОСТЕВОЙ ДОСТУП</button>
-        </div>
+        <h2 style="color: var(--neon);">P.R.I.S.M. ACCESS</h2>
+        <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
+        <input type="password" id="ups" placeholder="КЛЮЧ ДОСТУПА">
+        <button class="btn" onclick="tryLogin('admin')">ВХОД</button>
+        <button class="btn btn-secondary" onclick="tryLogin('guest')">ГОСТЕВОЙ ДОСТУП</button>
     </div>
 </div>
 
 <nav>
     <a href="index.html">ГЛАВНАЯ</a>
-    <a href="dossier.html" style="color: var(--neon);">ЛИЧНЫЕ ДЕЛА</a>
-    <a href="staff.html">ТЕРМИНАЛ</a>
+    <a href="dossier.html" style="color:var(--neon)">ДОССЬЕ</a>
 </nav>
 
 <div class="container">
@@ -85,88 +58,88 @@
     const RENDER_URL = "https://prism-bot.onrender.com";
 
     async function tryLogin(type) {
+        if (type === 'guest') {
+            localStorage.setItem('prism_level', 1);
+            localStorage.setItem('prism_user', 'ГОСТЬ');
+            location.reload();
+            return;
+        }
+
+        const id = document.getElementById('uid').value.toUpperCase().trim();
+        const ps = CryptoJS.MD5(document.getElementById('ups').value).toString();
+
         try {
-            const response = await fetch(`${RENDER_URL}/get-staff`);
-            const db = await response.json();
+            const response = await fetch(`${RENDER_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, pass: ps })
+            });
 
-            if (type === 'guest') {
-                localStorage.setItem('prism_level', 1);
-                localStorage.setItem('prism_user', 'ГОСТЬ');
-                renderDossiers(db);
-                return;
-            }
-
-            const id = document.getElementById('uid').value.toUpperCase().trim();
-            const ps = document.getElementById('ups').value;
-            const user = db[id];
-
-            if (user && CryptoJS.MD5(ps).toString() === user.pass) {
-                localStorage.setItem('prism_level', user.level);
-                localStorage.setItem('prism_user', user.name);
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('prism_level', data.level);
+                localStorage.setItem('prism_user', data.name);
                 localStorage.setItem('prism_uid', id);
                 
+                // Лог в ТГ
                 fetch(`${RENDER_URL}/auth-log`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id, name: user.name, level: user.level })
+                    body: JSON.stringify({ id, name: data.name, level: data.level })
                 });
 
-                renderDossiers(db);
+                location.reload();
             } else {
-                alert("ОТКАЗАНО В ДОСТУПЕ: НЕВЕРНЫЙ КЛЮЧ");
+                alert("ОТКАЗАНО В ДОСТУПЕ");
             }
         } catch (e) {
-            alert("ОШИБКА СИНХРОНИЗАЦИИ С БАЗОЙ");
+            alert("ОШИБКА СВЯЗИ С ТЕРМИНАЛОМ");
         }
     }
 
-    function renderDossiers(db) {
-        const myLevel = parseInt(localStorage.getItem('prism_level')) || 0;
+    async function renderPage() {
+        const myLevel = parseInt(localStorage.getItem('prism_level'));
+        if (!myLevel) return;
+
         document.getElementById('auth-overlay').style.display = 'none';
         document.body.classList.add('authorized');
 
+        const res = await fetch(`${RENDER_URL}/get-staff`);
+        const db = await res.json();
         const container = document.getElementById('dossier-container');
-        container.innerHTML = '';
-
-        Object.keys(db).forEach(id => {
+        
+        for (let id in db) {
             const p = db[id];
             const isLocked = myLevel < p.level;
             const card = document.createElement('div');
             card.className = 'player-card';
 
-            const skinNick = isLocked ? 'Steve' : (p.mc_name || 'Steve');
-
             card.innerHTML = `
-                ${isLocked ? `<div class="lock-text">LEVEL ${p.level} REQUIRED</div>` : ''}
-                <div class="content-wrap ${isLocked ? 'locked' : ''}" style="display:flex; width:100%;">
-                    <img src="https://minotar.net/armor/bust/${skinNick}/100.png" class="photo">
+                ${isLocked ? `<div class="lock-text">L${p.level} REQUIRED</div>` : ''}
+                <div class="${isLocked ? 'locked' : ''}" style="display:flex; width:100%;">
+                    <img src="https://minotar.net/armor/bust/${isLocked ? 'Steve' : p.mc_name}/100.png" class="photo">
                     <div class="info">
                         <div class="name">${p.name}</div>
-                        <div class="status-active">ОТДЕЛ: ${p.dept}</div>
-                        <div class="bio">${isLocked ? 'ДАННЫЕ ЗАШИФРОВАНЫ' : p.bio}</div>
-                        ${!isLocked && p.note ? `<div style="font-size:0.7em; color:var(--neon); margin-top:5px;">ЗАМЕТКА: ${p.note}</div>` : ''}
+                        <div style="font-size:0.7em; color:#00ff00;">ОТДЕЛ: ${p.dept}</div>
+                        <div class="bio" id="bio-${id}">ЗАГРУЗКА БИО...</div>
                     </div>
                 </div>
             `;
             container.appendChild(card);
-        });
-        db = null; 
-    }
 
-    function logout() {
-        localStorage.clear();
-        location.reload();
-    }
-
-    window.onload = async () => {
-        if (localStorage.getItem('prism_level')) {
-            try {
-                const response = await fetch(`${RENDER_URL}/get-staff`);
-                const db = await response.json();
-                renderDossiers(db);
-            } catch(e) { logout(); }
+            if (!isLocked) {
+                const bioRes = await fetch(`${RENDER_URL}/get-bio/${id}`);
+                const bioData = await bioRes.json();
+                document.getElementById(`bio-${id}`).innerText = bioData.bio;
+            } else {
+                document.getElementById(`bio-${id}`).innerText = "[ДАННЫЕ ЗАБЛОКИРОВАНЫ]";
+            }
         }
-    };
+    }
+
+    function logout() { localStorage.clear(); location.reload(); }
+
+    window.onload = () => { if(localStorage.getItem('prism_level')) renderPage(); };
 </script>
 </body>
 </html>
