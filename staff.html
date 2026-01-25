@@ -210,6 +210,7 @@ function renderDashboard(user) {
     if (user.role === "council") {
         actions.push({ name: "ПОЛНЫЙ_АРХИВ", link: "archive", class: "btn-council" });
         actions.push({ name: "СЕТЬ_ОБОРОНЫ", link: "military_prot", class: "btn-council" });
+        actions.push({ name: "СПИСОК_ПЕРСОНАЛА", link: "staff_list", class: "btn-council" }); // Новая кнопка
         actions.push({ name: "КОНТРОЛЬ_СОВЕТА", link: "override", class: "btn-council" });
     }
 
@@ -257,3 +258,4 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
