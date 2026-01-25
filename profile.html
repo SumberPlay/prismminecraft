@@ -6,10 +6,13 @@
     <style>
         :root { 
             --neon-green: #00ffcc; 
+            --neon-dim: rgba(0, 255, 204, 0.2);
             --gold: #ffd700;
+            --gold-dim: rgba(255, 215, 0, 0.2);
             --alert: #ff4444;
             --bg-dark: #050505; 
         }
+
         body { 
             background: var(--bg-dark); 
             color: #d1d1d1; 
@@ -18,137 +21,185 @@
             flex-direction: column;
             align-items: center;
             padding-top: 50px;
-            transition: background 0.5s;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
         }
 
-        /* Эффект тревоги */
-        body.alarm-mode { background: #1a0505; }
-        body.alarm-mode .dossier-card { border-color: var(--alert); box-shadow: 0 0 30px rgba(255, 0, 0, 0.2); }
+        /* Эффект ЭЛТ и шума */
+        body::before {
+            content: " ";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none; z-index: 100; opacity: 0.3;
+        }
+
+        body.alarm-mode { background: #1a0505; animation: red-panic 2s infinite; }
+        @keyframes red-panic { 0%, 100% { background: #050505; } 50% { background: #2a0505; } }
 
         .dossier-card {
-            width: 600px;
-            border: 1px solid #222;
-            background: #111;
+            width: 650px;
+            border: 1px solid var(--neon-dim);
+            background: rgba(10, 10, 10, 0.95);
             padding: 40px;
             position: relative;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            box-shadow: 0 0 50px rgba(0,0,0,1), inset 0 0 20px var(--neon-dim);
+            backdrop-filter: blur(5px);
+            z-index: 5;
         }
+
+        /* Уголки */
+        .dossier-card::before {
+            content: ""; position: absolute; top: -2px; left: -2px; width: 30px; height: 30px;
+            border-top: 3px solid var(--neon-green); border-left: 3px solid var(--neon-green);
+        }
+        .dossier-card::after {
+            content: ""; position: absolute; bottom: -2px; right: -2px; width: 30px; height: 30px;
+            border-bottom: 3px solid var(--neon-green); border-right: 3px solid var(--neon-green);
+        }
+
         .dossier-header {
             display: flex;
-            border-bottom: 2px solid var(--neon-green);
-            padding-bottom: 20px;
+            border-bottom: 1px solid var(--neon-dim);
+            padding-bottom: 30px;
             margin-bottom: 30px;
         }
-        .photo-stub {
-            width: 120px;
-            height: 120px;
-            border: 1px solid #333;
-            background: #0a0a0a;
+
+        .photo-container {
+            position: relative;
+            width: 140px; height: 140px;
             margin-right: 30px;
+            border: 1px solid var(--neon-green);
+            background: #000;
+        }
+
+        .photo-stub {
+            width: 100%; height: 100%;
             object-fit: cover;
+            filter: brightness(1.1) grayscale(0.5) contrast(1.2);
             image-rendering: pixelated;
         }
-        .info-row { margin: 15px 0; font-size: 1.1em; }
-        .label { color: #555; text-transform: uppercase; font-size: 0.8em; display: block; }
-        .value { color: var(--neon-green); margin-top: 5px; }
-        
-        /* Темы должностей */
-        .council-theme { border-color: var(--gold) !important; }
-        .council-text { color: var(--gold) !important; }
-        
+
+        .scanner-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--neon-green);
+            box-shadow: 0 0 10px var(--neon-green);
+            animation: scan 3s infinite linear;
+            z-index: 2;
+        }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .info-row { border-left: 2px solid #222; padding-left: 15px; }
+        .label { color: #555; text-transform: uppercase; font-size: 0.7em; letter-spacing: 1px; }
+        .value { color: var(--neon-green); margin-top: 5px; font-size: 1.1em; }
+
+        /* Секретное примечание */
+        .note-box {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px dashed #333;
+            background: rgba(0,0,0,0.3);
+            font-size: 0.8em;
+        }
+        .note-title { color: #444; margin-bottom: 5px; font-weight: bold; }
+        .note-content { color: #666; font-style: italic; }
+
+        /* Стили Совета */
+        .council-theme { border-color: var(--gold) !important; box-shadow: 0 0 40px rgba(255,215,0,0.1) !important; }
+        .council-theme::before, .council-theme::after { border-color: var(--gold) !important; }
+        .council-text { color: var(--gold) !important; text-shadow: 0 0 8px rgba(255,215,0,0.3); }
+        .council-note { border-color: var(--gold-dim) !important; background: rgba(255,215,0,0.02); }
+
         .back-btn {
-            position: absolute; top: 15px; left: 15px;
-            color: #444; text-decoration: none; font-size: 0.8em;
-            transition: 0.3s;
+            position: absolute; top: -35px; left: 0;
+            color: #444; text-decoration: none; font-size: 0.7em;
+            transition: 0.3s; letter-spacing: 1px;
         }
         .back-btn:hover { color: var(--neon-green); }
 
-        #sync-indicator {
-            margin-top: 20px;
-            font-size: 0.7em;
-            letter-spacing: 2px;
-            color: #333;
-        }
+        #sync-indicator { margin-top: 30px; font-size: 0.6em; letter-spacing: 3px; color: #333; }
+        .fade-in { animation: fadeIn 0.5s forwards; opacity: 0; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="dossier-card" id="main-card">
-    <a href="staff.html" class="back-btn"><-- ВЕРНУТЬСЯ В ТЕРМИНАЛ</a>
+    <a href="staff.html" class="back-btn"><-- [ ВЕРНУТЬСЯ_В_ТЕРМИНАЛ ]</a>
     
     <div class="dossier-header" id="header-line">
-        <img src="" class="photo-stub" id="user-photo" alt="PHOTO">
+        <div class="photo-container" id="photo-box">
+            <div class="scanner-line"></div>
+            <img src="" class="photo-stub" id="user-photo" alt="SCAN">
+        </div>
+        
         <div>
-            <h1 id="name" style="margin: 0; letter-spacing: 3px; text-transform: uppercase;">ЗАГРУЗКА...</h1>
-            <p id="id-display" style="color: #444; margin: 5px 0;">ID: NULL</p>
+            <h1 id="name" style="margin: 0; letter-spacing: 4px; text-transform: uppercase;">ЗАГРУЗКА...</h1>
+            <p id="id-display" style="color: #444; margin: 8px 0; font-size: 0.9em;">ID: NULL</p>
+            <div id="status-badge" style="font-size: 0.6em; border: 1px solid #333; padding: 2px 6px; display: inline-block;">STATUS: ACTIVE</div>
         </div>
     </div>
 
-    <div class="grid">
-        <div class="info-row">
+    <div class="info-grid">
+        <div class="info-row fade-in" style="animation-delay: 0.1s;">
             <span class="label">Подразделение</span>
             <div class="value" id="dept">---</div>
         </div>
-        <div class="info-row">
+        <div class="info-row fade-in" style="animation-delay: 0.2s;">
             <span class="label">Уровень допуска</span>
             <div class="value" id="level">---</div>
         </div>
-        <div class="info-row">
+        <div class="info-row fade-in" style="animation-delay: 0.3s;">
             <span class="label">Специализация</span>
             <div class="value" id="spec">---</div>
         </div>
-        <div class="info-row">
+        <div class="info-row fade-in" style="animation-delay: 0.4s;">
             <span class="label">Дата зачисления</span>
             <div class="value" id="joined">---</div>
         </div>
     </div>
+
+    <div class="note-box fade-in" id="note-container" style="animation-delay: 0.5s;">
+        <div class="note-title">ОСОБЫЕ_ОТМЕТКИ:</div>
+        <div class="note-content" id="note-text">НЕТ ДОПОЛНИТЕЛЬНЫХ ЗАПИСЕЙ В ЛИЧНОМ ДЕЛЕ.</div>
+    </div>
 </div>
 
-<div id="sync-indicator">СВЯЗЬ: <span id="sync-val">ПОДКЛЮЧЕНИЕ...</span></div>
+<div id="sync-indicator">СВЯЗЬ: <span id="sync-val">...</span></div>
 
 <script>
-    const RENDER_API = "https://prism-bot.onrender.com"; // <--- ТВОЯ ССЫЛКА
+    const RENDER_API = "https://prism-bot.onrender.com";
 
     const staffDB = {
         "M4SK": { 
-            name: "МэнсиКейн",
-            mc_name: "MancyKane",
-            dept: "Научный Департамент",
-            level: "L3",
-            spec: "Аномалии",
-            joined: "03.01.2026",
-            role: "scientific"
+            name: "МэнсиКейн", mc_name: "MancyKane",
+            dept: "Научный Департамент", level: "L3", spec: "Аномалии",
+            joined: "03.01.2026", role: "scientific",
+            note: "Замечена повышенная активность при работе с Объектом #001. Рекомендовано наблюдение."
         },
         "KRMP": { 
-            name: "Кримпи",
-            mc_name: "Krimpi",
-            dept: "Военная Группа",
-            level: "L3",
-            spec: "Тактика",
-            joined: "03.01.2026",
-            role: "military"
+            name: "Кримпи", mc_name: "Krimpi",
+            dept: "Военная Группа", level: "L3", spec: "Тактика",
+            joined: "03.01.2026", role: "military",
+            note: "Прямое подчинение Совету в случае протокола 'ЗЕРО'."
         },
         "SUMBR": {
-            name: "Самбер",
-            mc_name: "SumberTheCreator",
-            dept: "Высший Совет",
-            level: "L5",
-            spec: "Куратор",
-            joined: "С основания",
-            role: "council"
+            name: "Самбер", mc_name: "SumberTheCreator",
+            dept: "Высший Совет", level: "L5", spec: "Куратор",
+            joined: "С основания", role: "council",
+            note: "КЛЮЧ_ДОСТУПА: ВСЕ_СЕКТОРА. Инициирует протоколы очистки реальности."
         },
         "MRYZE": { 
-            name: "Юз",
-            mc_name: "MrYuze",
-            dept: "Высший Совет",
-            level: "L5",
-            spec: "Стратег",
-            joined: "С основания",
-            role: "council"
+            name: "Юз", mc_name: "MrYuze",
+            dept: "Высший Совет", level: "L5", spec: "Стратег",
+            joined: "С основания", role: "council",
+            note: "КЛЮЧ_ДОСТУПА: ВСЕ_СЕКТОРА. Ответственный за внешние связи с Разломами."
         }
     };
 
-    // 1. Синхронизация статуса (RED CODE)
     async function syncSystem() {
         try {
             const res = await fetch(`${RENDER_API}/status`);
@@ -156,20 +207,11 @@
             const val = document.getElementById('sync-val');
             val.innerText = data.label;
             val.style.color = data.color;
-
-            if (data.state === "RED") {
-                document.body.classList.add('alarm-mode');
-            } else {
-                document.body.classList.remove('alarm-mode');
-            }
-        } catch (e) {
-            document.getElementById('sync-val').innerText = "OFFLINE";
-        }
+            if (data.state === "RED") document.body.classList.add('alarm-mode');
+            else document.body.classList.remove('alarm-mode');
+        } catch (e) { document.getElementById('sync-val').innerText = "OFFLINE"; }
     }
-    setInterval(syncSystem, 3000);
-    syncSystem();
 
-    // 2. Загрузка данных пользователя
     window.onload = function() {
         const uid = sessionStorage.getItem('prism_uid');
         const user = staffDB[uid];
@@ -179,29 +221,41 @@
             return;
         }
 
-        // Заполняем текст
+        // Заполнение данных
         document.getElementById('name').innerText = user.name;
-        document.getElementById('id-display').innerText = "ID: " + uid;
+        document.getElementById('id-display').innerText = "ID_TOKEN: " + uid;
         document.getElementById('dept').innerText = user.dept;
         document.getElementById('level').innerText = user.level;
         document.getElementById('spec').innerText = user.spec;
         document.getElementById('joined').innerText = user.joined;
+        
+        // Фото сотрудника
+        const skin = user.mc_name || "MHF_Question";
+        document.getElementById('user-photo').src = `https://minotar.net/armor/bust/${skin}/120.png`;
 
-       // Заменяем старую строку на эту:
-        const skinName = user.mc_name || uid; 
-        document.getElementById('user-photo').src = `https://minotar.net/armor/bust/${skinName}/120.png`;
+        // Логика секретных примечаний
+        const userLevel = parseInt(sessionStorage.getItem('prism_level')) || 0;
+        if (userLevel >= 3) {
+            document.getElementById('note-text').innerText = user.note;
+        }
 
-        // Тема совета
+        // Стилизация для Совета
         if (user.role === 'council') {
-            document.getElementById('header-line').classList.add('council-theme');
+            document.getElementById('main-card').classList.add('council-theme');
+            document.getElementById('photo-box').style.borderColor = "var(--gold)";
             document.getElementById('name').classList.add('council-text');
+            document.getElementById('note-container').classList.add('council-note');
             document.querySelectorAll('.value').forEach(el => el.classList.add('council-text'));
+            document.querySelectorAll('.scanner-line').forEach(el => {
+                el.style.background = "var(--gold)";
+                el.style.boxShadow = "0 0 10px var(--gold)";
+            });
         }
     };
+
+    setInterval(syncSystem, 4000);
+    syncSystem();
 </script>
 
 </body>
 </html>
-
-
-
