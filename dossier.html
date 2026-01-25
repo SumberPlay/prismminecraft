@@ -2,58 +2,111 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>P.R.I.S.M. | Личные Дела</title>
+    <title>P.R.I.S.M. | PERSONNEL_DOSSIER</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        :root { --neon: #00ffcc; --bg: #050505; --alert: #ff4444; --panel: #0a0a0a; }
-        body { background: var(--bg); color: #bbb; font-family: 'Courier New', monospace; margin: 0; text-transform: uppercase; }
-        body::before { content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 4px; pointer-events: none; z-index: 1000; }
-        .container, nav { display: none; opacity: 0; transition: 0.5s; }
-        body.authorized .container, body.authorized nav { display: block; opacity: 1; }
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; align-items: center; justify-content: center; }
-        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 320px; }
-        input { background: #000; border: 1px solid #222; color: var(--neon); padding: 12px; margin: 10px 0; width: 100%; box-sizing: border-box; outline: none; font-family: inherit; }
-        .btn { background: var(--neon); color: #000; border: none; padding: 12px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; font-family: inherit; }
-        .btn-secondary { background: none; color: #555; border: 1px solid #333; }
-        nav { background: #000; padding: 15px; border-bottom: 1px solid #222; text-align: center; }
-        nav a { color: #555; text-decoration: none; padding: 0 15px; font-size: 0.8em; }
-        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
-        .header { border-bottom: 2px solid var(--neon); padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .dossier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 25px; }
-        .player-card { background: var(--panel); border: 1px solid #222; display: flex; padding: 20px; position: relative; min-height: 120px; }
-        .locked { filter: blur(10px) grayscale(1); opacity: 0.3; }
-        .lock-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--alert); font-weight: bold; z-index: 10; background: rgba(0,0,0,0.7); }
-        .photo { width: 100px; height: 100px; border: 1px solid #333; margin-right: 20px; }
-        .name { color: var(--neon); font-size: 1.2em; }
-        .bio { font-size: 0.8em; color: #888; margin-top: 10px; }
-        .btn-exit { background: none; border: 1px solid var(--alert); color: var(--alert); cursor: pointer; padding: 8px 15px; font-family: inherit; font-size: 0.8em; }
+        :root { 
+            --neon: #00ffcc; 
+            --bg: #050505; 
+            --alert: #ff4444; 
+            --dim: #00443a;
+            --panel: #0a0a0a;
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            background: var(--bg); color: #888; 
+            font-family: 'Courier New', monospace; margin: 0; 
+            text-transform: uppercase; font-size: 13px;
+        }
+
+        /* CRT Effect */
+        body::before { 
+            content: " "; position: fixed; inset: 0; 
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); 
+            background-size: 100% 4px; pointer-events: none; z-index: 1000; 
+        }
+
+        /* Навигация и Контейнер скрыты по умолчанию */
+        nav, .container { display: none; }
+        body.authorized nav, body.authorized .container { display: block; }
+
+        nav { background: #000; padding: 15px; border-bottom: 1px solid var(--dim); text-align: center; }
+        nav a { color: #555; text-decoration: none; padding: 0 20px; font-size: 0.85em; transition: 0.3s; }
+        nav a:hover { color: var(--neon); }
+
+        /* Окно входа */
+        #auth-overlay { 
+            position: fixed; inset: 0; background: #000; 
+            z-index: 5000; display: flex; align-items: center; justify-content: center; 
+        }
+        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 350px; }
+        input { 
+            background: #000; border: 1px solid #222; color: var(--neon); 
+            padding: 12px; margin: 10px 0; width: 100%; outline: none; font-family: inherit; 
+        }
+        .btn { 
+            background: var(--neon); color: #000; border: none; padding: 12px; 
+            cursor: pointer; width: 100%; font-weight: bold; font-family: inherit; margin-top: 10px;
+        }
+
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .header { 
+            border-bottom: 2px solid var(--neon); padding-bottom: 15px; 
+            margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; 
+        }
+
+        .dossier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 25px; }
+
+        .player-card { 
+            background: var(--panel); border: 1px solid #1a1a1a; 
+            display: flex; padding: 25px; position: relative; overflow: hidden;
+        }
+        .player-card.is-locked { border-color: #300; background: #050000; }
+
+        .photo-frame { 
+            position: relative; width: 100px; height: 100px; 
+            border: 1px solid var(--dim); flex-shrink: 0; margin-right: 25px; 
+        }
+        .photo { width: 100%; height: 100%; filter: grayscale(1) contrast(1.2); }
+
+        .info { flex-grow: 1; }
+        .name { color: var(--neon); font-size: 1.2em; font-weight: bold; margin-bottom: 5px; }
+        .dept-tag { font-size: 0.7em; color: var(--dim); margin-bottom: 12px; }
+        .bio { font-size: 0.85em; line-height: 1.5; color: #666; min-height: 1.5em;}
+
+        .level-badge { position: absolute; top: 10px; right: 10px; font-size: 0.7em; border: 1px solid var(--dim); padding: 2px 6px; }
+        .btn-exit { background: none; border: 1px solid var(--alert); color: var(--alert); cursor: pointer; padding: 8px 15px; font-family: inherit; }
     </style>
 </head>
 <body>
 
 <div id="auth-overlay">
     <div class="login-card">
-        <h2 style="color: var(--neon);">P.R.I.S.M. ACCESS</h2>
+        <h2 style="color: var(--neon);">P.R.I.S.M. LOGIN</h2>
         <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
         <input type="password" id="ups" placeholder="КЛЮЧ ДОСТУПА">
-        <button class="btn" onclick="tryLogin('admin')">ВХОД</button>
-        <button class="btn btn-secondary" onclick="tryLogin('guest')">ГОСТЕВОЙ ДОСТУП</button>
+        <button class="btn" onclick="tryLogin('admin')">АВТОРИЗАЦИЯ</button>
+        <button class="btn" style="background:none; color:#333;" onclick="tryLogin('guest')">ГОСТЕВОЙ ВХОД</button>
     </div>
 </div>
 
 <nav>
     <a href="index.html">ГЛАВНАЯ</a>
-    <a href="dossier.html" style="color:var(--neon)">ДОССЬЕ</a>
+    <a href="monitoring.html">МОНИТОРИНГ</a>
+    <a href="dossier.html" style="color:var(--neon)">АРХИВ_ДОССЬЕ</a>
 </nav>
 
 <div class="container">
     <div class="header">
-        <h1>PERSONNEL DOSSIER</h1>
-        <button class="btn-exit" onclick="logout()">EXIT SYSTEM</button>
+        <div>
+            <h1 style="margin:0; font-size: 1.5em; color: var(--neon);">PERSONNEL_DOSSIER</h1>
+            <div style="font-size:0.7em;">OPERATOR: <span id="user-display">---</span></div>
+        </div>
+        <button class="btn-exit" onclick="logout()">LOGOUT</button>
     </div>
     <div class="dossier-grid" id="dossier-container"></div>
 </div>
-
 
 <script>
     const RENDER_URL = "https://prism-bot.onrender.com";
@@ -61,82 +114,84 @@
     async function tryLogin(type) {
         if (type === 'guest') {
             sessionStorage.setItem('prism_level', 1);
-            sessionStorage.setItem('prism_user', 'ГОСТЬ');
-            location.reload();
-            return;
+            sessionStorage.setItem('prism_user', 'GUEST_USER');
+            location.reload(); return;
         }
 
         const id = document.getElementById('uid').value.toUpperCase().trim();
         const ps = CryptoJS.MD5(document.getElementById('ups').value).toString();
 
         try {
-            const response = await fetch(`${RENDER_URL}/login`, {
+            const res = await fetch(`${RENDER_URL}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id, pass: ps })
             });
 
-            if (response.ok) {
-                const data = await response.json();
+            if (res.ok) {
+                const data = await res.json();
                 sessionStorage.setItem('prism_level', data.level);
                 sessionStorage.setItem('prism_user', data.name);
                 sessionStorage.setItem('prism_uid', id);
-                
-                fetch(`${RENDER_URL}/auth-log`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, name: data.name, level: data.level })
-                });
-
                 location.reload();
             } else {
-                alert("ОТКАЗАНО В ДОСТУПЕ");
+                alert("ACCESS_DENIED");
             }
-        } catch (e) {
-            alert("ОШИБКА СВЯЗИ С ТЕРМИНАЛОМ");
-        }
+        } catch (e) { alert("CONNECTION_ERROR"); }
     }
 
     async function renderPage() {
         const myLevel = parseInt(sessionStorage.getItem('prism_level'));
         if (isNaN(myLevel)) return;
 
+        // Показываем интерфейс
         document.getElementById('auth-overlay').style.display = 'none';
         document.body.classList.add('authorized');
+        document.getElementById('user-display').innerText = sessionStorage.getItem('prism_user');
 
         try {
-            // Запрашиваем всё сразу
             const res = await fetch(`${RENDER_URL}/get-staff`);
             const db = await res.json();
             const container = document.getElementById('dossier-container');
-            container.innerHTML = ''; 
-            
+            container.innerHTML = '';
+
             for (const [id, p] of Object.entries(db)) {
                 const isLocked = myLevel < p.level;
-                const card = document.createElement('div');
-                card.className = 'player-card';
+                
+                // Фильтрация данных
+                const safeName = isLocked ? "CLASSIFIED" : (p.name || id);
+                const safeDept = isLocked ? "REDACTED" : (p.dept || "---");
+                const safeBio = isLocked ? "ACCESS_DENIED: L" + p.level + " CLEARANCE REQUIRED." : (p.bio || "NO DATA.");
+                const safeSkin = isLocked ? "Steve" : p.mc_name;
 
-                // Мы берем p.bio прямо из полученного объекта db, 
-                // так как сервер его уже прислал в /get-staff
+                const card = document.createElement('div');
+                card.className = `player-card ${isLocked ? 'is-locked' : ''}`;
                 card.innerHTML = `
-                    ${isLocked ? `<div class="lock-text">L${p.level} REQUIRED</div>` : ''}
-                    <div class="${isLocked ? 'locked' : ''}" style="display:flex; width:100%;">
-                        <img src="https://minotar.net/armor/bust/${isLocked ? 'Steve' : p.mc_name}/100.png" class="photo">
-                        <div class="info">
-                            <div class="name">${p.name}</div>
-                            <div style="font-size:0.7em; color:#00ff00;">ОТДЕЛ: ${p.dept}</div>
-                            <div class="bio">
-                                ${isLocked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (p.bio || 'БИОГРАФИЯ ОТСУТСТВУЕТ')}
-                            </div>
-                        </div>
+                    <div class="level-badge">L${p.level}</div>
+                    <div class="photo-frame">
+                        <img src="https://minotar.net/armor/bust/${safeSkin}/100.png" class="photo">
+                    </div>
+                    <div class="info">
+                        <div class="name">${safeName}</div>
+                        <div class="dept-tag">DEPT: ${safeDept}</div>
+                        <div class="bio" id="bio-${id}"></div>
                     </div>
                 `;
                 container.appendChild(card);
+                typeEffect(`bio-${id}`, safeBio);
             }
-        } catch (err) {
-            console.error("Render Error:", err);
-            document.getElementById('dossier-container').innerHTML = "ОШИБКА ЗАГРУЗКИ ДАННЫХ";
-        }
+        } catch (err) { container.innerHTML = "DATABASE_OFFLINE"; }
+    }
+
+    function typeEffect(id, text) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        let i = 0;
+        const timer = setInterval(() => {
+            el.innerText += text[i];
+            i++;
+            if (i >= text.length) clearInterval(timer);
+        }, 15);
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
@@ -149,5 +204,3 @@
 </script>
 </body>
 </html>
-
-
