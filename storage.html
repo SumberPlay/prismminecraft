@@ -236,23 +236,28 @@ const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/
     async function loadFiles() {
         const list = document.getElementById('file-list');
         const myLvl = parseInt(sessionStorage.getItem('p_lvl'));
-        list.innerHTML = "СИНХРОНИЗАЦИЯ...";
-
+        
+        list.innerHTML = "<div style='color:var(--dim)'>СИНХРОНИЗАЦИЯ...</div>";
+        
         try {
-            // Мы обращаемся к API GitHub, чтобы узнать SHA последнего коммита. 
-            // Это ГАРАНТИРОВАННО обходит любой кэш.
-            const apiRef = "https://api.github.com/repos/SumberPlay/prismminecraft/commits/main";
-            const commitRes = await fetch(apiRef);
-            const commitData = await commitRes.json();
-            const sha = commitData.sha; // Уникальный ID последнего изменения
+            // Используем только один простой параметр времени. 
+            // Этого ДОСТАТОЧНО, если не слать запросы каждую секунду.
+            const url = GITHUB_JSON + "?nocache=" + new Date().getTime();
+            
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("NETWORK_ERROR");
 
-            // Теперь запрашиваем файл, используя SHA как версию
-            const finalUrl = `${GITHUB_JSON}?v=${sha}`;
-            const res = await fetch(finalUrl);
             const files = await res.json();
+            
+            // ВАЖНО: Выводим в консоль, чтобы ты видел реальное кол-во записей
+            console.log("ЗАПИСЕЙ ПОЛУЧЕНО:", files.length); 
 
             list.innerHTML = "";
-            [...files].reverse().forEach(file => {
+            
+            // Клонируем массив и переворачиваем
+            const displayData = [...files].reverse();
+
+            displayData.forEach(file => {
                 const locked = myLvl < file.level;
                 const card = document.createElement('div');
                 card.className = `card ${locked ? 'locked' : ''}`;
@@ -260,15 +265,16 @@ const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/
                     <div class="card-info">${file.date} | REQ: L${file.level}</div>
                     <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : file.title}</div>
                 `;
-                card.onclick = () => locked ? alert("ОТКАЗАНО") : openReader(file);
+                card.onclick = () => {
+                    if(locked) alert("ОШИБКА: НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОПУСКА");
+                    else openReader(file);
+                };
                 list.appendChild(card);
             });
 
-            console.log("Успешная синхронизация с коммитом:", sha);
-
-        } catch (e) {
-            console.error(e);
-            list.innerHTML = "ОШИБКА СВЯЗИ С ЦЕНТРОМ.";
+        } catch (e) { 
+            console.error("Critical Sync Error:", e);
+            list.innerHTML = "<div style='color:var(--alert)'>ОШИБКА ДОСТУПА К АРХИВУ.</div>"; 
         }
     }
 
