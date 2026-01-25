@@ -2,180 +2,237 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>P.R.I.S.M. | Global Monitoring</title>
+    <title>P.R.I.S.M. | Interactive Monitoring</title>
     <style>
-        :root { 
-            --map-ui: #00ffcc; 
-            --alert: #ff4444;
-            --bg-dark: #020505; 
-            --panel-bg: rgba(10, 20, 20, 0.9); 
-        }
-        body { background: var(--bg-dark); color: var(--map-ui); font-family: 'Courier New', monospace; margin: 0; overflow-x: hidden; transition: 0.5s; }
-        
-        /* Состояние тревоги */
-        body.alarm-active { --map-ui: #ff4444; background: #0a0000; }
+    :root { 
+        --neon: #00ffcc; 
+        --alert: #ff4444; 
+        --bg: #050505; 
+        --dim: #004433;
+    }
 
-        .top-bar { 
-            background: #000; padding: 15px; border-bottom: 1px solid var(--map-ui); 
-            display: flex; justify-content: space-between; align-items: center;
-        }
+    body { 
+        background: var(--bg); color: var(--neon); 
+        font-family: 'Courier New', monospace; 
+        margin: 0; padding: 0; overflow: hidden;
+        text-transform: uppercase; font-size: 13px;
+    }
 
-        .map-viewport {
-            width: 100%;
-            height: 400px;
-            background: radial-gradient(circle, #0a2a2a 0%, #000 80%);
-            position: relative;
-            border-bottom: 1px solid #111;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    .crt-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, transparent 2px);
+        pointer-events: none; z-index: 1000;
+    }
 
-        .radar-grid {
-            position: absolute; width: 200%; height: 200%;
-            background-image: 
-                linear-gradient(rgba(0, 255, 204, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 204, 0.05) 1px, transparent 1px);
-            background-size: 50px 50px;
-            transform: rotate(15deg);
-        }
+    .app-grid {
+        display: grid;
+        grid-template-columns: 260px 1fr 320px;
+        grid-template-rows: 50px 1fr 180px;
+        height: 100vh; gap: 10px; padding: 10px; box-sizing: border-box;
+    }
 
-        /* Точки комплексов */
-        .point {
-            position: absolute; width: 12px; height: 12px;
-            background: var(--map-ui); border-radius: 50%;
-            box-shadow: 0 0 15px var(--map-ui);
-            cursor: pointer; transition: 0.3s;
-            z-index: 5;
-        }
-        .point:hover { transform: scale(2); }
-        .point::after {
-            content: attr(data-label); position: absolute; top: 15px; left: 10px;
-            font-size: 0.7em; white-space: nowrap; background: #000; padding: 2px 5px;
-            border: 1px solid var(--map-ui);
-        }
+    .window { border: 1px solid var(--neon); background: #000; display: flex; flex-direction: column; position: relative; }
+    .win-header { background: var(--neon); color: #000; padding: 3px 10px; font-weight: bold; font-size: 0.8em; display: flex; justify-content: space-between; }
 
-        /* Анимация пульсации для активных точек */
-        .point.active-node { animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(0, 255, 204, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0); } }
+    .header { grid-column: 1 / 4; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border: 1px solid var(--neon); }
+    .nav-links a { color: var(--neon); text-decoration: none; margin-left: 20px; font-weight: bold; }
+    .nav-links a:hover { background: var(--neon); color: #000; }
 
-        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        
-        .facility-card {
-            background: var(--panel-bg); border: 1px solid #1a3333;
-            padding: 20px; transition: 0.3s;
-        }
-        .facility-card:hover { border-color: var(--map-ui); background: rgba(0, 255, 204, 0.05); }
-        
-        .status-ok { color: #00ff00; }
-        .status-warn { color: #ffff00; }
-        .status-crit { color: #ff0000; opacity: 0.6; }
-        .status-alert { color: #ff0000; font-weight: bold; animation: blink 0.8s infinite; }
+    .map-area { grid-column: 2; grid-row: 2; overflow: hidden; position: relative; cursor: crosshair; }
+    
+    /* Радар */
+    .radar-circle {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 450px; height: 450px; border: 1px solid var(--dim); border-radius: 50%;
+    }
+    .radar-sweep {
+        position: absolute; top: 50%; left: 50%; width: 450px; height: 450px;
+        background: conic-gradient(from 0deg, var(--neon) 0deg, transparent 90deg);
+        transform-origin: top left; animation: sweep 4s linear infinite; opacity: 0.1;
+    }
 
-        @keyframes blink { 50% { opacity: 0.3; } }
+    /* Точки объектов */
+    .point { 
+        position: absolute; width: 14px; height: 14px; 
+        border: 1px solid var(--neon); cursor: pointer; z-index: 10;
+        transition: 0.2s; background: rgba(0,0,0,0.5);
+    }
+    .point:hover { background: var(--neon); box-shadow: 0 0 15px var(--neon); }
+    .point.selected { border-width: 3px; background: #fff; }
+    .point.offline { border-color: #444; color: #444; }
 
-        .back-btn { color: var(--map-ui); text-decoration: none; font-size: 0.9em; border: 1px solid; padding: 5px 15px; transition: 0.3s; }
-        .back-btn:hover { background: var(--map-ui); color: #000; }
+    /* График */
+    #activity-graph {
+        position: absolute; bottom: 20px; left: 20px; width: 200px; height: 50px;
+        border-left: 1px solid var(--dim); border-bottom: 1px solid var(--dim);
+    }
 
-        #scan-line {
-            position: absolute; width: 100%; height: 2px;
-            background: rgba(0, 255, 204, 0.2);
-            top: 0; animation: scan 4s linear infinite;
-        }
-        @keyframes scan { from { top: 0; } to { top: 100%; } }
+    .sidebar-left, .sidebar-right { overflow-y: auto; }
+    .bottom-log { grid-column: 2; grid-row: 3; }
+
+    .cmd-btn {
+        background: transparent; border: 1px solid var(--neon); color: var(--neon);
+        padding: 8px; margin: 5px 10px; cursor: pointer; text-align: left;
+        font-family: 'Courier New', monospace; font-size: 0.8em;
+    }
+    .cmd-btn:hover { background: var(--neon); color: #000; }
+
+    .stat-row { padding: 8px 10px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--dim); }
+    
+    @keyframes sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    #log-stream { padding: 10px; font-size: 0.75em; color: #008877; line-height: 1.4; }
     </style>
 </head>
 <body>
 
-<div class="top-bar">
-    <div>[P.R.I.S.M. GLOBAL ASSETS]</div>
-    <div id="sync-status" style="font-size: 0.8em;">SYNC: CONNECTING...</div>
-    <a href="staff.html" class="back-btn">ВЕРНУТЬСЯ В ТЕРМИНАЛ</a>
+<div class="crt-overlay"></div>
+
+<div class="app-grid">
+    <header class="header">
+        <div>[ P.R.I.S.M. INTEL_LINK v4.2 ]</div>
+        <div id="sys-clock">00:00:00</div>
+        <nav class="nav-links">
+            <a href="index.html">/HOME</a>
+            <a href="staff.html">/ROOT</a>
+        </nav>
+    </header>
+
+    <aside class="window sidebar-left">
+        <div class="win-header"><span>SYSTEM_INTEGRITY</span></div>
+        <div class="stat-row"><span>CPU_USAGE</span><span id="cpu-load">12%</span></div>
+        <div class="stat-row"><span>NET_LINK</span><span id="net-status">STABLE</span></div>
+        <div class="stat-row"><span>ENTROPY</span><span>0.0004</span></div>
+        <div style="padding: 15px;">
+            <div style="font-size: 0.7em; margin-bottom: 10px;">> QUICK_ACTIONS:</div>
+            <button class="cmd-btn" style="width: 90%;" onclick="addLogLine('SCANNING FOR BREACHES...')">SCAN_SECTORS</button>
+            <button class="cmd-btn" style="width: 90%;" onclick="location.reload()">REFRESH_OS</button>
+        </div>
+    </aside>
+
+    <section class="window map-area" id="map-container">
+        <div class="win-header"><span>LIVE_RADAR_FEED</span><span>REC_AUTO</span></div>
+        <div class="radar-sweep"></div>
+        <div class="radar-circle"></div>
+        <div class="radar-circle" style="width:250px; height:250px;"></div>
+        
+        <div class="point offline" style="top:25%; left:35%;" onclick="selectNode('v1')" title="ALPHA-M V1"></div>
+        <div class="point offline" style="top:65%; left:20%;" onclick="selectNode('v2')" title="ALPHA-M V2"></div>
+        <div class="point offline" style="top:35%; left:50%;" onclick="selectNode('v22')" title="ALPHA-M V2.2"></div>
+        <div class="point" id="v3-node" style="top:48%; left:72%;" onclick="selectNode('v3')" title="ALPHA-M V3"></div>
+
+        <canvas id="activity-graph"></canvas>
+    </section>
+
+    <aside class="window sidebar-right">
+        <div class="win-header"><span>NODE_INSPECTOR</span></div>
+        <div id="details-panel" style="padding: 20px;">
+            <div style="color: #444; text-align: center; margin-top: 50px;">
+                SELECT NODE ON MAP<br>TO BEGIN INSPECTION
+            </div>
+        </div>
+    </aside>
+
+    <footer class="window bottom-log">
+        <div class="win-header"><span>TERMINAL_OUTPUT</span></div>
+        <div id="log-stream"></div>
+    </footer>
 </div>
 
-<div class="map-viewport">
-    <div class="radar-grid"></div>
-    <div id="scan-line"></div>
-    
-    <div class="point" style="top: 30%; left: 45%; opacity: 0.4;" data-label="Alpha-M V1 (Offline)"></div>
-    <div class="point" style="top: 60%; left: 20%; opacity: 0.4;" data-label="Alpha-M V2 (Offline)"></div>
-    <div class="point" style="top: 85%; left: 45%; opacity: 0.4;" data-label="Alpha-M V2.2 (Offline)"></div>
-    
-    <div class="point active-node" id="v3-point" style="top: 45%; left: 75%;" data-label="Alpha-M V3 (ACTIVE)"></div>
 
-    <div style="z-index: 10; font-size: 0.8em; opacity: 0.5; position: absolute; bottom: 10px;">
-        SATELLITE UPLINK: STABLE
-    </div>
-</div>
-
-<div class="container">
-    <h2 style="letter-spacing: 3px; border-bottom: 1px solid #111; padding-bottom: 10px;">РЕЕСТР ОБЪЕКТОВ</h2>
-    
-    <div class="grid">
-        <div class="facility-card">
-            <h3>Alpha-M V1</h3>
-            <p><b>Локация:</b> Курампа (2), центр. Офис ES.</p>
-            <p><b>Статус:</b> <span class="status-crit">СВЯЗЬ ПОТЕРЯНА</span></p>
-        </div>
-
-        <div class="facility-card">
-            <h3>Alpha-M V2</h3>
-            <p><b>Локация:</b> Курампа (3), центр.</p>
-            <p><b>Статус:</b> <span class="status-crit">СВЯЗЬ ПОТЕРЯНА</span></p>
-        </div>
-
-       <div class="facility-card">
-            <h3>Alpha-M V2.2</h3>
-            <p><b>Локация:</b> Курампа (3), база 34ray_</p>
-            <p><b>Статус:</b> <span class="status-crit">СВЯЗЬ ПОТЕРЯНА</span></p>
-        </div>
-
-        <div class="facility-card" id="v3-card" style="border-color: var(--map-ui);">
-            <h3 id="v3-title">Alpha-M V3</h3>
-            <p><b>Локация:</b> Blink, база МэнсиКейн</p>
-            <p><b>Назначение:</b> Текущий штаб P.R.I.S.M. Координация всех операций.</p>
-            <p><b>Статус:</b> <span id="v3-status" class="status-ok">НОРМА</span></p>
-        </div>
-    </div>
-</div>
 
 <script>
-    const RENDER_API = "https://prism-bot.onrender.com"; // ЗАМЕНИ НА СВОЮ
+    const RENDER_API = "https://prism-bot.onrender.com";
+    
+    const nodeData = {
+        v1: { title: "ALPHA-M V1", loc: "KURAMPA_SEC_02", status: "DISCONNECTED", desc: "Связь потеряна в 2024 году. Последний отчет: зафиксировано полное смещение реальности в радиусе 50м.", color: "#444" },
+        v2: { title: "ALPHA-M V2", loc: "KURAMPA_SEC_03", status: "ABANDONED", desc: "Доступ был утерян после инцидента с Объектом #001..", color: "#444" },
+        v22: { title: "ALPHA-M V2.2", loc: "KURAMPA_SEC_03", status: "ABANDONED", desc: "Доступ утерян по причине, аналогичной с ALPHA-M V2.", color: "#444" },
+        v3: { title: "ALPHA-M V3", loc: "BLINK_BASE_MC", status: "ACTIVE", desc: "Текущий операционный центр. Уровень защиты: МАКСИМАЛЬНЫЙ.", color: "var(--neon)" }
+    };
 
-    async function syncAssets() {
+    function selectNode(id) {
+        const data = nodeData[id];
+        const panel = document.getElementById('details-panel');
+        
+        // Визуальное выделение
+        document.querySelectorAll('.point').forEach(p => p.classList.remove('selected'));
+        event.target.classList.add('selected');
+
+        panel.innerHTML = `
+            <div style="border-bottom: 2px solid ${data.color}; padding-bottom: 10px; margin-bottom: 15px; font-weight: bold; font-size: 1.2em;">
+                ${data.title}
+            </div>
+            <div style="margin-bottom: 10px;"><span style="color:#666">LOCATION:</span> ${data.loc}</div>
+            <div style="margin-bottom: 10px;"><span style="color:#666">STATUS:</span> <span style="color:${data.color}">${data.status}</span></div>
+            <div style="margin-bottom: 20px; font-size: 0.85em; line-height: 1.6; border: 1px dashed #333; padding: 10px;">
+                ${data.desc}
+            </div>
+            ${id === 'v3' ? '<button class="cmd-btn" style="width:100%" onclick="addLogLine(\'ACCESSING V3 ENCRYPTION...\')">OPEN_REMOTE_SHELL</button>' : ''}
+        `;
+        addLogLine("INSPECTING NODE: " + data.title);
+    }
+
+    function addLogLine(text) {
+        const stream = document.getElementById('log-stream');
+        const line = document.createElement('div');
+        line.innerHTML = `> [${new Date().toLocaleTimeString()}] ${text}`;
+        stream.prepend(line);
+        if (stream.children.length > 8) stream.removeChild(stream.lastChild);
+    }
+
+    // Рендер графика
+    const canvas = document.getElementById('activity-graph');
+    const gCtx = canvas.getContext('2d');
+    let points = Array(20).fill(25);
+
+    function drawGraph() {
+        gCtx.clearRect(0, 0, canvas.width, canvas.height);
+        gCtx.strokeStyle = document.documentElement.style.getPropertyValue('--neon') || '#00ffcc';
+        gCtx.beginPath();
+        gCtx.moveTo(0, points[0]);
+        for(let i=1; i<points.length; i++) {
+            gCtx.lineTo(i * (canvas.width/points.length), points[i]);
+        }
+        gCtx.stroke();
+        points.shift();
+        points.push(Math.random() * 50);
+    }
+
+    async function sync() {
         try {
             const res = await fetch(`${RENDER_API}/status`);
             const data = await res.json();
+            const v3Node = document.getElementById('v3-node');
             
-            const syncLabel = document.getElementById('sync-status');
-            const v3Status = document.getElementById('v3-status');
-            const v3Card = document.getElementById('v3-card');
-            
-            syncLabel.innerText = `SYNC: ${data.label}`;
-            syncLabel.style.color = data.color;
-
             if (data.state === "RED") {
-                document.body.classList.add('alarm-active');
-                v3Status.innerText = "КРИТИЧЕСКАЯ УГРОЗА";
-                v3Status.className = "status-alert";
-                v3Card.style.borderColor = "red";
+                document.documentElement.style.setProperty('--neon', '#ff4444');
+                document.getElementById('net-status').innerText = "ALERT";
+                v3Node.style.background = "#ff4444";
+                v3Node.style.boxShadow = "0 0 20px #ff4444";
+                addLogLine("!!! EMERGENCY ALERT RECEIVED FROM V3 !!!");
             } else {
-                document.body.classList.remove('alarm-active');
-                v3Status.innerText = "НОРМА";
-                v3Status.className = "status-ok";
-                v3Card.style.borderColor = "#1a3333";
+                document.documentElement.style.setProperty('--neon', '#00ffcc');
+                document.getElementById('net-status').innerText = "STABLE";
+                v3Node.style.background = "var(--neon)";
+                v3Node.style.boxShadow = "none";
             }
         } catch (e) {
-            document.getElementById('sync-status').innerText = "SYNC: ERROR";
+            document.getElementById('net-status').innerText = "ERROR";
         }
     }
 
-    setInterval(syncAssets, 4000);
-    syncAssets();
+    setInterval(() => {
+        document.getElementById('sys-clock').innerText = new Date().toLocaleTimeString();
+        document.getElementById('cpu-load').innerText = Math.floor(Math.random()*15 + 5) + "%";
+        drawGraph();
+    }, 1000);
+
+    setInterval(sync, 4000);
+    sync();
+    addLogLine("P.R.I.S.M. SYSTEM ONLINE. STANDBY.");
 </script>
 
 </body>
 </html>
-
