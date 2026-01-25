@@ -21,7 +21,6 @@
             text-transform: uppercase;
         }
 
-        /* Эффект ЭЛТ-монитора */
         body::before {
             content: " ";
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -56,51 +55,13 @@
         .btn-council { border-color: #ffd700; color: #ffd700; }
         .btn-council:hover { background: #ffd700; color: #000; box-shadow: 0 0 15px #ffd700; }
 
-       input, textarea { 
-            background-color: #000 !important; /* Принудительный черный фон */
+        input, textarea { 
+            background-color: #000 !important;
             border: 1px solid var(--term-dim) !important;
             color: var(--term-green) !important;
-            padding: 15px; 
-            width: 100%; 
-            box-sizing: border-box; 
-            outline: none;
-            font-family: 'Courier New', monospace; 
-            margin-bottom: 15px; 
-            font-size: 1.1em;
-            
-            /* Убираем стандартные стили браузера */
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            border-radius: 0; /* Убираем закругления, если они есть */
-            
-            transition: all 0.3s ease;
-        }
-
-        input:focus, textarea:focus {
-            border-color: var(--term-green) !important;
-            box-shadow: 0 0 15px var(--term-dim);
-            background-color: #030303 !important; /* Чуть-чуть светлее при наведении */
-        }
-
-        /* Стиль для текста внутри полей в браузерах Safari/Chrome */
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover, 
-        input:-webkit-autofill:focus {
-            -webkit-text-fill-color: var(--term-green);
-            -webkit-box-shadow: 0 0 0px 1000px #000 inset;
-            transition: background-color 5000s ease-in-out 0s;
-        }
-
-        ::placeholder {
-            color: var(--term-dim);
-            opacity: 0.6;
-        }
-
-        /* Чтобы плейсхолдеры тоже были тускло-зелеными, а не серыми */
-        ::placeholder {
-            color: var(--term-dim);
-            opacity: 0.8;
+            padding: 15px; width: 100%; box-sizing: border-box; outline: none;
+            font-family: 'Courier New', monospace; margin-bottom: 15px; font-size: 1.1em;
+            border-radius: 0; appearance: none;
         }
 
         #incident-box { border: 2px solid var(--alert-red); padding: 20px; margin: 20px 0; background: rgba(50, 0, 0, 0.3); animation: flash 2s infinite; }
@@ -139,7 +100,7 @@
     </div>
 
     <div id="staff-content" style="display: none;">
-        <div id="user-role" style="font-size: 0.8em; color: var(--term-dim);">УРОВЕНЬ_ДОПУСКА: 0</div>
+        <div id="user-role" style="font-size: 0.8em; color: var(--term-dim);">ЗАГРУЗКА...</div>
         <h2 id="greet" style="margin-top: 5px; min-height: 1.2em;"></h2><span id="greet-cursor" class="cursor"></span>
         
         <div id="incident-box" style="display: none;">
@@ -152,7 +113,7 @@
             <h3 style="font-size: 0.9em; margin-bottom: 15px;">ПОДАЧА_ОПЕРАТИВНОГО_РАПОРТА</h3>
             <textarea id="reportText" placeholder="ВВЕДИТЕ_ДАННЫЕ_ЛОГА..."></textarea>
             <button onclick="sendReport()" class="btn">ПЕРЕДАТЬ_ПАКЕТ_ДАННЫХ</button>
-            <div id="reportStatus"></div>
+            <div id="reportStatus" style="font-size: 0.8em; margin-top: 10px;"></div>
         </div>
 
         <button onclick="logout()" style="background:none; border:none; color:var(--term-dim); margin-top:40px; cursor:pointer; width: 100%; font-family: inherit; font-size: 0.7em;">
@@ -163,25 +124,6 @@
 
 <script>
 const RENDER_API = "https://prism-bot.onrender.com";
-let staffDB = {};
-
-// 1. Инициализация терминала и загрузка базы
-async function initTerminal() {
-    try {
-        const response = await fetch(`${RENDER_API}/get-staff`);
-        staffDB = await response.json();
-        document.getElementById('sync-val').innerText = "ONLINE";
-        
-        // Проверка, если уже залогинены
-        const savedUID = sessionStorage.getItem('prism_uid');
-        if (savedUID && staffDB[savedUID]) {
-            renderDashboard(staffDB[savedUID]);
-        }
-    } catch (e) {
-        document.getElementById('sync-val').innerText = "OFFLINE (ОШИБКА БАЗЫ)";
-        document.getElementById('sync-val').style.color = "var(--alert-red)";
-    }
-}
 
 async function syncSystem() {
     try {
@@ -194,13 +136,11 @@ async function syncSystem() {
         }
 
         if (data.state === "RED") {
-            document.body.style.color = "var(--alert-red)";
-            if (data.reason) {
-                document.getElementById('incident-box').style.display = "block";
-                document.getElementById('incident-reason').innerText = data.reason.toUpperCase();
-            }
+            document.body.style.setProperty('--term-green', 'var(--alert-red)');
+            document.getElementById('incident-box').style.display = "block";
+            document.getElementById('incident-reason').innerText = data.reason.toUpperCase();
         } else {
-            document.body.style.color = "var(--term-green)";
+            document.body.style.setProperty('--term-green', '#00ff41');
             document.getElementById('incident-box').style.display = "none";
         }
     } catch (e) { 
@@ -208,50 +148,59 @@ async function syncSystem() {
     }
 }
 
-function checkAuth() {
+async function checkAuth() {
     const id = document.getElementById('uid').value.toUpperCase().trim();
-    const ps = document.getElementById('ups').value;
-    const user = staffDB[id];
+    const ps = CryptoJS.MD5(document.getElementById('ups').value).toString();
 
-    if (user && CryptoJS.MD5(ps).toString() === user.pass) {
-        sessionStorage.setItem('prism_uid', id);
-        sessionStorage.setItem('prism_level', user.level);
-        
-        // Отчет боту
-        fetch(`${RENDER_API}/auth-log`, {
+    try {
+        const response = await fetch(`${RENDER_API}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: id, name: user.name, level: user.level })
+            body: JSON.stringify({ id, pass: ps })
         });
 
-        renderDashboard(user);
-    } else {
-        document.getElementById('err').style.display = 'block';
-        setTimeout(() => document.getElementById('err').style.display = 'none', 3000);
+        if (response.ok) {
+            const data = await response.json();
+            sessionStorage.setItem('prism_uid', id);
+            sessionStorage.setItem('prism_level', data.level);
+            sessionStorage.setItem('prism_name', data.name);
+            
+            // Лог в ТГ
+            fetch(`${RENDER_API}/auth-log`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, name: data.name, level: data.level })
+            });
+
+            renderDashboard({ id, level: data.level, name: data.name });
+        } else {
+            document.getElementById('err').style.display = 'block';
+            setTimeout(() => document.getElementById('err').style.display = 'none', 3000);
+        }
+    } catch (e) {
+        alert("СБОЙ ТЕРМИНАЛА");
     }
 }
 
 function renderDashboard(user) {
     document.getElementById('login-zone').style.display = 'none';
     document.getElementById('staff-content').style.display = 'block';
-    document.getElementById('user-role').innerText = `ДОПУСК: УРОВЕНЬ_${user.level} // РОЛЬ: ${user.role.toUpperCase()}`;
-    
+    document.getElementById('user-role').innerText = `ДОПУСК: УРОВЕНЬ_${user.level}`;
     document.getElementById('greet').innerText = `ДОБРО_ПОЖАЛОВАТЬ: ${user.name}`;
 
     const container = document.getElementById('buttons-container');
     container.innerHTML = "";
     
     const actions = [
-        { name: "ЛИЧНОЕ_ДОСЬЕ", link: "profile" },
+        { name: "ЛИЧНОЕ_ДОСЬЕ", link: "dossier" }, // Исправлено на правильный файл
         { name: "КАРТА_ОБЪЕКТА", link: "map" }
     ];
 
-    if (user.role === "scientific") actions.push({ name: "АРХИВ_АНОМАЛИЙ", link: "archive" });
-    if (user.role === "military") actions.push({ name: "ВОЕННЫЕ_ПРОТОКОЛЫ", link: "military_prot" });
-    if (user.role === "council") {
+    // Логика кнопок на основе уровня
+    if (user.level >= 3) actions.push({ name: "АРХИВ_АНОМАЛИЙ", link: "archive" });
+    if (user.level >= 5) {
         actions.push({ name: "ПОЛНЫЙ_АРХИВ", link: "archive", class: "btn-council" });
-        actions.push({ name: "СЕТЬ_ОБОРОНЫ", link: "military_prot", class: "btn-council" });
-        actions.push({ name: "СПИСОК_ПЕРСОНАЛА", link: "staff_list", class: "btn-council" }); // Новая кнопка
+        actions.push({ name: "СПИСОК_ПЕРСОНАЛА", link: "staff_list", class: "btn-council" });
         actions.push({ name: "КОНТРОЛЬ_СОВЕТА", link: "override", class: "btn-council" });
     }
 
@@ -280,6 +229,7 @@ async function sendReport() {
         if (res.ok) {
             status.innerText = "> УСПЕХ: ДАННЫЕ_ПЕРЕДАНЫ";
             document.getElementById('reportText').value = "";
+            setTimeout(() => status.innerText = "", 3000);
         } else { throw new Error(); }
     } catch (e) {
         status.innerText = "> ОШИБКА: СБОЙ_ПЕРЕДАЧИ";
@@ -291,14 +241,19 @@ function logout() {
     location.reload();
 }
 
-// Запуск
-document.addEventListener("DOMContentLoaded", () => {
-    initTerminal();
+window.onload = () => {
+    syncSystem();
     setInterval(syncSystem, 5000);
-});
+    
+    const savedUID = sessionStorage.getItem('prism_uid');
+    if (savedUID) {
+        renderDashboard({ 
+            id: savedUID, 
+            level: sessionStorage.getItem('prism_level'), 
+            name: sessionStorage.getItem('prism_name') 
+        });
+    }
+};
 </script>
 </body>
 </html>
-
-
-
