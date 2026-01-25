@@ -238,32 +238,45 @@ const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/
         const myLvl = parseInt(sessionStorage.getItem('p_lvl')) || 1;
         list.innerHTML = "<div style='color:var(--dim)'>СИНХРОНИЗАЦИЯ...</div>";
         
-        try {
-            // Возвращаемся к raw, но добавляем УНИКАЛЬНЫЙ запрос
-            const RAW_URL = "https://raw.githubusercontent.com/SumberPlay/prismminecraft/main/data/archive.json";
-            const res = await fetch(`${RAW_URL}?t=${Date.now()}`, {
-                cache: "no-store",
-                headers: { 'Cache-Control': 'no-cache' }
-            });
+        // Пробуем два источника: прямой RAW и стабильный jsDelivr
+        const sources = [
+            `https://raw.githubusercontent.com/SumberPlay/prismminecraft/main/data/archive.json?t=${Date.now()}`,
+            `https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/data/archive.json?v=${Date.now()}`
+        ];
 
-            if (!res.ok) throw new Error("HTTP_" + res.status);
-            const files = await res.json();
+        for (let url of sources) {
+            try {
+                console.log("ПОПЫТКА ЗАГРУЗКИ:", url);
+                const res = await fetch(url, { cache: "no-store" });
+                
+                if (!res.ok) {
+                    console.warn(`Источник ${url} ответил ошибкой ${res.status}`);
+                    continue;
+                }
 
-            list.innerHTML = "";
-            [...files].reverse().forEach(file => {
-                const locked = myLvl < file.level;
-                const card = document.createElement('div');
-                card.className = `card ${locked ? 'locked' : ''}`;
-                card.innerHTML = `
-                    <div class="card-info">${file.date || '---'} | REQ: L${file.level}</div>
-                    <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (file.title || 'БЕЗ НАЗВАНИЯ')}</div>
-                `;
-                card.onclick = () => locked ? alert("ОТКАЗАНО") : openReader(file);
-                list.appendChild(card);
-            });
-        } catch (e) { 
-            list.innerHTML = "<div style='color:var(--alert)'>ОШИБКА ОБНОВЛЕНИЯ.</div>"; 
+                const files = await res.json();
+                
+                list.innerHTML = "";
+                [...files].reverse().forEach(file => {
+                    const locked = myLvl < file.level;
+                    const card = document.createElement('div');
+                    card.className = `card ${locked ? 'locked' : ''}`;
+                    card.innerHTML = `
+                        <div class="card-info">${file.date || '---'} | REQ: L${file.level}</div>
+                        <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (file.title || 'БЕЗ НАЗВАНИЯ')}</div>
+                    `;
+                    card.onclick = () => locked ? alert("ОШИБКА: НЕДОСТАТОЧНЫЙ ДОПУСК") : openReader(file);
+                    list.appendChild(card);
+                });
+                
+                return; // Успешно загружено, выходим из функции
+
+            } catch (e) {
+                console.error("ОШИБКА ИСТОЧНИКА:", url, e);
+            }
         }
+
+        list.innerHTML = "<div style='color:var(--alert)'>КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ.</div>";
     }
 
     function openReader(file) {
