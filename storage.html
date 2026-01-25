@@ -236,27 +236,32 @@
         const list = document.getElementById('file-list');
         const myLvl = parseInt(sessionStorage.getItem('p_lvl'));
         
-        // Показываем статус загрузки
-        list.innerHTML = "<div style='color:var(--dim)'>СИНХРОНИЗАЦИЯ С АРХИВОМ...</div>";
+        list.innerHTML = "<div style='color:var(--dim)'>СИНХРОНИЗАЦИЯ С ОБЛАКОМ...</div>";
         
         try {
-            // Используем fetch с параметром cache: "no-store"
-            const res = await fetch(`${GITHUB_JSON}?v=${new Date().getTime()}`, {
-                cache: "no-store"
+            // Генерируем абсолютно уникальный параметр для каждого запроса
+            const antiCache = `?v=${new Date().getTime()}&seed=${Math.random()}`;
+            
+            const res = await fetch(GITHUB_JSON + antiCache, {
+                cache: "no-store", // Запрещаем сохранять файл в памяти
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
             });
-            
-            if (!res.ok) throw new Error("Файл не найден");
-            
+
+            if (!res.ok) throw new Error("LINK_ERROR");
+
             const files = await res.json();
             list.innerHTML = "";
 
-            // Сортируем: новые сверху (предполагаем наличие поля date или id)
-            files.reverse().forEach(file => {
+            // Переворачиваем, чтобы новые (ID с большими числами) были вверху
+            [...files].reverse().forEach(file => {
                 const locked = myLvl < file.level;
                 const card = document.createElement('div');
                 card.className = `card ${locked ? 'locked' : ''}`;
                 card.innerHTML = `
-                    <div class="card-info">${file.date || '00.00.00'} | REQ: L${file.level}</div>
+                    <div class="card-info">${file.date} | REQ: L${file.level}</div>
                     <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : file.title}</div>
                 `;
                 card.onclick = () => {
@@ -265,10 +270,12 @@
                 };
                 list.appendChild(card);
             });
+
         } catch (e) { 
-            console.error("Archive Error:", e);
-            list.innerHTML = "ОШИБКА ДОСТУПА: АРХИВ НЕ ОТВЕЧАЕТ ИЛИ ПОВРЕЖДЕН."; 
+            console.error("Critical Sync Error:", e);
+            list.innerHTML = "ОШИБКА: НЕ УДАЛОСЬ ПОЛУЧИТЬ ОБНОВЛЕНИЯ АРХИВА."; 
         }
+    }
 
     function openReader(file) {
         document.getElementById('reader').style.display = 'block';
