@@ -31,7 +31,34 @@
             pointer-events: none; z-index: 1000;
         }
 
-        .container { max-width: 800px; margin: 80px auto; padding: 20px; }
+        /* Навигация сверху */
+        .top-nav {
+            padding: 20px;
+            border-bottom: 1px solid var(--dim);
+            background: rgba(0,0,0,0.8);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .nav-link {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.8em;
+            border: 1px solid var(--dim);
+            padding: 5px 15px;
+            transition: 0.3s;
+        }
+
+        .nav-link:hover {
+            color: var(--neon);
+            border-color: var(--neon);
+            box-shadow: 0 0 10px var(--dim);
+        }
+
+        .container { max-width: 800px; margin: 40px auto; padding: 20px; }
 
         .header {
             border-left: 4px solid var(--neon);
@@ -41,7 +68,6 @@
 
         h1 { color: var(--neon); letter-spacing: 5px; margin: 0; font-size: 1.4em; }
 
-        /* Форма входа */
         .login-form {
             background: rgba(0, 20, 15, 0.4);
             padding: 30px;
@@ -84,7 +110,6 @@
             font-size: 0.8em;
         }
 
-        /* Список файлов */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -103,7 +128,6 @@
         .card-name { color: #eee; font-weight: bold; margin-bottom: 5px; }
         .card-info { font-size: 0.7em; color: var(--dim); }
 
-        /* Окно чтения */
         #reader {
             display: none;
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -120,6 +144,10 @@
 <body>
 
 <div class="scanline"></div>
+
+<nav class="top-nav">
+    <a href="index.html" class="nav-link"> < [ ВЕРНУТЬСЯ_НА_ГЛАВНУЮ ] </a>
+</nav>
 
 <div id="screen-auth" class="container">
     <div class="header">
@@ -148,7 +176,7 @@
         <p>ДОСТУП ПРЕДОСТАВЛЕН: <span id="op-name" style="color:var(--neon)"></span></p>
     </div>
     <div class="grid" id="file-list"></div>
-    <button class="btn" onclick="location.reload()" style="margin-top:40px; border-color:var(--alert); color:var(--alert)">[ ВЫХОД ]</button>
+    <button class="btn" onclick="location.reload()" style="margin-top:40px; border-color:var(--alert); color:var(--alert)">[ ВЫХОД ИЗ СИСТЕМЫ ]</button>
 </div>
 
 <div id="reader">
@@ -156,21 +184,20 @@
         <div id="r-meta" class="reader-meta"></div>
         <div id="r-title" class="reader-title"></div>
         <div id="r-text" class="reader-text"></div>
-        <button class="btn" onclick="closeReader()">[ ЗАКРЫТЬ ]</button>
+        <button class="btn" onclick="closeReader()">[ ЗАКРЫТЬ ПРОТОКОЛ ]</button>
     </div>
 </div>
+
 <script>
-const API_URL = "https://prism-bot.onrender.com";
+    const API_URL = "https://prism-bot.onrender.com";
     const GITHUB_JSON = "https://raw.githubusercontent.com/SumberPlay/prismminecraft/main/data/archive.json"; 
 
-    // 1. АВТОРИЗАЦИЯ СОТРУДНИКА
     async function attemptLogin() {
         const id = document.getElementById('inp-id').value.toUpperCase();
         const rawPass = document.getElementById('inp-pass').value;
 
         if(!id || !rawPass) return alert("ЗАПОЛНИТЕ ВСЕ ПОЛЯ");
 
-        // Хешируем введенный пароль в MD5
         const pass = CryptoJS.MD5(rawPass).toString();
 
         try {
@@ -193,28 +220,23 @@ const API_URL = "https://prism-bot.onrender.com";
         }
     }
 
-    // 2. ГОСТЕВОЙ ВХОД
     function enterAsGuest() {
         startSession({ name: "VISITOR_GUEST", level: 1 });
     }
 
     function startSession(user) {
         sessionStorage.setItem('p_lvl', user.level);
-        
         document.getElementById('screen-auth').style.display = 'none';
         document.getElementById('screen-storage').style.display = 'block';
         document.getElementById('op-name').innerText = `${user.name} (L${user.level})`;
-        
         loadFiles();
     }
 
-    // 3. ЗАГРУЗКА ФАЙЛОВ
     async function loadFiles() {
         const list = document.getElementById('file-list');
         const myLvl = parseInt(sessionStorage.getItem('p_lvl'));
         
         try {
-            // Добавляем ?t=Date.now чтобы избежать кэширования старых записей
             const res = await fetch(`${GITHUB_JSON}?t=${Date.now()}`);
             const files = await res.json();
             list.innerHTML = "";
@@ -234,11 +256,10 @@ const API_URL = "https://prism-bot.onrender.com";
                 list.appendChild(card);
             });
         } catch (e) { 
-            list.innerHTML = "ОШИБКА ПОДКЛЮЧЕНИЯ К АРХИВУ. ПРОВЕРЬТЕ JSON НА GITHUB."; 
+            list.innerHTML = "ОШИБКА ПОДКЛЮЧЕНИЯ К АРХИВУ."; 
         }
     }
 
-    // 4. РИДЕР
     function openReader(file) {
         document.getElementById('reader').style.display = 'block';
         document.getElementById('r-title').innerText = file.title;
