@@ -57,9 +57,29 @@
         .btn-council:hover { background: #ffd700; color: #000; box-shadow: 0 0 15px #ffd700; }
 
         input, textarea { 
-            background: #000; border: 1px solid var(--term-dim); color: var(--term-green); 
-            padding: 15px; width: 100%; box-sizing: border-box; outline: none;
-            font-family: inherit; margin-bottom: 15px; font-size: 1.1em;
+            background: #000; /* Черный фон */
+            border: 1px solid var(--term-dim); /* Темно-зеленая рамка */
+            color: var(--term-green); /* Светящийся зеленый текст */
+            padding: 15px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            outline: none;
+            font-family: inherit; 
+            margin-bottom: 15px; 
+            font-size: 1.1em;
+            /* Убираем белое свечение при клике и делаем его зеленым */
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--term-green);
+            box-shadow: 0 0 10px var(--term-dim);
+        }
+
+        /* Чтобы плейсхолдеры тоже были тускло-зелеными, а не серыми */
+        ::placeholder {
+            color: var(--term-dim);
+            opacity: 0.8;
         }
 
         #incident-box { border: 2px solid var(--alert-red); padding: 20px; margin: 20px 0; background: rgba(50, 0, 0, 0.3); animation: flash 2s infinite; }
@@ -258,4 +278,5 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
