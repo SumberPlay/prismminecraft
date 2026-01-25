@@ -140,6 +140,14 @@
 <script>
 const RENDER_API = "https://prism-bot.onrender.com";
 
+// База для подстраховки (если уровень не передался через сессию)
+const backupDB = {
+    "M4SK": 3,
+    "KRMP": 2,
+    "SUMBR": 5,
+    "MRYZE": 5
+};
+
 async function syncSystem() {
     try {
         const res = await fetch(`${RENDER_API}/status`);
@@ -151,8 +159,18 @@ async function syncSystem() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    // ЧИТАЕМ УРОВЕНЬ
-    const userLevel = parseInt(sessionStorage.getItem('prism_level')) || 0;
+    // 1. Пытаемся достать уровень напрямую
+    let userLevel = sessionStorage.getItem('prism_level');
+    
+    // 2. Если уровня нет, пробуем узнать его по ID пользователя
+    if (userLevel === null) {
+        const uid = sessionStorage.getItem('prism_uid');
+        userLevel = backupDB[uid] || 0;
+        // Сохраняем на будущее, чтобы больше не терялся
+        sessionStorage.setItem('prism_level', userLevel);
+    }
+
+    userLevel = parseInt(userLevel);
     document.getElementById('access-display').innerText = userLevel;
     
     const entries = document.querySelectorAll('.object-entry');
@@ -162,19 +180,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const descElement = entry.querySelector('.object-desc');
         const originalText = descElement.getAttribute('data-text');
 
-        // 1. Проверка на полное скрытие (для уровня 5)
-        if (reqLevel === 5 && userLevel < 5) {
-            entry.style.display = "none";
+        // Логика доступа
+        if (reqLevel > userLevel) {
+            if (reqLevel >= 5) {
+                entry.style.display = "none";
+            } else {
+                descElement.innerHTML = `<span style="color:var(--alert-red);">[ДАННЫЕ ЗАСЕКРЕЧЕНЫ: ТРЕБУЕТСЯ УРОВЕНЬ ${reqLevel}]</span>`;
+            }
             return;
         }
 
-        // 2. Проверка на цензуру (для уровня 3)
-        if (reqLevel === 3 && userLevel < 3) {
-            descElement.innerHTML = "<span style='color:var(--alert-red);'>[ДАННЫЕ_ЗАСЕКРЕЧЕНЫ: НЕДОСТАТОЧНЫЙ_УРОВЕНЬ_ДОСТУПА]</span>";
-            return;
-        }
-
-        // 3. Эффект печати
+        // Эффект печати
         descElement.innerHTML = '<span class="text-holder"></span><span class="cursor"></span>';
         const holder = descElement.querySelector('.text-holder');
         
@@ -186,10 +202,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     i++;
                 } else {
                     clearInterval(timer);
-                    descElement.querySelector('.cursor').remove();
-                    if (reqLevel >= 5) startGlitches(holder);
+                    const cursor = descElement.querySelector('.cursor');
+                    if (cursor) cursor.remove();
+                    if (reqLevel >= 3) startGlitches(holder);
                 }
-            }, 20);
+            }, 25);
         }, index * 300);
     });
 });
@@ -213,3 +230,4 @@ syncSystem();
 </script>
 </body>
 </html>
+
