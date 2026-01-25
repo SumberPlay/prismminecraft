@@ -221,7 +221,7 @@ function renderDashboard(user) {
     else if (user.role === "council") {
         container.innerHTML += '<button class="btn btn-council" onclick="nav(\'archive\')">📂 ВЕСЬ АРХИВ</button>';
         container.innerHTML += '<button class="btn btn-council" onclick="nav(\'military_prot\')">🛡️ ОБОРОНА</button>';
-        container.innerHTML += '<button class="btn btn-council" style="grid-column: span 2;" onclick="nav(\'override\')">⚖️ ПРОТОКОЛ ОБНУЛЕНИЯ</button>';
+        container.innerHTML += '<button class="btn btn-council" style="grid-column: span 2;" onclick="nav(\'override\')">⚖️ ПРОТОКОЛЫ СОВЕТА</button>';
     }
 }
 
@@ -278,3 +278,4 @@ window.onload = function() {
 </script>
 </body>
 </html>
+
