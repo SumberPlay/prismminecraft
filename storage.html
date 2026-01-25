@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P.R.I.S.M. | STORAGE ACCESS</title>
@@ -235,35 +235,32 @@ const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/
 
     async function loadFiles() {
         const list = document.getElementById('file-list');
-        const myLvl = parseInt(sessionStorage.getItem('p_lvl'));
+        const myLvl = parseInt(sessionStorage.getItem('p_lvl')) || 1;
         
         list.innerHTML = "<div style='color:var(--dim)'>СИНХРОНИЗАЦИЯ...</div>";
         
         try {
-            // Используем только один простой параметр времени. 
-            // Этого ДОСТАТОЧНО, если не слать запросы каждую секунду.
-            const url = GITHUB_JSON + "?nocache=" + new Date().getTime();
-            
-            const res = await fetch(url);
-            if (!res.ok) throw new Error("NETWORK_ERROR");
+            // Используем только прямую ссылку с двойным анти-кэшем
+            const cacheBuster = `?v=${Date.now()}&nocache=${Math.random()}`;
+            const res = await fetch(GITHUB_JSON + cacheBuster);
+
+            if (!res.ok) throw new Error("HTTP_" + res.status);
 
             const files = await res.json();
-            
-            // ВАЖНО: Выводим в консоль, чтобы ты видел реальное кол-во записей
-            console.log("ЗАПИСЕЙ ПОЛУЧЕНО:", files.length); 
+            console.log("ДАННЫЕ ПОЛУЧЕНЫ. ВСЕГО ЗАПИСЕЙ:", files.length);
 
             list.innerHTML = "";
             
-            // Клонируем массив и переворачиваем
-            const displayData = [...files].reverse();
+            // Разворачиваем массив
+            const reversed = [...files].reverse();
 
-            displayData.forEach(file => {
+            reversed.forEach(file => {
                 const locked = myLvl < file.level;
                 const card = document.createElement('div');
                 card.className = `card ${locked ? 'locked' : ''}`;
                 card.innerHTML = `
-                    <div class="card-info">${file.date} | REQ: L${file.level}</div>
-                    <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : file.title}</div>
+                    <div class="card-info">${file.date || '---'} | REQ: L${file.level}</div>
+                    <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (file.title || 'БЕЗ НАЗВАНИЯ')}</div>
                 `;
                 card.onclick = () => {
                     if(locked) alert("ОШИБКА: НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОПУСКА");
@@ -273,8 +270,8 @@ const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/
             });
 
         } catch (e) { 
-            console.error("Critical Sync Error:", e);
-            list.innerHTML = "<div style='color:var(--alert)'>ОШИБКА ДОСТУПА К АРХИВУ.</div>"; 
+            console.error("Archive Error:", e);
+            list.innerHTML = "<div style='color:var(--alert)'>ОШИБКА СИНХРОНИЗАЦИИ. ПРОВЕРЬТЕ КОНСОЛЬ.</div>"; 
         }
     }
 
