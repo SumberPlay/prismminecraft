@@ -236,29 +236,35 @@
         const list = document.getElementById('file-list');
         const myLvl = parseInt(sessionStorage.getItem('p_lvl'));
         
-        list.innerHTML = "<div style='color:var(--dim)'>СИНХРОНИЗАЦИЯ С ОБЛАКОМ...</div>";
+        list.innerHTML = "<div style='color:var(--dim)'>ПОДКЛЮЧЕНИЕ К УЗЛУ...</div>";
         
         try {
-            // Оставляем только параметр времени, это не триггерит CORS
-            const antiCacheUrl = `${GITHUB_JSON}?t=${new Date().getTime()}`;
+            // 1. Используем сразу три метода обхода кэша:
+            // - t: время в мс
+            // - r: случайное число
+            // - cache: "reload" в самом fetch
+            const cacheBuster = `?t=${new Date().getTime()}&r=${Math.random()}`;
             
-            const res = await fetch(antiCacheUrl);
+            const res = await fetch(GITHUB_JSON + cacheBuster, {
+                cache: "reload", 
+                mode: 'cors'
+            });
 
-            if (!res.ok) throw new Error("Сбой загрузки: " + res.status);
+            if (!res.ok) throw new Error("ACCESS_DENIED");
 
             const files = await res.json();
-            
-            if (!Array.isArray(files)) throw new Error("Неверный формат данных");
-
             list.innerHTML = "";
 
-            // Копируем и разворачиваем массив
-            [...files].reverse().forEach(file => {
+            // 2. Сортировка (на всякий случай, если в JSON порядок сбился)
+            // Новые записи обычно в конце массива, поэтому .reverse() обязателен
+            const data = [...files].reverse();
+
+            data.forEach(file => {
                 const locked = myLvl < file.level;
                 const card = document.createElement('div');
                 card.className = `card ${locked ? 'locked' : ''}`;
                 card.innerHTML = `
-                    <div class="card-info">${file.date || 'LOG'} | REQ: L${file.level}</div>
+                    <div class="card-info">${file.date} | REQ: L${file.level}</div>
                     <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : file.title}</div>
                 `;
                 card.onclick = () => {
@@ -268,9 +274,11 @@
                 list.appendChild(card);
             });
 
+            console.log("Архив синхронизирован. Записей:", data.length);
+
         } catch (e) { 
-            console.error("Critical Sync Error:", e);
-            list.innerHTML = `<div style="color:var(--alert)">ОШИБКА СИНХРОНИЗАЦИИ.<br>ПРОВЕРЬТЕ СОЕДИНЕНИЕ ИЛИ JSON.</div>`; 
+            console.error("Sync Error:", e);
+            list.innerHTML = "<div style='color:var(--alert)'>ОШИБКА СИНХРОНИЗАЦИИ. ПОВТОРИТЕ ПОПЫТКУ.</div>"; 
         }
     }
 
