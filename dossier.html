@@ -82,7 +82,6 @@
                 sessionStorage.setItem('prism_user', data.name);
                 sessionStorage.setItem('prism_uid', id);
                 
-                // Лог в ТГ (без ожидания ответа, чтобы не тормозить вход)
                 fetch(`${RENDER_URL}/auth-log`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -106,17 +105,19 @@
         document.body.classList.add('authorized');
 
         try {
+            // Запрашиваем всё сразу
             const res = await fetch(`${RENDER_URL}/get-staff`);
             const db = await res.json();
             const container = document.getElementById('dossier-container');
-            container.innerHTML = ''; // Очистка перед загрузкой
+            container.innerHTML = ''; 
             
-            // Используем Object.entries для более надежного перебора
             for (const [id, p] of Object.entries(db)) {
                 const isLocked = myLevel < p.level;
                 const card = document.createElement('div');
                 card.className = 'player-card';
 
+                // Мы берем p.bio прямо из полученного объекта db, 
+                // так как сервер его уже прислал в /get-staff
                 card.innerHTML = `
                     ${isLocked ? `<div class="lock-text">L${p.level} REQUIRED</div>` : ''}
                     <div class="${isLocked ? 'locked' : ''}" style="display:flex; width:100%;">
@@ -124,37 +125,22 @@
                         <div class="info">
                             <div class="name">${p.name}</div>
                             <div style="font-size:0.7em; color:#00ff00;">ОТДЕЛ: ${p.dept}</div>
-                            <div class="bio" id="bio-${id}">ЗАГРУЗКА...</div>
+                            <div class="bio">
+                                ${isLocked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (p.bio || 'БИОГРАФИЯ ОТСУТСТВУЕТ')}
+                            </div>
                         </div>
                     </div>
                 `;
                 container.appendChild(card);
-
-                // Загружаем био отдельно для каждой карточки
-                if (!isLocked) {
-                    fetch(`${RENDER_URL}/get-bio/${id}`)
-                        .then(r => r.json())
-                        .then(data => {
-                            const bioEl = document.getElementById(`bio-${id}`);
-                            if (bioEl) bioEl.innerText = data.bio;
-                        })
-                        .catch(() => {
-                            const bioEl = document.getElementById(`bio-${id}`);
-                            if (bioEl) bioEl.innerText = "ОШИБКА ЗАГРУЗКИ";
-                        });
-                } else {
-                    document.getElementById(`bio-${id}`).innerText = "[ДАННЫЕ ЗАБЛОКИРОВАНЫ]";
-                }
             }
         } catch (err) {
-            console.error(err);
+            console.error("Render Error:", err);
             document.getElementById('dossier-container').innerHTML = "ОШИБКА ЗАГРУЗКИ ДАННЫХ";
         }
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
 
-    // Используем DOMContentLoaded вместо window.onload для скорости
     document.addEventListener("DOMContentLoaded", () => {
         if (sessionStorage.getItem('prism_level')) {
             renderPage();
@@ -163,4 +149,5 @@
 </script>
 </body>
 </html>
+
 
