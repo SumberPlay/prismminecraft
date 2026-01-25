@@ -111,6 +111,12 @@
 <script>
 const RENDER_API = "https://prism-bot.onrender.com";
 
+// Аудио-настройки сирены
+const alarmSound = new Audio('alarm.mp3');
+alarmSound.loop = true;
+alarmSound.volume = 0.2;
+let isAlarmPlaying = false;
+
 const staffDB = {
     "M4SK": { pass: "5e03fcd2d70a976a6b026374da5da3f9", role: "scientific", level: 3, name: "МэнсиКейн, НИД" },
     "KRMP": { pass: "1bf502b835ee007957e558cbb1959ecb", role: "military", level: 2, name: "Кримпи, глава ВГР" },
@@ -133,6 +139,13 @@ async function syncSystem() {
 
         if (data.state === "RED") {
             document.body.classList.add('alarm-mode');
+            
+            // Если пользователь авторизован — запускаем звук
+            if (sessionStorage.getItem('prism_uid') && !isAlarmPlaying) {
+                alarmSound.play().catch(e => console.log("Sound pending interaction..."));
+                isAlarmPlaying = true;
+            }
+
             if (data.reason) {
                 incidentBox.style.display = "block";
                 incidentReason.innerText = data.reason.toUpperCase();
@@ -140,10 +153,17 @@ async function syncSystem() {
         } else {
             document.body.classList.remove('alarm-mode');
             incidentBox.style.display = "none";
+            
+            // Выключаем звук
+            alarmSound.pause();
+            alarmSound.currentTime = 0;
+            isAlarmPlaying = false;
         }
     } catch (e) {
         document.getElementById('sync-val').innerText = "OFFLINE";
         document.getElementById('sync-val').style.color = "gray";
+        alarmSound.pause();
+        isAlarmPlaying = false;
     }
 }
 
@@ -154,13 +174,18 @@ function checkAuth() {
     const user = staffDB[id];
 
     if (user) {
-        // ЭТА СТРОКА БЫЛА ПРОПУЩЕНА:
         const hashedInput = CryptoJS.MD5(ps).toString(); 
 
         if (user.pass === hashedInput) {
             sessionStorage.setItem('prism_uid', id); 
             sessionStorage.setItem('prism_level', user.level); 
             renderDashboard(user);
+            
+            // Пытаемся включить звук сразу после клика на кнопку "Вход", если уже тревога
+            if (document.body.classList.contains('alarm-mode') && !isAlarmPlaying) {
+                alarmSound.play().catch(() => {});
+                isAlarmPlaying = true;
+            }
         } else { 
             showError(); 
         }
@@ -184,11 +209,9 @@ function renderDashboard(user) {
     const container = document.getElementById('buttons-container');
     container.innerHTML = ""; 
 
-    // Базовые кнопки
     container.innerHTML += '<button class="btn" onclick="nav(\'profile\')">👤 ЛИЧНОЕ ДОСЬЕ</button>';
     container.innerHTML += '<button class="btn" onclick="nav(\'map\')">🗺️ КАРТА КОМПЛЕКСОВ</button>';
 
-    // Ролевые кнопки
     if (user.role === "scientific") {
         container.innerHTML += '<button class="btn" onclick="nav(\'archive\')">📂 АРХИВ АНОМАЛИЙ</button>';
     } 
@@ -202,12 +225,10 @@ function renderDashboard(user) {
     }
 }
 
-// 4. НАВИГАЦИЯ
 function nav(page) {
     window.location.href = page + ".html";
 }
 
-// 5. ОТПРАВКА РАПОРТА
 async function sendReport() {
     const text = document.getElementById('reportText').value.trim();
     const uid = sessionStorage.getItem('prism_uid') || "Unknown";
@@ -257,5 +278,3 @@ window.onload = function() {
 </script>
 </body>
 </html>
-
-
