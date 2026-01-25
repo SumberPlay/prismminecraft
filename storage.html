@@ -190,7 +190,8 @@
 
 <script>
     const API_URL = "https://prism-bot.onrender.com";
-    const GITHUB_JSON = "https://raw.githubusercontent.com/SumberPlay/prismminecraft/main/data/archive.json"; 
+    // Вместо raw.githubusercontent.com используем прокси jsDelivr
+const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/data/archive.json";
 
     async function attemptLogin() {
         const id = document.getElementById('inp-id').value.toUpperCase();
@@ -235,31 +236,23 @@
     async function loadFiles() {
         const list = document.getElementById('file-list');
         const myLvl = parseInt(sessionStorage.getItem('p_lvl'));
-        
-        list.innerHTML = "<div style='color:var(--dim)'>ПОДКЛЮЧЕНИЕ К УЗЛУ...</div>";
+        list.innerHTML = "<div style='color:var(--dim)'>СИНХРОНИЗАЦИЯ С УЗЛОМ...</div>";
         
         try {
-            // 1. Используем сразу три метода обхода кэша:
-            // - t: время в мс
-            // - r: случайное число
-            // - cache: "reload" в самом fetch
-            const cacheBuster = `?t=${new Date().getTime()}&r=${Math.random()}`;
+            // Магия jsDelivr: добавляем метку времени после версии, чтобы пробить кэш
+            const fastUrl = `https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/data/archive.json?v=${new Date().getTime()}`;
             
-            const res = await fetch(GITHUB_JSON + cacheBuster, {
-                cache: "reload", 
-                mode: 'cors'
+            const res = await fetch(fastUrl, {
+                cache: "no-store"
             });
 
-            if (!res.ok) throw new Error("ACCESS_DENIED");
+            if (!res.ok) throw new Error("CDN_ERROR");
 
             const files = await res.json();
+            console.log("ПОЛУЧЕНО ЗАПИСЕЙ:", files.length); // Проверь число в консоли!
+            
             list.innerHTML = "";
-
-            // 2. Сортировка (на всякий случай, если в JSON порядок сбился)
-            // Новые записи обычно в конце массива, поэтому .reverse() обязателен
-            const data = [...files].reverse();
-
-            data.forEach(file => {
+            [...files].reverse().forEach(file => {
                 const locked = myLvl < file.level;
                 const card = document.createElement('div');
                 card.className = `card ${locked ? 'locked' : ''}`;
@@ -267,18 +260,13 @@
                     <div class="card-info">${file.date} | REQ: L${file.level}</div>
                     <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : file.title}</div>
                 `;
-                card.onclick = () => {
-                    if(locked) alert("ОШИБКА: НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОПУСКА");
-                    else openReader(file);
-                };
+                card.onclick = () => locked ? alert("ОТКАЗАНО") : openReader(file);
                 list.appendChild(card);
             });
 
-            console.log("Архив синхронизирован. Записей:", data.length);
-
         } catch (e) { 
             console.error("Sync Error:", e);
-            list.innerHTML = "<div style='color:var(--alert)'>ОШИБКА СИНХРОНИЗАЦИИ. ПОВТОРИТЕ ПОПЫТКУ.</div>"; 
+            list.innerHTML = "<div style='color:var(--alert)'>ОШИБКА СИНХРОНИЗАЦИИ.</div>"; 
         }
     }
 
