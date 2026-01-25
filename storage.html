@@ -236,21 +236,21 @@ const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/
     async function loadFiles() {
         const list = document.getElementById('file-list');
         const myLvl = parseInt(sessionStorage.getItem('p_lvl'));
-        list.innerHTML = "<div style='color:var(--dim)'>СИНХРОНИЗАЦИЯ С УЗЛОМ...</div>";
-        
+        list.innerHTML = "СИНХРОНИЗАЦИЯ...";
+
         try {
-            // Магия jsDelivr: добавляем метку времени после версии, чтобы пробить кэш
-            const fastUrl = `https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/data/archive.json?v=${new Date().getTime()}`;
-            
-            const res = await fetch(fastUrl, {
-                cache: "no-store"
-            });
+            // Мы обращаемся к API GitHub, чтобы узнать SHA последнего коммита. 
+            // Это ГАРАНТИРОВАННО обходит любой кэш.
+            const apiRef = "https://api.github.com/repos/SumberPlay/prismminecraft/commits/main";
+            const commitRes = await fetch(apiRef);
+            const commitData = await commitRes.json();
+            const sha = commitData.sha; // Уникальный ID последнего изменения
 
-            if (!res.ok) throw new Error("CDN_ERROR");
-
+            // Теперь запрашиваем файл, используя SHA как версию
+            const finalUrl = `${GITHUB_JSON}?v=${sha}`;
+            const res = await fetch(finalUrl);
             const files = await res.json();
-            console.log("ПОЛУЧЕНО ЗАПИСЕЙ:", files.length); // Проверь число в консоли!
-            
+
             list.innerHTML = "";
             [...files].reverse().forEach(file => {
                 const locked = myLvl < file.level;
@@ -264,9 +264,11 @@ const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/
                 list.appendChild(card);
             });
 
-        } catch (e) { 
-            console.error("Sync Error:", e);
-            list.innerHTML = "<div style='color:var(--alert)'>ОШИБКА СИНХРОНИЗАЦИИ.</div>"; 
+            console.log("Успешная синхронизация с коммитом:", sha);
+
+        } catch (e) {
+            console.error(e);
+            list.innerHTML = "ОШИБКА СВЯЗИ С ЦЕНТРОМ.";
         }
     }
 
