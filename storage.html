@@ -160,26 +160,39 @@
     </div>
 </div>
 
-<script>
-    const API_URL = "https://prism-bot.onrender.com";
+const API_URL = "https://prism-bot.onrender.com";
     const GITHUB_JSON = "https://raw.githubusercontent.com/SumberPlay/prismminecraft/main/data/archive.json"; 
 
     // 1. АВТОРИЗАЦИЯ СОТРУДНИКА
     async function attemptLogin() {
-    const id = document.getElementById('inp-id').value.toUpperCase();
-    const rawPass = document.getElementById('inp-pass').value;
+        const id = document.getElementById('inp-id').value.toUpperCase();
+        const rawPass = document.getElementById('inp-pass').value;
 
-    if(!id || !rawPass) return alert("ЗАПОЛНИТЕ ВСЕ ПОЛЯ");
+        if(!id || !rawPass) return alert("ЗАПОЛНИТЕ ВСЕ ПОЛЯ");
 
-    // Хешируем введенный пароль в MD5 перед отправкой на сервер
-    const pass = CryptoJS.MD5(rawPass).toString();
+        // Хешируем введенный пароль в MD5
+        const pass = CryptoJS.MD5(rawPass).toString();
 
-    try {
-        const res = await fetch(`${API_URL}/login`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ id, pass }) // Теперь отправляем ХЕШ
-        });
+        try {
+            const res = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, pass })
+            });
+            
+            const data = await res.json();
+            
+            if(data.success) {
+                startSession(data);
+            } else {
+                alert("ОШИБКА: НЕДОПУСТИМАЯ КОМБИНАЦИЯ ID/KEY");
+            }
+        } catch (e) { 
+            console.error(e);
+            alert("КРИТИЧЕСКАЯ ОШИБКА СЕРВЕРА"); 
+        }
+    }
+
     // 2. ГОСТЕВОЙ ВХОД
     function enterAsGuest() {
         startSession({ name: "VISITOR_GUEST", level: 1 });
@@ -201,6 +214,7 @@
         const myLvl = parseInt(sessionStorage.getItem('p_lvl'));
         
         try {
+            // Добавляем ?t=Date.now чтобы избежать кэширования старых записей
             const res = await fetch(`${GITHUB_JSON}?t=${Date.now()}`);
             const files = await res.json();
             list.innerHTML = "";
@@ -219,7 +233,9 @@
                 };
                 list.appendChild(card);
             });
-        } catch (e) { list.innerHTML = "ОШИБКА ПОДКЛЮЧЕНИЯ К АРХИВУ"; }
+        } catch (e) { 
+            list.innerHTML = "ОШИБКА ПОДКЛЮЧЕНИЯ К АРХИВУ. ПРОВЕРЬТЕ JSON НА GITHUB."; 
+        }
     }
 
     // 4. РИДЕР
@@ -244,7 +260,6 @@
     function closeReader() {
         document.getElementById('reader').style.display = 'none';
     }
-</script>
 
 </body>
 </html>
