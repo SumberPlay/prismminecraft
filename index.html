@@ -147,12 +147,12 @@
 
     <div class="grid">
         <div class="card counter-box">
-            ОБЪЕКТОВ ПОД НАБЛЮДЕНИЕМ
-            <span class="counter-num">20</span>
+            ВЕРОЯТНОСТЬ ДЕСТАБИЛИЗАЦИИ
+            <span class="counter-num" id="risk-percent">0.0031%</span>
         </div>
         <div class="card counter-box">
-            ДНЕЙ БЕЗ ПРОРЫВА
-            <span class="counter-num" id="days-count">[BLOCKED]</span>
+            ИНДЕКС РЕЗОНАНСА МИРА
+            <span class="counter-num" id="resonance-index">1.0000</span>
         </div>
     </div>
 
@@ -199,6 +199,37 @@
         }
     }
 
+    function updateSensors() {
+        const riskElem = document.getElementById('risk-percent');
+        const resonanceElem = document.getElementById('resonance-index');
+
+        if (riskElem && resonanceElem) {
+            // Имитируем микродрожание риска (от 0.0025 до 0.0039)
+            const risk = (0.003 + (Math.random() * 0.001)).toFixed(4);
+            riskElem.innerText = `${risk}%`;
+
+            // Имитируем колебания резонанса вокруг 1.0000
+            // При состоянии RED (тревога) можно увеличивать амплитуду
+            const drift = (Math.sin(Date.now() / 2000) * 0.0005);
+            const noise = (Math.random() * 0.0002);
+            const resonance = (1.0000 + drift + noise).toFixed(4);
+            resonanceElem.innerText = resonance;
+
+            // Если статус RED — подсвечиваем цифры красным
+            const status = document.getElementById('status-text').innerText;
+            if (status === "RED" || status === "КРИТИЧЕСКИЙ") {
+                riskElem.style.color = "var(--alert-red)";
+                resonanceElem.style.color = "var(--alert-red)";
+            } else {
+                riskElem.style.color = "var(--neon-green)";
+                resonanceElem.style.color = "var(--neon-green)";
+            }
+        }
+    }
+
+    // Запускаем обновление каждые 150мс для плавности
+    setInterval(updateSensors, 150);
+
     function updateUI(state, label, color) {
         const statusTxt = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
@@ -241,6 +272,7 @@
 </script>
 </body>
 </html>
+
 
 
 
