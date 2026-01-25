@@ -20,14 +20,14 @@
             text-transform: uppercase; font-size: 13px;
         }
 
-        /* CRT Effect */
+        /* Эффект ЭЛТ-монитора */
         body::before { 
             content: " "; position: fixed; inset: 0; 
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); 
             background-size: 100% 4px; pointer-events: none; z-index: 1000; 
         }
 
-        /* Навигация и Контейнер скрыты по умолчанию */
+        /* Навигация и Контейнер скрыты до авторизации */
         nav, .container { display: none; }
         body.authorized nav, body.authorized .container { display: block; }
 
@@ -35,7 +35,7 @@
         nav a { color: #555; text-decoration: none; padding: 0 20px; font-size: 0.85em; transition: 0.3s; }
         nav a:hover { color: var(--neon); }
 
-        /* Окно входа */
+        /* Окно логина */
         #auth-overlay { 
             position: fixed; inset: 0; background: #000; 
             z-index: 5000; display: flex; align-items: center; justify-content: center; 
@@ -50,60 +50,78 @@
             cursor: pointer; width: 100%; font-weight: bold; font-family: inherit; margin-top: 10px;
         }
 
+        /* Контентная часть */
         .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
         .header { 
             border-bottom: 2px solid var(--neon); padding-bottom: 15px; 
-            margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; 
         }
 
-        .dossier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 25px; }
+        .dossier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 30px; }
 
         .player-card { 
             background: var(--panel); border: 1px solid #1a1a1a; 
             display: flex; padding: 25px; position: relative; overflow: hidden;
         }
-        .player-card.is-locked { border-color: #300; background: #050000; }
+        .player-card.is-locked { border-color: #300; background: #080000; }
 
         .photo-frame { 
-            position: relative; width: 100px; height: 100px; 
+            position: relative; width: 110px; height: 110px; 
             border: 1px solid var(--dim); flex-shrink: 0; margin-right: 25px; 
         }
-        .photo { width: 100%; height: 100%; filter: grayscale(1) contrast(1.2); }
+        .photo { width: 100%; height: 100%; filter: grayscale(1) contrast(1.1); display: block; }
 
         .info { flex-grow: 1; }
-        .name { color: var(--neon); font-size: 1.2em; font-weight: bold; margin-bottom: 5px; }
-        .dept-tag { font-size: 0.7em; color: var(--dim); margin-bottom: 12px; }
-        .bio { font-size: 0.85em; line-height: 1.5; color: #666; min-height: 1.5em;}
+        .name { color: var(--neon); font-size: 1.25em; font-weight: bold; margin-bottom: 4px; letter-spacing: 1px; }
+        .dept-tag { font-size: 0.75em; color: var(--dim); margin-bottom: 15px; font-weight: bold; }
+        
+        /* Исправленные отступы и читаемость БИО */
+        .bio { 
+            font-size: 0.9em; 
+            line-height: 1.6; 
+            color: #aaa; 
+            white-space: pre-wrap; /* Сохраняет переносы строк */
+            word-break: break-word;
+            margin-top: 10px;
+            border-top: 1px solid #1a1a1a;
+            padding-top: 10px;
+        }
 
-        .level-badge { position: absolute; top: 10px; right: 10px; font-size: 0.7em; border: 1px solid var(--dim); padding: 2px 6px; }
+        .level-badge { 
+            position: absolute; top: 10px; right: 10px; 
+            font-size: 0.7em; border: 1px solid var(--dim); padding: 2px 8px; color: var(--dim);
+        }
+        .is-locked .level-badge { border-color: var(--alert); color: var(--alert); }
+
         .btn-exit { background: none; border: 1px solid var(--alert); color: var(--alert); cursor: pointer; padding: 8px 15px; font-family: inherit; }
+        .btn-exit:hover { background: var(--alert); color: #000; }
     </style>
 </head>
 <body>
 
 <div id="auth-overlay">
     <div class="login-card">
-        <h2 style="color: var(--neon);">P.R.I.S.M. LOGIN</h2>
+        <h2 style="color: var(--neon); letter-spacing: 2px;">P.R.I.S.M. ACCESS</h2>
         <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
         <input type="password" id="ups" placeholder="КЛЮЧ ДОСТУПА">
         <button class="btn" onclick="tryLogin('admin')">АВТОРИЗАЦИЯ</button>
-        <button class="btn" style="background:none; color:#333;" onclick="tryLogin('guest')">ГОСТЕВОЙ ВХОД</button>
+        <button class="btn" style="background:none; color:#444;" onclick="tryLogin('guest')">ГОСТЕВОЙ ВХОД</button>
     </div>
 </div>
 
 <nav>
-    <a href="index.html">ГЛАВНАЯ</a>
-    <a href="monitoring.html">МОНИТОРИНГ</a>
-    <a href="dossier.html" style="color:var(--neon)">АРХИВ_ДОССЬЕ</a>
+    <a href="index.html">/ ГЛАВНАЯ</a>
+    <a href="monitoring.html">/ МОНИТОРИНГ</a>
+    <a href="dossier.html" style="color:var(--neon)">/ АРХИВ_ДОССЬЕ</a>
 </nav>
 
 <div class="container">
     <div class="header">
         <div>
-            <h1 style="margin:0; font-size: 1.5em; color: var(--neon);">PERSONNEL_DOSSIER</h1>
-            <div style="font-size:0.7em;">OPERATOR: <span id="user-display">---</span></div>
+            <h1 style="margin:0; font-size: 1.6em; color: var(--neon);">PERSONNEL_DOSSIER</h1>
+            <div style="font-size:0.75em; margin-top: 5px;">ACTIVE_OPERATOR: <span id="user-display">---</span></div>
         </div>
-        <button class="btn-exit" onclick="logout()">LOGOUT</button>
+        <button class="btn-exit" onclick="logout()">LOGOUT_SESSION</button>
     </div>
     <div class="dossier-grid" id="dossier-container"></div>
 </div>
@@ -114,12 +132,15 @@
     async function tryLogin(type) {
         if (type === 'guest') {
             sessionStorage.setItem('prism_level', 1);
-            sessionStorage.setItem('prism_user', 'GUEST_USER');
+            sessionStorage.setItem('prism_user', 'GUEST_01');
             location.reload(); return;
         }
 
         const id = document.getElementById('uid').value.toUpperCase().trim();
-        const ps = CryptoJS.MD5(document.getElementById('ups').value).toString();
+        const rawPass = document.getElementById('ups').value;
+        if (!id || !rawPass) return alert("EMPTY_FIELDS");
+        
+        const ps = CryptoJS.MD5(rawPass).toString();
 
         try {
             const res = await fetch(`${RENDER_URL}/login`, {
@@ -135,16 +156,15 @@
                 sessionStorage.setItem('prism_uid', id);
                 location.reload();
             } else {
-                alert("ACCESS_DENIED");
+                alert("ACCESS_DENIED: INVALID_ID_OR_KEY");
             }
-        } catch (e) { alert("CONNECTION_ERROR"); }
+        } catch (e) { alert("TERMINAL_OFFLINE"); }
     }
 
     async function renderPage() {
         const myLevel = parseInt(sessionStorage.getItem('prism_level'));
         if (isNaN(myLevel)) return;
 
-        // Показываем интерфейс
         document.getElementById('auth-overlay').style.display = 'none';
         document.body.classList.add('authorized');
         document.getElementById('user-display').innerText = sessionStorage.getItem('prism_user');
@@ -158,29 +178,33 @@
             for (const [id, p] of Object.entries(db)) {
                 const isLocked = myLevel < p.level;
                 
-                // Фильтрация данных
-                const safeName = isLocked ? "CLASSIFIED" : (p.name || id);
-                const safeDept = isLocked ? "REDACTED" : (p.dept || "---");
-                const safeBio = isLocked ? "ACCESS_DENIED: L" + p.level + " CLEARANCE REQUIRED." : (p.bio || "NO DATA.");
+                // Безопасная фильтрация на уровне логики (не лезет в DOM если нельзя)
+                const safeName = isLocked ? "CLASSIFIED_SUBJECT" : (p.name || id);
+                const safeDept = isLocked ? "REDACTED" : (p.dept || "GENERAL");
+                const safeBio = isLocked ? "ВНИМАНИЕ: Недостаточный уровень допуска.\nТребуется Clearance: L" + p.level : (p.bio || "Данные биографии отсутствуют.");
                 const safeSkin = isLocked ? "Steve" : p.mc_name;
 
                 const card = document.createElement('div');
                 card.className = `player-card ${isLocked ? 'is-locked' : ''}`;
                 card.innerHTML = `
-                    <div class="level-badge">L${p.level}</div>
+                    <div class="level-badge">LEVEL_${p.level}</div>
                     <div class="photo-frame">
-                        <img src="https://minotar.net/armor/bust/${safeSkin}/100.png" class="photo">
+                        <img src="https://minotar.net/armor/bust/${safeSkin}/100.png" class="photo" alt="ID_PHOTO">
                     </div>
                     <div class="info">
                         <div class="name">${safeName}</div>
-                        <div class="dept-tag">DEPT: ${safeDept}</div>
+                        <div class="dept-tag">SECTION: ${safeDept}</div>
                         <div class="bio" id="bio-${id}"></div>
                     </div>
                 `;
                 container.appendChild(card);
+                
+                // Эффект печати с поддержкой переносов строк
                 typeEffect(`bio-${id}`, safeBio);
             }
-        } catch (err) { container.innerHTML = "DATABASE_OFFLINE"; }
+        } catch (err) { 
+            document.getElementById('dossier-container').innerHTML = "CRITICAL_ERROR: DATABASE_SYNC_FAILED"; 
+        }
     }
 
     function typeEffect(id, text) {
@@ -188,13 +212,16 @@
         if (!el) return;
         let i = 0;
         const timer = setInterval(() => {
-            el.innerText += text[i];
+            el.innerText += text.charAt(i); 
             i++;
             if (i >= text.length) clearInterval(timer);
         }, 15);
     }
 
-    function logout() { sessionStorage.clear(); location.reload(); }
+    function logout() { 
+        sessionStorage.clear(); 
+        location.reload(); 
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
         if (sessionStorage.getItem('prism_level')) {
