@@ -273,9 +273,44 @@
     setInterval(syncPrism, 4000);
     syncPrism();
     updateClock();
+
+    const logMessages = [
+    "Установка соединения с RENDER_API...",
+    "Синхронизация локальных баз данных завершена.",
+    "Поток данных: Сектор 04 - Стабилен.",
+    "Обнаружена попытка несанкционированного доступа... Отклонено.",
+    "Протокол P.R.I.S.M. работает в штатном режиме.",
+    "Сканирование подпространственных карманов...",
+    "Обновление метрик резонанса...",
+    "Целостность оболочки: 99.98%"
+];
+
+function addLogLine() {
+    const logContainer = document.getElementById('system-log');
+    if (!logContainer) return;
+
+    const time = new Date().toLocaleTimeString();
+    const msg = logMessages[Math.floor(Math.random() * logMessages.length)];
+    
+    const line = document.createElement('div');
+    line.innerHTML = `<span style="color: #444;">[${time}]</span> > ${msg}`;
+    
+    // Добавляем новую строку сверху
+    logContainer.prepend(line);
+
+    // Удаляем старые строки, чтобы не перегружать страницу
+    if (logContainer.children.length > 5) {
+        logContainer.removeChild(logContainer.lastChild);
+    }
+}
+
+// Добавляем новую строку каждые 3-7 секунд
+setInterval(addLogLine, Math.random() * 4000 + 3000);
+addLogLine(); // Первое сообщение сразу
 </script>
 </body>
 </html>
+
 
 
 
