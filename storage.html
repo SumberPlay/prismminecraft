@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P.R.I.S.M. | СХОД-ХРАНИЛИЩЕ</title>
+    <style>
+        :root {
+            --neon: #00ffcc;
+            --bg: #050505;
+            --dim: #00443a;
+            --alert: #ff4444;
+            --text: #888;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            text-transform: uppercase;
+            overflow-x: hidden;
+        }
+
+        .scanline {
+            width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0;
+            background: linear-gradient(0deg, rgba(0, 255, 204, 0.03) 0%, transparent 50%);
+            background-size: 100% 4px;
+            pointer-events: none; z-index: 1000;
+        }
+
+        .container { max-width: 900px; margin: 50px auto; padding: 20px; }
+
+        .header {
+            border-left: 4px solid var(--neon);
+            padding-left: 20px;
+            margin-bottom: 40px;
+        }
+
+        h1 { color: var(--neon); letter-spacing: 5px; margin: 0; font-size: 1.5em; }
+
+        /* Сетка выбора и файлов */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            border: 1px solid var(--dim);
+            padding: 20px;
+            background: rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            border-color: var(--neon);
+            box-shadow: 0 0 10px var(--dim);
+        }
+
+        .card.locked {
+            opacity: 0.4;
+            border-style: dashed;
+        }
+
+        .card.locked:hover { border-color: var(--alert); }
+
+        .card-name { color: #eee; font-weight: bold; margin-bottom: 5px; }
+        .card-info { font-size: 0.7em; color: var(--dim); }
+
+        /* Окно чтения */
+        #reader {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 2000; padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .reader-wrap { max-width: 700px; margin: 0 auto; }
+        .reader-title { color: var(--neon); font-size: 2em; margin-bottom: 10px; }
+        .reader-meta { font-size: 0.8em; color: var(--dim); margin-bottom: 30px; border-bottom: 1px solid var(--dim); padding-bottom: 10px; }
+        .reader-text { color: #ccc; line-height: 1.6; white-space: pre-wrap; font-size: 1.1em; }
+
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            border: 1px solid var(--neon);
+            color: var(--neon);
+            cursor: pointer;
+            background: none;
+            text-transform: uppercase;
+            font-family: inherit;
+        }
+
+        .btn:hover { background: var(--neon); color: #000; }
+        .btn-guest { border-color: #555; color: #555; margin-top: 40px; }
+    </style>
+</head>
+<body>
+
+<div class="scanline"></div>
+
+<div id="screen-auth" class="container">
+    <div class="header">
+        <h1>IDENT_INTERNAL_NETWORK</h1>
+        <p>ВЫБЕРИТЕ ПРОФИЛЬ ДЛЯ АВТОРИЗАЦИИ</p>
+    </div>
+    <div class="grid" id="auth-list">
+        </div>
+    <button class="btn btn-guest" onclick="enterAsGuest()">[ ВОЙТИ КАК ГОСТЬ (L1) ]</button>
+</div>
+
+<div id="screen-storage" class="container" style="display:none;">
+    <div class="header">
+        <h1>DATA_STORAGE_V4</h1>
+        <p>ОПЕРАТОР: <span id="op-name" style="color:var(--neon)"></span></p>
+    </div>
+    <div class="grid" id="file-list">
+        </div>
+    <button class="btn" onclick="location.reload()" style="margin-top:40px; border-color:var(--alert); color:var(--alert)">[ ВЫХОД ]</button>
+</div>
+
+<div id="reader">
+    <div class="reader-wrap">
+        <div id="r-meta" class="reader-meta"></div>
+        <div id="r-title" class="reader-title"></div>
+        <div id="r-text" class="reader-text"></div>
+        <button class="btn" onclick="closeReader()">[ НАЗАД К СПИСКУ ]</button>
+    </div>
+</div>
+
+<script>
+    const API_URL = "https://prism-bot.onrender.com";
+    // ПРЯМАЯ ССЫЛКА НА ТВОЙ JSON НА GITHUB
+    const GITHUB_JSON = "https://raw.githubusercontent.com/SumberPlay/prismminecraft/main/data/archive.json"; 
+
+    // 1. ЗАГРУЗКА СПИСКА СОТРУДНИКОВ (из твоего playerDB через сервер)
+    async function loadAuth() {
+        try {
+            const res = await fetch(`${API_URL}/get-staff`);
+            const db = await res.json();
+            const list = document.getElementById('auth-list');
+
+            Object.keys(db).forEach(id => {
+                const user = db[id];
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<div class="card-name">${user.name}</div><div class="card-info">${user.dept}</div>`;
+                card.onclick = () => login(id);
+                list.appendChild(card);
+            });
+        } catch (e) {
+            document.getElementById('auth-list').innerHTML = "ОШИБКА СВЯЗИ С ТЕРМИНАЛОМ";
+        }
+    }
+
+    // 2. ЛОГИКА ВХОДА
+    async function login(id) {
+        const pass = prompt("ВВЕДИТЕ КЛЮЧ ДОСТУПА:");
+        if(!pass) return;
+
+        try {
+            const res = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, pass })
+            });
+            const data = await res.json();
+            if(data.success) {
+                startSession(data);
+            } else {
+                alert("ОТКАЗАНО: НЕВЕРНЫЙ КЛЮЧ");
+            }
+        } catch (e) { alert("ОШИБКА СЕРВЕРА"); }
+    }
+
+    function enterAsGuest() {
+        startSession({ name: "GUEST_USER", level: 1, role: "VISITOR" });
+    }
+
+    function startSession(user) {
+        sessionStorage.setItem('p_lvl', user.level);
+        sessionStorage.setItem('p_name', user.name);
+        
+        document.getElementById('screen-auth').style.display = 'none';
+        document.getElementById('screen-storage').style.display = 'block';
+        document.getElementById('op-name').innerText = `${user.name} (LVL_${user.level})`;
+        
+        loadFiles();
+    }
+
+    // 3. ЗАГРУЗКА ФАЙЛОВ
+    async function loadFiles() {
+        const list = document.getElementById('file-list');
+        const myLvl = parseInt(sessionStorage.getItem('p_lvl'));
+        
+        try {
+            const res = await fetch(`${GITHUB_JSON}?t=${Date.now()}`);
+            const files = await res.json();
+            list.innerHTML = "";
+
+            files.reverse().forEach(file => {
+                const locked = myLvl < file.level;
+                const card = document.createElement('div');
+                card.className = `card ${locked ? 'locked' : ''}`;
+                card.innerHTML = `
+                    <div class="card-info">${file.date} | L${file.level}</div>
+                    <div class="card-name">${locked ? 'ДАННЫЕ_ЗАБЛОКИРОВАНЫ' : file.title}</div>
+                `;
+                card.onclick = () => {
+                    if(locked) alert("ОШИБКА: НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОПУСКА");
+                    else openReader(file);
+                };
+                list.appendChild(card);
+            });
+        } catch (e) { list.innerHTML = "ОШИБКА ЧТЕНИЯ АРХИВА"; }
+    }
+
+    // 4. ЧТЕНИЕ
+    function openReader(file) {
+        document.getElementById('reader').style.display = 'block';
+        document.getElementById('r-title').innerText = file.title;
+        document.getElementById('r-meta').innerText = `ID: ${file.id} | DATE: ${file.date} | CLEARANCE: L${file.level}`;
+        
+        // Эффект печати
+        const textEl = document.getElementById('r-text');
+        textEl.innerText = "";
+        let i = 0;
+        function type() {
+            if (i < file.content.length) {
+                textEl.innerText += file.content.charAt(i);
+                i++;
+                setTimeout(type, 15);
+            }
+        }
+        type();
+    }
+
+    function closeReader() {
+        document.getElementById('reader').style.display = 'none';
+    }
+
+    // Старт
+    loadAuth();
+</script>
+
+</body>
+</html>
