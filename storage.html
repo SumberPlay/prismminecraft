@@ -239,29 +239,26 @@
         list.innerHTML = "<div style='color:var(--dim)'>СИНХРОНИЗАЦИЯ С ОБЛАКОМ...</div>";
         
         try {
-            // Генерируем абсолютно уникальный параметр для каждого запроса
-            const antiCache = `?v=${new Date().getTime()}&seed=${Math.random()}`;
+            // Оставляем только параметр времени, это не триггерит CORS
+            const antiCacheUrl = `${GITHUB_JSON}?t=${new Date().getTime()}`;
             
-            const res = await fetch(GITHUB_JSON + antiCache, {
-                cache: "no-store", // Запрещаем сохранять файл в памяти
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
-            });
+            const res = await fetch(antiCacheUrl);
 
-            if (!res.ok) throw new Error("LINK_ERROR");
+            if (!res.ok) throw new Error("Сбой загрузки: " + res.status);
 
             const files = await res.json();
+            
+            if (!Array.isArray(files)) throw new Error("Неверный формат данных");
+
             list.innerHTML = "";
 
-            // Переворачиваем, чтобы новые (ID с большими числами) были вверху
+            // Копируем и разворачиваем массив
             [...files].reverse().forEach(file => {
                 const locked = myLvl < file.level;
                 const card = document.createElement('div');
                 card.className = `card ${locked ? 'locked' : ''}`;
                 card.innerHTML = `
-                    <div class="card-info">${file.date} | REQ: L${file.level}</div>
+                    <div class="card-info">${file.date || 'LOG'} | REQ: L${file.level}</div>
                     <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : file.title}</div>
                 `;
                 card.onclick = () => {
@@ -273,7 +270,7 @@
 
         } catch (e) { 
             console.error("Critical Sync Error:", e);
-            list.innerHTML = "ОШИБКА: НЕ УДАЛОСЬ ПОЛУЧИТЬ ОБНОВЛЕНИЯ АРХИВА."; 
+            list.innerHTML = `<div style="color:var(--alert)">ОШИБКА СИНХРОНИЗАЦИИ.<br>ПРОВЕРЬТЕ СОЕДИНЕНИЕ ИЛИ JSON.</div>`; 
         }
     }
 
