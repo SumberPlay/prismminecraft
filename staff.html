@@ -66,24 +66,23 @@
         @keyframes flash { 0% { border-color: var(--alert-red); } 50% { border-color: transparent; } 100% { border-color: var(--alert-red); } }
 
         .ascii-art { font-size: 8px; line-height: 1; white-space: pre; margin-bottom: 30px; color: var(--term-green); text-shadow: 0 0 5px var(--term-green); }
-        #reportStatus { font-size: 0.8em; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <nav>
     <a href="index.html">ГЛАВНАЯ_ДИРЕКТОРИЯ</a>
-    <a href="archive.html">ДОСТУП_К_АРХИВУ</a>
+    <a href="dossier.html">ЛИЧНЫЕ_ДЕЛА</a>
 </nav>
 
 <div class="container">
     <div id="system-status-indicator" style="font-size: 0.7em; opacity: 0.6; margin-bottom: 10px;">
-        СТАТУС_СВЯЗИ: <span id="sync-val">СИНХРОНИЗАЦИЯ...</span>
+        СТАТУС_СВЯЗИ: <span id="sync-val">ПОДКЛЮЧЕНИЕ...</span>
     </div>
 
     <div id="login-zone">
         <div class="ascii-art">
- ██████╗ ██████╗ ██╗███████╗███╗   ███╗
+ ██████╗ ██████╗ ██╗███████╗███╗    ███╗
  ██╔══██╗██╔══██╗██║██╔════╝████╗ ████║
  ██████╔╝██████╔╝██║███████╗██╔████╔██║
  ██╔═══╝ ██╔══██╗██║╚════██║██║╚██╔╝██║
@@ -123,32 +122,24 @@
 
 <script>
 const RENDER_API = "https://prism-bot.onrender.com";
-const alarmSound = new Audio('alarm.mp3');
-alarmSound.loop = true;
-let isAlarmPlaying = false;
+let staffDB = {};
 
-const staffDB = {
-    "M4SK": { pass: "5e03fcd2d70a976a6b026374da5da3f9", role: "scientific", level: 3, name: "МЭНСИ_КЕЙН, НИД" },
-    "KRMP": { pass: "1bf502b835ee007957e558cbb1959ecb", role: "military", level: 2, name: "КРИМПИ, ГЛАВА_ВГР" },
-    "SUMBR": { pass: "8aaa688aadaf78796f5f620a4897eeb3", role: "council", level: 5, name: "САМБЕР, СОВЕТ_PRISM" },
-    "MRYZE": { pass: "b0eee0a274f64e6f5792b85c93321159", role: "council", level: 5, name: "МР_ЮЗ, СОВЕТ_PRISM" }
-};
-
-function typeText(elementId, text, speed = 50, callback) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-    element.innerText = "";
-    let i = 0;
-    function type() {
-        if (i < text.length) {
-            element.innerText += text.charAt(i);
-            i++;
-            setTimeout(type, speed);
-        } else if (callback) {
-            callback();
+// 1. Инициализация терминала и загрузка базы
+async function initTerminal() {
+    try {
+        const response = await fetch(`${RENDER_API}/get-staff`);
+        staffDB = await response.json();
+        document.getElementById('sync-val').innerText = "ONLINE";
+        
+        // Проверка, если уже залогинены
+        const savedUID = sessionStorage.getItem('prism_uid');
+        if (savedUID && staffDB[savedUID]) {
+            renderDashboard(staffDB[savedUID]);
         }
+    } catch (e) {
+        document.getElementById('sync-val').innerText = "OFFLINE (ОШИБКА БАЗЫ)";
+        document.getElementById('sync-val').style.color = "var(--alert-red)";
     }
-    type();
 }
 
 async function syncSystem() {
@@ -156,15 +147,13 @@ async function syncSystem() {
         const response = await fetch(`${RENDER_API}/status`);
         const data = await response.json();
         const syncVal = document.getElementById('sync-val');
-        syncVal.innerText = data.label;
-        syncVal.style.color = data.color;
+        if(syncVal) {
+            syncVal.innerText = data.label;
+            syncVal.style.color = data.color;
+        }
 
         if (data.state === "RED") {
             document.body.style.color = "var(--alert-red)";
-            if (sessionStorage.getItem('prism_uid') && !isAlarmPlaying) {
-                alarmSound.play().catch(()=>{});
-                isAlarmPlaying = true;
-            }
             if (data.reason) {
                 document.getElementById('incident-box').style.display = "block";
                 document.getElementById('incident-reason').innerText = data.reason.toUpperCase();
@@ -172,11 +161,9 @@ async function syncSystem() {
         } else {
             document.body.style.color = "var(--term-green)";
             document.getElementById('incident-box').style.display = "none";
-            alarmSound.pause();
-            isAlarmPlaying = false;
         }
-    } catch (e) {
-        document.getElementById('sync-val').innerText = "СВЯЗЬ_ПОТЕРЯНА";
+    } catch (e) { 
+        document.getElementById('sync-val').innerText = "СВЯЗЬ_ПОТЕРЯНА"; 
     }
 }
 
@@ -186,9 +173,16 @@ function checkAuth() {
     const user = staffDB[id];
 
     if (user && CryptoJS.MD5(ps).toString() === user.pass) {
-        // СОХРАНЯЕМ ДАННЫЕ В СЕССИЮ
         sessionStorage.setItem('prism_uid', id);
-        sessionStorage.setItem('prism_level', user.level); // Ключевая строка для Архива!
+        sessionStorage.setItem('prism_level', user.level);
+        
+        // Отчет боту
+        fetch(`${RENDER_API}/auth-log`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, name: user.name, level: user.level })
+        });
+
         renderDashboard(user);
     } else {
         document.getElementById('err').style.display = 'block';
@@ -201,7 +195,7 @@ function renderDashboard(user) {
     document.getElementById('staff-content').style.display = 'block';
     document.getElementById('user-role').innerText = `ДОПУСК: УРОВЕНЬ_${user.level} // РОЛЬ: ${user.role.toUpperCase()}`;
     
-    typeText('greet', `ДОБРО_ПОЖАЛОВАТЬ: ${user.name}`, 40);
+    document.getElementById('greet').innerText = `ДОБРО_ПОЖАЛОВАТЬ: ${user.name}`;
 
     const container = document.getElementById('buttons-container');
     container.innerHTML = "";
@@ -255,17 +249,11 @@ function logout() {
     location.reload();
 }
 
-setInterval(syncSystem, 4000);
-syncSystem();
-
-window.onload = function() {
-    const savedUID = sessionStorage.getItem('prism_uid');
-    if (savedUID && staffDB[savedUID]) {
-        // Убеждаемся, что уровень тоже в сессии при обновлении
-        sessionStorage.setItem('prism_level', staffDB[savedUID].level);
-        renderDashboard(staffDB[savedUID]);
-    }
-};
+// Запуск
+document.addEventListener("DOMContentLoaded", () => {
+    initTerminal();
+    setInterval(syncSystem, 5000);
+});
 </script>
 </body>
 </html>
