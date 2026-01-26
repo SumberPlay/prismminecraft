@@ -7,10 +7,10 @@
     <style>
         :root { 
             --neon: #00ffcc; 
-            --bg: #050505; 
             --alert: #ff4444; 
-            --dim: #00443a;
-            --panel: #0a0a0a;
+            --bg: #050505; 
+            --panel: rgba(10, 15, 15, 0.95);
+            --border: #1a3a3a;
         }
 
         * { box-sizing: border-box; }
@@ -18,109 +18,147 @@
             background: var(--bg); color: #888; 
             font-family: 'Courier New', monospace; margin: 0; 
             text-transform: uppercase; font-size: 13px;
+            overflow-x: hidden;
         }
 
-        /* Эффект ЭЛТ-монитора */
-        body::before { 
-            content: " "; position: fixed; inset: 0; 
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); 
-            background-size: 100% 4px; pointer-events: none; z-index: 1000; 
+        /* Фоновая сетка и эффекты как на главной */
+        body::before {
+            content: ""; position: fixed; inset: 0;
+            background-image: linear-gradient(var(--border) 1px, transparent 1px),
+                              linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px; opacity: 0.05; z-index: -1;
         }
 
-        /* Навигация и Контейнер скрыты до авторизации */
-        nav, .container { display: none; }
+        .overlay {
+            position: fixed; inset: 0;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, transparent 2px);
+            pointer-events: none; z-index: 1000;
+        }
+
+        .scanline {
+            position: fixed; top: 0; left: 0; width: 100%; height: 4px;
+            background: rgba(0, 255, 204, 0.05); z-index: 1001;
+            pointer-events: none; animation: scan 8s linear infinite;
+        }
+
+        @keyframes scan { from { top: -5%; } to { top: 105%; } }
+
+        /* Навигация */
+        nav { 
+            background: rgba(0,0,0,0.9); padding: 20px; 
+            border-bottom: 1px solid var(--border); text-align: center;
+            display: none; /* Скрыто до авторизации */
+        }
+        nav a { color: #555; text-decoration: none; padding: 0 25px; letter-spacing: 2px; transition: 0.3s; }
+        nav a:hover, nav a.active { color: var(--neon); text-shadow: 0 0 10px var(--neon); }
+
         body.authorized nav, body.authorized .container { display: block; }
 
-        nav { background: #000; padding: 15px; border-bottom: 1px solid var(--dim); text-align: center; }
-        nav a { color: #555; text-decoration: none; padding: 0 20px; font-size: 0.85em; transition: 0.3s; }
-        nav a:hover { color: var(--neon); }
-
-        /* Окно логина */
+        /* Окно авторизации */
         #auth-overlay { 
-            position: fixed; inset: 0; background: #000; 
+            position: fixed; inset: 0; background: var(--bg); 
             z-index: 5000; display: flex; align-items: center; justify-content: center; 
         }
-        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 350px; }
+        .login-card { 
+            border: 1px solid var(--neon); padding: 40px; background: #000; 
+            text-align: center; width: 400px; position: relative;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.1);
+        }
+        /* Декоративные уголки для логина */
+        .login-card::before { content: ""; position: absolute; top: -2px; left: -2px; width: 20px; height: 20px; border-top: 2px solid var(--neon); border-left: 2px solid var(--neon); }
+        .login-card::after { content: ""; position: absolute; bottom: -2px; right: -2px; width: 20px; height: 20px; border-bottom: 2px solid var(--neon); border-right: 2px solid var(--neon); }
+
         input { 
-            background: #000; border: 1px solid #222; color: var(--neon); 
-            padding: 12px; margin: 10px 0; width: 100%; outline: none; font-family: inherit; 
+            background: rgba(0, 255, 204, 0.05); border: 1px solid var(--border); 
+            color: var(--neon); padding: 15px; margin: 10px 0; width: 100%; 
+            outline: none; font-family: inherit; letter-spacing: 2px;
         }
+
         .btn { 
-            background: var(--neon); color: #000; border: none; padding: 12px; 
-            cursor: pointer; width: 100%; font-weight: bold; font-family: inherit; margin-top: 10px;
+            background: rgba(0, 255, 204, 0.1); color: var(--neon); border: 1px solid var(--neon); 
+            padding: 15px; cursor: pointer; width: 100%; font-weight: bold; 
+            font-family: inherit; margin-top: 15px; transition: 0.3s;
+        }
+        .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 20px var(--neon); }
+
+        /* Сетка Досье */
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: none; }
+        
+        .header-panel { 
+            border: 1px solid var(--border); padding: 30px; 
+            background: rgba(0, 255, 204, 0.02); margin-bottom: 40px;
+            display: flex; justify-content: space-between; align-items: center;
         }
 
-        /* Контентная часть */
-        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
-        .header { 
-            border-bottom: 2px solid var(--neon); padding-bottom: 15px; 
-            margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; 
-        }
-
-        .dossier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 30px; }
+        .dossier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 30px; }
 
         .player-card { 
-            background: var(--panel); border: 1px solid #1a1a1a; 
-            display: flex; padding: 25px; position: relative; overflow: hidden;
+            background: var(--panel); border: 1px solid var(--border); 
+            display: flex; padding: 30px; position: relative; transition: 0.3s;
         }
-        .player-card.is-locked { border-color: #300; background: #080000; }
+        .player-card:hover { border-color: var(--neon); box-shadow: inset 0 0 15px rgba(0, 255, 204, 0.05); }
+        
+        .player-card::before { content: ""; position: absolute; top: 0; left: 0; width: 10px; height: 10px; border-top: 2px solid var(--neon); border-left: 2px solid var(--neon); opacity: 0; transition: 0.3s; }
+        .player-card:hover::before { opacity: 1; }
+
+        .player-card.is-locked { border-color: #311; background: rgba(50, 0, 0, 0.1); }
+        .player-card.is-locked:hover { border-color: var(--alert); }
 
         .photo-frame { 
-            position: relative; width: 110px; height: 110px; 
-            border: 1px solid var(--dim); flex-shrink: 0; margin-right: 25px; 
+            width: 130px; height: 130px; border: 1px solid var(--border); 
+            padding: 5px; background: #000; flex-shrink: 0; margin-right: 30px;
         }
-        .photo { width: 100%; height: 100%; filter: grayscale(1) contrast(1.1); display: block; }
+        .photo { width: 100%; height: 100%; filter: grayscale(1) sepia(0.5) brightness(0.8); }
+        .is-locked .photo { filter: blur(5px) grayscale(1); }
 
         .info { flex-grow: 1; }
-        .name { color: var(--neon); font-size: 1.25em; font-weight: bold; margin-bottom: 4px; letter-spacing: 1px; }
-        .dept-tag { font-size: 0.75em; color: var(--dim); margin-bottom: 15px; font-weight: bold; }
+        .name { color: var(--neon); font-size: 1.4em; font-weight: bold; margin-bottom: 5px; letter-spacing: 2px; }
+        .dept-tag { font-size: 0.8em; color: #555; margin-bottom: 15px; }
         
-        /* Исправленные отступы и читаемость БИО */
         .bio { 
-            font-size: 0.9em; 
-            line-height: 1.6; 
-            color: #aaa; 
-            white-space: pre-wrap; /* Сохраняет переносы строк */
-            word-break: break-word;
-            margin-top: 10px;
-            border-top: 1px solid #1a1a1a;
-            padding-top: 10px;
+            font-size: 0.9em; line-height: 1.5; color: #aaa; 
+            white-space: pre-wrap; border-top: 1px solid var(--border); padding-top: 15px;
         }
 
         .level-badge { 
-            position: absolute; top: 10px; right: 10px; 
-            font-size: 0.7em; border: 1px solid var(--dim); padding: 2px 8px; color: var(--dim);
+            position: absolute; top: 15px; right: 15px; 
+            font-size: 0.7em; border: 1px solid var(--border); padding: 3px 10px;
         }
-        .is-locked .level-badge { border-color: var(--alert); color: var(--alert); }
+        .is-locked .level-badge { color: var(--alert); border-color: var(--alert); animation: pulse 2s infinite; }
 
-        .btn-exit { background: none; border: 1px solid var(--alert); color: var(--alert); cursor: pointer; padding: 8px 15px; font-family: inherit; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .btn-exit { background: none; border: 1px solid var(--alert); color: var(--alert); cursor: pointer; padding: 10px 20px; font-family: inherit; transition: 0.3s; }
         .btn-exit:hover { background: var(--alert); color: #000; }
     </style>
 </head>
 <body>
 
+<div class="overlay"></div>
+<div class="scanline"></div>
+
 <div id="auth-overlay">
     <div class="login-card">
-        <h2 style="color: var(--neon); letter-spacing: 2px;">P.R.I.S.M. ACCESS</h2>
-        <input type="text" id="uid" placeholder="ID СОТРУДНИКА">
-        <input type="password" id="ups" placeholder="КЛЮЧ ДОСТУПА">
-        <button class="btn" onclick="tryLogin('admin')">АВТОРИЗАЦИЯ</button>
-        <button class="btn" style="background:none; color:#444;" onclick="tryLogin('guest')">ГОСТЕВОЙ ВХОД</button>
+        <h2 style="color: var(--neon); letter-spacing: 5px; margin-bottom: 30px;">PRISM_DECRYPTOR</h2>
+        <input type="text" id="uid" placeholder="IDENTIFICATION_ID">
+        <input type="password" id="ups" placeholder="SECURITY_KEY">
+        <button class="btn" onclick="tryLogin('admin')">ESTABLISH_CONNECTION</button>
+        <button class="btn" style="border-color:#333; color:#444; background:none;" onclick="tryLogin('guest')">GUEST_LINK</button>
     </div>
 </div>
 
-<nav>
-    <a href="index.html">/ ГЛАВНАЯ</a>
-    <a href="dossier.html" style="color:var(--neon)">/ АРХИВ_ДОССЬЕ</a>
+<nav id="top-nav">
+    <a href="index.html">/ MAIN_TERMINAL</a>
+    <a href="dossier.html" class="active">/ PERSONNEL_ARCHIVE</a>
 </nav>
 
 <div class="container">
-    <div class="header">
+    <div class="header-panel">
         <div>
-            <h1 style="margin:0; font-size: 1.6em; color: var(--neon);">PERSONNEL_DOSSIER</h1>
-            <div style="font-size:0.75em; margin-top: 5px;">ACTIVE_OPERATOR: <span id="user-display">---</span></div>
+            <h1 style="margin:0; font-size: 1.8em; color: var(--neon); letter-spacing: 4px;">DOSSIER_DATABASE</h1>
+            <div style="font-size:0.7em; margin-top: 8px; color: #555;">OPERATOR: <span id="user-display" style="color: var(--neon);">---</span></div>
         </div>
-        <button class="btn-exit" onclick="logout()">LOGOUT_SESSION</button>
+        <button class="btn-exit" onclick="logout()">TERMINATE_SESSION</button>
     </div>
     <div class="dossier-grid" id="dossier-container"></div>
 </div>
@@ -131,13 +169,13 @@
     async function tryLogin(type) {
         if (type === 'guest') {
             sessionStorage.setItem('prism_level', 1);
-            sessionStorage.setItem('prism_user', 'GUEST_01');
+            sessionStorage.setItem('prism_user', 'VISITOR_99');
             location.reload(); return;
         }
 
         const id = document.getElementById('uid').value.toUpperCase().trim();
         const rawPass = document.getElementById('ups').value;
-        if (!id || !rawPass) return alert("EMPTY_FIELDS");
+        if (!id || !rawPass) return;
         
         const ps = CryptoJS.MD5(rawPass).toString();
 
@@ -152,12 +190,11 @@
                 const data = await res.json();
                 sessionStorage.setItem('prism_level', data.level);
                 sessionStorage.setItem('prism_user', data.name);
-                sessionStorage.setItem('prism_uid', id);
                 location.reload();
             } else {
-                alert("ACCESS_DENIED: INVALID_ID_OR_KEY");
+                alert("ERR: AUTH_FAILED");
             }
-        } catch (e) { alert("TERMINAL_OFFLINE"); }
+        } catch (e) { alert("ERR: SERVER_OFFLINE"); }
     }
 
     async function renderPage() {
@@ -166,6 +203,7 @@
 
         document.getElementById('auth-overlay').style.display = 'none';
         document.body.classList.add('authorized');
+        document.getElementById('top-nav').style.display = 'block';
         document.getElementById('user-display').innerText = sessionStorage.getItem('prism_user');
 
         try {
@@ -177,32 +215,29 @@
             for (const [id, p] of Object.entries(db)) {
                 const isLocked = myLevel < p.level;
                 
-                // Безопасная фильтрация на уровне логики (не лезет в DOM если нельзя)
-                const safeName = isLocked ? "CLASSIFIED_SUBJECT" : (p.name || id);
-                const safeDept = isLocked ? "REDACTED" : (p.dept || "GENERAL");
-                const safeBio = isLocked ? "ВНИМАНИЕ: Недостаточный уровень допуска.\nТребуется Clearance: L" + p.level : (p.bio || "Данные биографии отсутствуют.");
+                const safeName = isLocked ? "CLASSIFIED" : (p.name || id);
+                const safeDept = isLocked ? "REDACTED" : (p.dept || "GENERAL_UNIT");
+                const safeBio = isLocked ? "ACCESS_DENIED. CLEARANCE_LEVEL_L" + p.level + "_REQUIRED." : (p.bio || "NO_DATA_FOUND");
                 const safeSkin = isLocked ? "Steve" : p.mc_name;
 
                 const card = document.createElement('div');
                 card.className = `player-card ${isLocked ? 'is-locked' : ''}`;
                 card.innerHTML = `
-                    <div class="level-badge">LEVEL_${p.level}</div>
+                    <div class="level-badge">L${p.level}_CLEARANCE</div>
                     <div class="photo-frame">
-                        <img src="https://minotar.net/armor/bust/${safeSkin}/100.png" class="photo" alt="ID_PHOTO">
+                        <img src="https://minotar.net/armor/bust/${safeSkin}/120.png" class="photo" alt="DATA_IMG">
                     </div>
                     <div class="info">
                         <div class="name">${safeName}</div>
-                        <div class="dept-tag">SECTION: ${safeDept}</div>
+                        <div class="dept-tag">// SECTOR: ${safeDept}</div>
                         <div class="bio" id="bio-${id}"></div>
                     </div>
                 `;
                 container.appendChild(card);
-                
-                // Эффект печати с поддержкой переносов строк
                 typeEffect(`bio-${id}`, safeBio);
             }
         } catch (err) { 
-            document.getElementById('dossier-container').innerHTML = "CRITICAL_ERROR: DATABASE_SYNC_FAILED"; 
+            container.innerHTML = "CRITICAL_ERROR: DATA_STREAM_INTERRUPTED"; 
         }
     }
 
@@ -214,20 +249,14 @@
             el.innerText += text.charAt(i); 
             i++;
             if (i >= text.length) clearInterval(timer);
-        }, 15);
+        }, 10);
     }
 
-    function logout() { 
-        sessionStorage.clear(); 
-        location.reload(); 
-    }
+    function logout() { sessionStorage.clear(); location.reload(); }
 
     document.addEventListener("DOMContentLoaded", () => {
-        if (sessionStorage.getItem('prism_level')) {
-            renderPage();
-        }
+        if (sessionStorage.getItem('prism_level')) renderPage();
     });
 </script>
 </body>
 </html>
-
