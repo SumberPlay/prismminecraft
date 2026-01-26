@@ -77,9 +77,9 @@
 <script>
     const RENDER_API = "https://prism-bot.onrender.com";
     let staffDB = {};
+    let mcOnlinePlayers = []; // Массив для хранения ников с сервера
 
     async function init() {
-        // Проверка допуска
         const level = sessionStorage.getItem('prism_level');
         if (!level || parseInt(level) < 5) {
             document.body.innerHTML = "<h1 style='color:red; padding:50px;'>ACCESS_DENIED // INSUFFICIENT_LEVEL</h1>";
@@ -88,9 +88,19 @@
         }
 
         try {
-            // ИЗМЕНЕНО: теперь стучимся в специальный эндпоинт для админов
-            const res = await fetch(`${RENDER_API}/get-admin-staff`);
-            staffDB = await res.json();
+            // Запрашиваем данные сотрудников и статус сервера одновременно
+            const [staffRes, mcRes] = await Promise.all([
+                fetch(`${RENDER_API}/get-admin-staff`),
+                fetch(`${RENDER_API}/mc-status`).catch(() => null) // Если упадет, не ломаем всё
+            ]);
+
+            staffDB = await staffRes.json();
+            
+            if (mcRes) {
+                const mcData = await mcRes.json();
+                mcOnlinePlayers = mcData.onlinePlayers || [];
+            }
+
             renderList();
         } catch (e) {
             document.getElementById('staff-list').innerText = "ОШИБКА_СВЯЗИ_С_СЕРВЕРОМ";
@@ -102,9 +112,15 @@
         list.innerHTML = '<div class="dim-text" style="margin-bottom:15px;">РЕЕСТР_СОТРУДНИКОВ:</div>';
         
         Object.keys(staffDB).forEach(id => {
+            const user = staffDB[id];
+            const isOnline = mcOnlinePlayers.includes(user.mc_name); // Проверка ника
+            
             const item = document.createElement('div');
             item.className = 'staff-item';
-            item.innerHTML = `[ID: ${id}] ${staffDB[id].name}`;
+            // Добавляем индикатор в список слева
+            const statusMarker = isOnline ? `<span style="color:var(--term-green)">[ON]</span> ` : `<span style="color:var(--term-dim)">[--]</span> `;
+            
+            item.innerHTML = `${statusMarker}[ID: ${id}] ${user.name}`;
             item.onclick = () => showDossier(id, item);
             list.appendChild(item);
         });
@@ -117,10 +133,18 @@
         const user = staffDB[id];
         const terminal = document.getElementById('terminal-content');
         
+        // Проверяем онлайн статус конкретно для этого досье
+        const isOnline = mcOnlinePlayers.includes(user.mc_name);
+        const onlineStatusText = isOnline 
+            ? `<span style="color:var(--term-green); font-weight:bold;">В_СЕТИ (MINECRAFT_SERVER)</span>` 
+            : `<span style="color:var(--term-dim)">ВНЕ_СЕТИ</span>`;
+
         terminal.innerHTML = `<div class="output-line">ЗАПРОС ДАННЫХ: СОТРУДНИК_${id}...</div>`;
         
         const lines = [
             `> ИМЯ: ${user.name || 'UNKNOWN'}`,
+            `> MC_НИК: ${user.mc_name || 'NOT_LINKED'}`,
+            `> ТЕКУЩИЙ_СТАТУС: ${onlineStatusText}`, // Новая строка со статусом
             `> ДОПУСКА_УРОВЕНЬ: L${user.level || '0'}`,
             `> ПОДРАЗДЕЛЕНИЕ: ${user.dept || 'ОТДЕЛ_НЕ_УКАЗАН'}`,
             `> РОЛЬ_В_СИСТЕМЕ: ${user.role || 'GUEST'}`,
@@ -140,11 +164,13 @@
                 lineDiv.innerHTML = lines[i];
                 terminal.appendChild(lineDiv);
                 i++;
-                setTimeout(printNextLine, 80); // Чуть быстрее печать
+                setTimeout(printNextLine, 50); 
             } else {
                 const cursor = document.createElement('span');
                 cursor.className = 'cursor';
                 terminal.appendChild(cursor);
+                // Авто-скролл вниз при печати
+                document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
             }
         }
         
@@ -152,6 +178,26 @@
     }
 
     document.addEventListener("DOMContentLoaded", init);
+    // Функция для фонового обновления данных о сервере
+async function refreshMCStatus() {
+    try {
+        const mcRes = await fetch(`${RENDER_API}/mc-status`);
+        if (mcRes.ok) {
+            const mcData = await mcRes.json();
+            mcOnlinePlayers = mcData.onlinePlayers || [];
+            
+            // Перерисовываем список слева, чтобы обновить индикаторы [ON] / [--]
+            renderList();
+            
+            console.log("MC Status Updated:", mcOnlinePlayers);
+        }
+    } catch (e) {
+        console.error("Ошибка авто-обновления MC:", e);
+    }
+}
+
+// Запускаем цикл обновления раз в 30 секунд
+setInterval(refreshMCStatus, 30000);
 </script>
 
 </body>
