@@ -74,14 +74,19 @@
         background: transparent; border: 1px solid var(--neon); color: var(--neon);
         padding: 8px; margin: 5px 10px; cursor: pointer; text-align: left;
         font-family: 'Courier New', monospace; font-size: 0.8em;
+        transition: 0.2s;
     }
     .cmd-btn:hover { background: var(--neon); color: #000; }
 
     .stat-row { padding: 8px 10px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--dim); }
     
-    @keyframes sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes blink { 50% { opacity: 0; } }
+    /* Окно терминала взлома */
+    #shell-overlay {
+        display: none; position: fixed; inset: 0; 
+        background: rgba(0,0,0,0.95); z-index: 2000; padding: 40px;
+    }
 
+    @keyframes sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     #log-stream { padding: 10px; font-size: 0.75em; color: #008877; line-height: 1.4; }
     </style>
 </head>
@@ -89,13 +94,23 @@
 
 <div class="crt-overlay"></div>
 
+<div id="shell-overlay">
+    <div class="window" style="height: 100%; border-color: var(--neon);">
+        <div class="win-header">
+            <span>REMOTE_SHELL_V3</span>
+            <span onclick="closeShell()" style="cursor:pointer; padding: 0 10px; background: var(--alert); color: #000;">[EXIT]</span>
+        </div>
+        <div id="shell-output" style="padding: 20px; color: var(--neon); font-size: 1.2em; overflow-y: auto; height: 100%; white-space: pre-wrap;"></div>
+    </div>
+</div>
+
 <div class="app-grid">
     <header class="header">
-        <div>[ P.R.I.S.M. INTEL_LINK v4.2 ]</div>
+        <div>[ P.R.I.S.M. INTEL_LINK v4.5 ]</div>
         <div id="sys-clock">00:00:00</div>
         <nav class="nav-links">
             <a href="index.html">/HOME</a>
-            <a href="staff.html">/ROOT</a>
+            <a href="dossier.html">/ARCHIVE</a>
         </nav>
     </header>
 
@@ -103,10 +118,10 @@
         <div class="win-header"><span>SYSTEM_INTEGRITY</span></div>
         <div class="stat-row"><span>CPU_USAGE</span><span id="cpu-load">12%</span></div>
         <div class="stat-row"><span>NET_LINK</span><span id="net-status">STABLE</span></div>
-        <div class="stat-row"><span>ENTROPY</span><span>0.0004</span></div>
+        <div class="stat-row"><span>ENTROPY</span><span id="entropy-val">0.0004</span></div>
         <div style="padding: 15px;">
             <div style="font-size: 0.7em; margin-bottom: 10px;">> QUICK_ACTIONS:</div>
-            <button class="cmd-btn" style="width: 90%;" onclick="addLogLine('SCANNING FOR BREACHES...')">SCAN_SECTORS</button>
+            <button class="cmd-btn" style="width: 90%;" onclick="scanSectors()">SCAN_SECTORS</button>
             <button class="cmd-btn" style="width: 90%;" onclick="location.reload()">REFRESH_OS</button>
         </div>
     </aside>
@@ -140,14 +155,12 @@
     </footer>
 </div>
 
-
-
 <script>
     const RENDER_API = "https://prism-bot.onrender.com";
     
     const nodeData = {
         v1: { title: "ALPHA-M V1", loc: "KURAMPA_SEC_02", status: "DISCONNECTED", desc: "Связь потеряна в 2024 году. Последний отчет: зафиксировано полное смещение реальности в радиусе 50м.", color: "#444" },
-        v2: { title: "ALPHA-M V2", loc: "KURAMPA_SEC_03", status: "ABANDONED", desc: "Доступ был утерян после инцидента с Объектом #001..", color: "#444" },
+        v2: { title: "ALPHA-M V2", loc: "KURAMPA_SEC_03", status: "ABANDONED", desc: "Доступ был утерян после инцидента с Объектом #001.", color: "#444" },
         v22: { title: "ALPHA-M V2.2", loc: "KURAMPA_SEC_03", status: "ABANDONED", desc: "Доступ утерян по причине, аналогичной с ALPHA-M V2.", color: "#444" },
         v3: { title: "ALPHA-M V3", loc: "BLINK_BASE_MC", status: "ACTIVE", desc: "Текущий операционный центр. Уровень защиты: МАКСИМАЛЬНЫЙ.", color: "var(--neon)" }
     };
@@ -156,9 +169,8 @@
         const data = nodeData[id];
         const panel = document.getElementById('details-panel');
         
-        // Визуальное выделение
         document.querySelectorAll('.point').forEach(p => p.classList.remove('selected'));
-        event.target.classList.add('selected');
+        if(event) event.target.classList.add('selected');
 
         panel.innerHTML = `
             <div style="border-bottom: 2px solid ${data.color}; padding-bottom: 10px; margin-bottom: 15px; font-weight: bold; font-size: 1.2em;">
@@ -169,7 +181,7 @@
             <div style="margin-bottom: 20px; font-size: 0.85em; line-height: 1.6; border: 1px dashed #333; padding: 10px;">
                 ${data.desc}
             </div>
-            ${id === 'v3' ? '<button class="cmd-btn" style="width:100%" onclick="addLogLine(\'ACCESSING V3 ENCRYPTION...\')">OPEN_REMOTE_SHELL</button>' : ''}
+            ${id === 'v3' ? '<button class="cmd-btn" style="width:100%" onclick="openRemoteShell()">OPEN_REMOTE_SHELL</button>' : ''}
         `;
         addLogLine("INSPECTING NODE: " + data.title);
     }
@@ -182,6 +194,48 @@
         if (stream.children.length > 8) stream.removeChild(stream.lastChild);
     }
 
+    async function scanSectors() {
+        addLogLine("INITIATING GLOBAL SECTOR SCAN...");
+        try {
+            const res = await fetch(`${RENDER_API}/get-staff`);
+            const data = await res.json();
+            const count = Object.keys(data).length;
+            setTimeout(() => {
+                addLogLine(`SCAN COMPLETE: ${count} ACTIVE_UNITS DETECTED.`);
+            }, 1000);
+        } catch (e) {
+            addLogLine("SCAN ERROR: UNABLE TO REACH RENDER_CORE.");
+        }
+    }
+
+    function openRemoteShell() {
+        const shell = document.getElementById('shell-overlay');
+        const output = document.getElementById('shell-output');
+        shell.style.display = 'block';
+        output.innerHTML = "";
+        
+        const sequence = [
+            "> CONNECTING TO ALPHA-M V3...",
+            "> BYPASSING BIO-METRIC LOCK...",
+            "> ACCESS GRANTED.",
+            "> [WARNING]: UNRELIABLE PACKET LOSS DETECTED",
+            "> SYSTEM_CORE: STABLE",
+            "> RUNNING 'P.R.I.S.M_DAEMON'...",
+            "> REMOTE TERMINAL READY."
+        ];
+
+        let i = 0;
+        const interval = setInterval(() => {
+            output.innerHTML += sequence[i] + "\n";
+            i++;
+            if (i >= sequence.length) clearInterval(interval);
+        }, 500);
+    }
+
+    function closeShell() {
+        document.getElementById('shell-overlay').style.display = 'none';
+    }
+
     // Рендер графика
     const canvas = document.getElementById('activity-graph');
     const gCtx = canvas.getContext('2d');
@@ -189,7 +243,8 @@
 
     function drawGraph() {
         gCtx.clearRect(0, 0, canvas.width, canvas.height);
-        gCtx.strokeStyle = document.documentElement.style.getPropertyValue('--neon') || '#00ffcc';
+        const isRed = document.documentElement.style.getPropertyValue('--neon') === '#ff4444';
+        gCtx.strokeStyle = isRed ? '#ff4444' : '#00ffcc';
         gCtx.beginPath();
         gCtx.moveTo(0, points[0]);
         for(let i=1; i<points.length; i++) {
@@ -197,7 +252,7 @@
         }
         gCtx.stroke();
         points.shift();
-        points.push(Math.random() * 50);
+        points.push(Math.random() * (isRed ? 60 : 30));
     }
 
     async function sync() {
@@ -211,7 +266,7 @@
                 document.getElementById('net-status').innerText = "ALERT";
                 v3Node.style.background = "#ff4444";
                 v3Node.style.boxShadow = "0 0 20px #ff4444";
-                addLogLine("!!! EMERGENCY ALERT RECEIVED FROM V3 !!!");
+                addLogLine("!!! EMERGENCY ALERT: SYSTEM RED !!!");
             } else {
                 document.documentElement.style.setProperty('--neon', '#00ffcc');
                 document.getElementById('net-status').innerText = "STABLE";
@@ -219,19 +274,23 @@
                 v3Node.style.boxShadow = "none";
             }
         } catch (e) {
-            document.getElementById('net-status').innerText = "ERROR";
+            document.getElementById('net-status').innerText = "OFFLINE";
         }
     }
 
     setInterval(() => {
         document.getElementById('sys-clock').innerText = new Date().toLocaleTimeString();
-        document.getElementById('cpu-load').innerText = Math.floor(Math.random()*15 + 5) + "%";
+        const isRed = document.documentElement.style.getPropertyValue('--neon') === '#ff4444';
+        
+        document.getElementById('cpu-load').innerText = Math.floor(Math.random() * (isRed ? 40 : 10) + (isRed ? 50 : 5)) + "%";
+        document.getElementById('entropy-val').innerText = (Math.random() * (isRed ? 0.9 : 0.001)).toFixed(4);
+        
         drawGraph();
     }, 1000);
 
-    setInterval(sync, 4000);
+    setInterval(sync, 5000);
     sync();
-    addLogLine("P.R.I.S.M. SYSTEM ONLINE. STANDBY.");
+    addLogLine("P.R.I.S.M. INTEL_LINK v4.5 ONLINE.");
 </script>
 
 </body>
