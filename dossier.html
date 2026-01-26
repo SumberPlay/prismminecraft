@@ -21,80 +21,54 @@
             height: 100vh; overflow: hidden;
         }
 
-        /* Эффекты монитора */
         .overlay { position: fixed; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, transparent 2px); pointer-events: none; z-index: 1000; }
         .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(0, 255, 204, 0.05); z-index: 1001; pointer-events: none; animation: scan 8s linear infinite; }
         @keyframes scan { from { top: -5%; } to { top: 105%; } }
 
+        /* ИСПРАВЛЕННАЯ НАВИГАЦИЯ */
+        nav { 
+            position: fixed; top: 0; width: 100%; height: 60px;
+            background: #000; border-bottom: 1px solid var(--border);
+            display: none; align-items: center; justify-content: center; z-index: 500;
+            padding: 0 20px;
+        }
+        body.authorized nav { display: flex; }
+        
+        .nav-links { display: flex; gap: 20px; position: absolute; left: 50%; transform: translateX(-50%); }
+        nav a { color: #555; text-decoration: none; letter-spacing: 2px; transition: 0.3s; }
+        nav a:hover { color: var(--neon); }
+
+        .nav-user-info { margin-left: auto; display: flex; align-items: center; gap: 20px; }
+        #user-display { color: #444; font-size: 0.9em; }
+
         /* Структура экрана */
         .main-layout {
-            display: none; /* До авторизации */
+            display: none;
             grid-template-columns: 350px 1fr;
             height: calc(100vh - 60px);
             margin-top: 60px;
         }
         body.authorized .main-layout { display: grid; }
 
-        nav { 
-            position: fixed; top: 0; width: 100%; height: 60px;
-            background: #000; border-bottom: 1px solid var(--border);
-            display: none; align-items: center; justify-content: center; z-index: 500;
-        }
-        body.authorized nav { display: flex; }
-        nav a { color: #555; text-decoration: none; padding: 0 20px; letter-spacing: 2px; }
-        nav a:hover { color: var(--neon); }
-
-        /* Левая колонка: Список */
-        .sidebar {
-            border-right: 1px solid var(--border);
-            overflow-y: auto;
-            background: rgba(0,0,0,0.5);
-            padding: 10px;
-        }
+        .sidebar { border-right: 1px solid var(--border); overflow-y: auto; background: rgba(0,0,0,0.5); padding: 10px; }
         .sidebar::-webkit-scrollbar { width: 4px; }
         .sidebar::-webkit-scrollbar-thumb { background: var(--border); }
 
         .list-item {
-            padding: 15px;
-            border: 1px solid transparent;
-            margin-bottom: 5px;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            padding: 15px; border: 1px solid transparent; margin-bottom: 5px;
+            cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 15px;
         }
         .list-item:hover { background: rgba(0, 255, 204, 0.05); border-color: var(--border); }
-        .list-item.active { 
-            background: rgba(0, 255, 204, 0.1); 
-            border-color: var(--neon);
-            color: var(--neon);
-        }
+        .list-item.active { background: rgba(0, 255, 204, 0.1); border-color: var(--neon); color: var(--neon); }
         .list-item.locked { opacity: 0.5; border-left: 3px solid var(--alert); }
 
         .mini-avatar { width: 40px; height: 40px; border: 1px solid var(--border); filter: grayscale(1); }
 
-        /* Правая колонка: Просмотр */
-        .viewer {
-            padding: 40px;
-            overflow-y: auto;
-            position: relative;
-        }
-        .placeholder-text {
-            height: 100%; display: flex; align-items: center; justify-content: center;
-            color: #333; font-size: 1.5em; letter-spacing: 5px;
-        }
+        .viewer { padding: 40px; overflow-y: auto; position: relative; }
+        .placeholder-text { height: 100%; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1.5em; letter-spacing: 5px; }
 
-        .dossier-content {
-            display: none; /* Появляется при выборе */
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        .big-photo-frame {
-            width: 200px; height: 200px; border: 1px solid var(--neon);
-            padding: 10px; background: #000; float: left; margin: 0 30px 30px 0;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.1);
-        }
+        .dossier-content { display: none; animation: fadeIn 0.4s ease-out; }
+        .big-photo-frame { width: 200px; height: 200px; border: 1px solid var(--neon); padding: 10px; background: #000; float: left; margin: 0 30px 30px 0; box-shadow: 0 0 20px rgba(0, 255, 204, 0.1); }
 
         .data-row { margin-bottom: 15px; border-bottom: 1px solid #111; padding-bottom: 5px; }
         .label { color: #555; font-size: 0.8em; }
@@ -102,14 +76,15 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Кнопка выхода */
-        .btn-exit { position: absolute; top: 15px; right: 20px; border: 1px solid var(--alert); color: var(--alert); background: none; cursor: pointer; padding: 5px 10px; font-family: inherit; }
+        .btn-exit { border: 1px solid var(--alert); color: var(--alert); background: none; cursor: pointer; padding: 5px 15px; font-family: inherit; transition: 0.3s; }
+        .btn-exit:hover { background: var(--alert); color: #000; }
 
-        /* Окно логина (без изменений) */
+        /* Окно логина */
         #auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 5000; display: flex; align-items: center; justify-content: center; }
-        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 400px; }
+        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 400px; position: relative; }
         input { background: rgba(0, 255, 204, 0.05); border: 1px solid var(--border); color: var(--neon); padding: 15px; margin: 10px 0; width: 100%; outline: none; font-family: inherit; }
-        .btn { background: rgba(0, 255, 204, 0.1); color: var(--neon); border: 1px solid var(--neon); padding: 15px; cursor: pointer; width: 100%; font-family: inherit; margin-top: 15px; }
+        .btn { background: rgba(0, 255, 204, 0.1); color: var(--neon); border: 1px solid var(--neon); padding: 15px; cursor: pointer; width: 100%; font-family: inherit; margin-top: 10px; transition: 0.3s; }
+        .btn:hover { background: var(--neon); color: #000; }
     </style>
 </head>
 <body>
@@ -122,20 +97,24 @@
         <h2 style="color: var(--neon); letter-spacing: 5px;">PRISM_LOGIN</h2>
         <input type="text" id="uid" placeholder="PERSONNEL_ID">
         <input type="password" id="ups" placeholder="ACCESS_KEY">
-        <button class="btn" onclick="tryLogin()">ACCESS_DATABASE</button>
+        <button class="btn" onclick="tryLogin('admin')">ACCESS_DATABASE</button>
+        <button class="btn" style="border-color: #444; color: #444; background: none;" onclick="tryLogin('guest')">GUEST_ACCESS</button>
     </div>
 </div>
 
 <nav>
-    <a href="index.html">/ MAIN</a>
-    <a href="dossier.html" style="color:var(--neon)">/ ARCHIVE_EXPLORER</a>
-    <span id="user-display" style="margin-left:auto; padding-right:20px; color:#444;"></span>
-    <button class="btn-exit" onclick="logout()">LOGOUT</button>
+    <div class="nav-links">
+        <a href="index.html">/ MAIN</a>
+        <a href="dossier.html" style="color:var(--neon)">/ ARCHIVE_EXPLORER</a>
+    </div>
+    <div class="nav-user-info">
+        <span id="user-display">---</span>
+        <button class="btn-exit" onclick="logout()">LOGOUT</button>
+    </div>
 </nav>
 
 <div class="main-layout">
-    <div class="sidebar" id="staff-list">
-        </div>
+    <div class="sidebar" id="staff-list"></div>
     
     <div class="viewer" id="staff-viewer">
         <div class="placeholder-text" id="placeholder">SELECT_SUBJECT_FOR_ANALYSIS</div>
@@ -167,7 +146,13 @@
     const RENDER_URL = "https://prism-bot.onrender.com";
     let STAFF_DATA = {};
 
-    async function tryLogin() {
+    async function tryLogin(type) {
+        if (type === 'guest') {
+            sessionStorage.setItem('prism_level', 1);
+            sessionStorage.setItem('prism_user', 'VISITOR_01');
+            location.reload(); return;
+        }
+
         const id = document.getElementById('uid').value.toUpperCase().trim();
         const rawPass = document.getElementById('ups').value;
         const ps = CryptoJS.MD5(rawPass).toString();
@@ -217,29 +202,28 @@
     }
 
     function selectStaff(id, isLocked) {
-        // Убираем активный класс у всех и даем выбранному
         document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active'));
         event.currentTarget.classList.add('active');
 
         const p = STAFF_DATA[id];
-        const myLevel = parseInt(sessionStorage.getItem('prism_level'));
-
         document.getElementById('placeholder').style.display = 'none';
         const box = document.getElementById('content-box');
         box.style.display = 'block';
+
+        const bioEl = document.getElementById('v-bio');
+        bioEl.innerText = ""; // Сброс текста для эффекта печати
 
         if (isLocked) {
             document.getElementById('v-name').innerText = "RESTRICTED_DATA";
             document.getElementById('v-photo').src = "https://minotar.net/armor/bust/Steve/200.png";
             document.getElementById('v-dept').innerText = "REDACTED";
             document.getElementById('v-level').innerText = `CRITICAL: LEVEL ${p.level} CLEARANCE REQUIRED`;
-            document.getElementById('v-bio').innerText = "Для доступа к данному досье требуется прямое разрешение Совета P.R.I.S.M. Ваша попытка доступа была зафиксирована.";
+            typeEffect('v-bio', "Для доступа к данному досье требуется прямое разрешение Совета P.R.I.S.M. Ваша попытка доступа была зафиксирована.");
         } else {
             document.getElementById('v-name').innerText = p.name || id;
             document.getElementById('v-photo').src = `https://minotar.net/armor/bust/${p.mc_name}/200.png`;
             document.getElementById('v-dept').innerText = p.dept || "GENERAL_UNIT";
             document.getElementById('v-level').innerText = `STATUS: AUTHORIZED (L${p.level})`;
-            document.getElementById('v-bio').innerText = ""; // Очищаем для эффекта печати
             typeEffect('v-bio', p.bio || "Биографические данные отсутствуют в базе.");
         }
     }
@@ -251,7 +235,7 @@
             el.innerText += text.charAt(i);
             i++;
             if (i >= text.length) clearInterval(timer);
-        }, 15);
+        }, 10);
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
