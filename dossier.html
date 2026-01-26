@@ -54,15 +54,45 @@
         .sidebar::-webkit-scrollbar { width: 4px; }
         .sidebar::-webkit-scrollbar-thumb { background: var(--border); }
 
-        .list-item {
-            padding: 15px; border: 1px solid transparent; margin-bottom: 5px;
-            cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 15px;
+        .mini-avatar { 
+            width: 40px; 
+            height: 40px; 
+            border: 1px solid var(--border); 
+            filter: grayscale(1); 
+            transition: 0.3s ease; /* Плавный переход */
         }
-        .list-item:hover { background: rgba(0, 255, 204, 0.05); border-color: var(--border); }
-        .list-item.active { background: rgba(0, 255, 204, 0.1); border-color: var(--neon); color: var(--neon); }
-        .list-item.locked { opacity: 0.5; border-left: 3px solid var(--alert); }
 
-        .mini-avatar { width: 40px; height: 40px; border: 1px solid var(--border); filter: grayscale(1); }
+        .list-item {
+            padding: 15px; 
+            border: 1px solid transparent; 
+            margin-bottom: 5px;
+            cursor: pointer; 
+            transition: 0.3s; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Эффекты при наведении */
+        .list-item:hover { 
+            background: rgba(0, 255, 204, 0.08); 
+            border-color: var(--border);
+            padding-left: 20px; /* Легкое смещение вправо */
+        }
+
+        .list-item:hover .mini-avatar { 
+            filter: grayscale(0); /* Аватарка становится цветной */
+            border-color: var(--neon);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+        }
+
+        /* Активный элемент (выбранный) */
+        .list-item.active .mini-avatar {
+            filter: grayscale(0);
+            border-color: var(--neon);
+        }
 
         .viewer { padding: 40px; overflow-y: auto; position: relative; }
         .placeholder-text { height: 100%; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1.5em; letter-spacing: 5px; }
@@ -201,7 +231,14 @@
         } catch (e) { console.error(e); }
     }
 
+    let typeTimer = null; // Глобальная переменная для контроля таймера
+
+    let typeTimer = null;
+
     function selectStaff(id, isLocked) {
+        // 1. Сбрасываем старый таймер, чтобы не было "каши"
+        if (typeTimer) clearInterval(typeTimer);
+
         document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active'));
         event.currentTarget.classList.add('active');
 
@@ -210,34 +247,52 @@
         const box = document.getElementById('content-box');
         box.style.display = 'block';
 
+        // 2. Устанавливаем базовые данные
         const bioEl = document.getElementById('v-bio');
-        bioEl.innerText = ""; // Сброс текста для эффекта печати
-
         if (isLocked) {
             document.getElementById('v-name').innerText = "RESTRICTED_DATA";
             document.getElementById('v-photo').src = "https://minotar.net/armor/bust/Steve/200.png";
             document.getElementById('v-dept').innerText = "REDACTED";
             document.getElementById('v-level').innerText = `CRITICAL: LEVEL ${p.level} CLEARANCE REQUIRED`;
-            typeEffect('v-bio', "Для доступа к данному досье требуется прямое разрешение Совета P.R.I.S.M. Ваша попытка доступа была зафиксирована.");
+            startDecryptionEffect(bioEl, "Для доступа к данному досье требуется прямое разрешение Совета P.R.I.S.M. Ваша попытка доступа была зафиксирована.");
         } else {
             document.getElementById('v-name').innerText = p.name || id;
             document.getElementById('v-photo').src = `https://minotar.net/armor/bust/${p.mc_name}/200.png`;
             document.getElementById('v-dept').innerText = p.dept || "GENERAL_UNIT";
             document.getElementById('v-level').innerText = `STATUS: AUTHORIZED (L${p.level})`;
-            typeEffect('v-bio', p.bio || "Биографические данные отсутствуют в базе.");
+            startDecryptionEffect(bioEl, p.bio || "Биографические данные отсутствуют в базе.");
         }
     }
 
-    function typeEffect(id, text) {
-        const el = document.getElementById(id);
-        let i = 0;
-        const timer = setInterval(() => {
-            el.innerText += text.charAt(i);
-            i++;
-            if (i >= text.length) clearInterval(timer);
-        }, 10);
+    function startDecryptionEffect(el, finalText) {
+        el.innerHTML = `<span style="color:var(--neon)">[ DECRYPTING: 0% ]</span>`;
+        let percent = 0;
+        
+        // Эффект "подгрузки" перед печатью
+        typeTimer = setInterval(() => {
+            percent += Math.floor(Math.random() * 15) + 5;
+            if (percent >= 100) {
+                percent = 100;
+                clearInterval(typeTimer);
+                el.innerText = ""; // Очищаем для печати основного текста
+                typeEffect(el, finalText);
+            } else {
+                el.innerHTML = `<span style="color:var(--neon)">[ DECRYPTING: ${percent}% ]</span>`;
+            }
+        }, 40);
     }
 
+    function typeEffect(el, text) {
+        let i = 0;
+        typeTimer = setInterval(() => {
+            el.innerText += text.charAt(i);
+            i++;
+            if (i >= text.length) {
+                clearInterval(typeTimer);
+                typeTimer = null;
+            }
+        }, 8); // Чуть ускорил печать для динамики
+    }
     function logout() { sessionStorage.clear(); location.reload(); }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -246,3 +301,4 @@
 </script>
 </body>
 </html>
+
