@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>P.R.I.S.M. | PERSONNEL_DOSSIER</title>
+    <title>P.R.I.S.M. | ARCHIVE_EXPLORER</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         :root { 
@@ -18,118 +18,98 @@
             background: var(--bg); color: #888; 
             font-family: 'Courier New', monospace; margin: 0; 
             text-transform: uppercase; font-size: 13px;
-            overflow-x: hidden;
+            height: 100vh; overflow: hidden;
         }
 
-        /* Фоновая сетка и эффекты как на главной */
-        body::before {
-            content: ""; position: fixed; inset: 0;
-            background-image: linear-gradient(var(--border) 1px, transparent 1px),
-                              linear-gradient(90deg, var(--border) 1px, transparent 1px);
-            background-size: 50px 50px; opacity: 0.05; z-index: -1;
-        }
-
-        .overlay {
-            position: fixed; inset: 0;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, transparent 2px);
-            pointer-events: none; z-index: 1000;
-        }
-
-        .scanline {
-            position: fixed; top: 0; left: 0; width: 100%; height: 4px;
-            background: rgba(0, 255, 204, 0.05); z-index: 1001;
-            pointer-events: none; animation: scan 8s linear infinite;
-        }
-
+        /* Эффекты монитора */
+        .overlay { position: fixed; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, transparent 2px); pointer-events: none; z-index: 1000; }
+        .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(0, 255, 204, 0.05); z-index: 1001; pointer-events: none; animation: scan 8s linear infinite; }
         @keyframes scan { from { top: -5%; } to { top: 105%; } }
 
-        /* Навигация */
+        /* Структура экрана */
+        .main-layout {
+            display: none; /* До авторизации */
+            grid-template-columns: 350px 1fr;
+            height: calc(100vh - 60px);
+            margin-top: 60px;
+        }
+        body.authorized .main-layout { display: grid; }
+
         nav { 
-            background: rgba(0,0,0,0.9); padding: 20px; 
-            border-bottom: 1px solid var(--border); text-align: center;
-            display: none; /* Скрыто до авторизации */
+            position: fixed; top: 0; width: 100%; height: 60px;
+            background: #000; border-bottom: 1px solid var(--border);
+            display: none; align-items: center; justify-content: center; z-index: 500;
         }
-        nav a { color: #555; text-decoration: none; padding: 0 25px; letter-spacing: 2px; transition: 0.3s; }
-        nav a:hover, nav a.active { color: var(--neon); text-shadow: 0 0 10px var(--neon); }
+        body.authorized nav { display: flex; }
+        nav a { color: #555; text-decoration: none; padding: 0 20px; letter-spacing: 2px; }
+        nav a:hover { color: var(--neon); }
 
-        body.authorized nav, body.authorized .container { display: block; }
-
-        /* Окно авторизации */
-        #auth-overlay { 
-            position: fixed; inset: 0; background: var(--bg); 
-            z-index: 5000; display: flex; align-items: center; justify-content: center; 
+        /* Левая колонка: Список */
+        .sidebar {
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
         }
-        .login-card { 
-            border: 1px solid var(--neon); padding: 40px; background: #000; 
-            text-align: center; width: 400px; position: relative;
-            box-shadow: 0 0 30px rgba(0, 255, 204, 0.1);
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+
+        .list-item {
+            padding: 15px;
+            border: 1px solid transparent;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        /* Декоративные уголки для логина */
-        .login-card::before { content: ""; position: absolute; top: -2px; left: -2px; width: 20px; height: 20px; border-top: 2px solid var(--neon); border-left: 2px solid var(--neon); }
-        .login-card::after { content: ""; position: absolute; bottom: -2px; right: -2px; width: 20px; height: 20px; border-bottom: 2px solid var(--neon); border-right: 2px solid var(--neon); }
-
-        input { 
-            background: rgba(0, 255, 204, 0.05); border: 1px solid var(--border); 
-            color: var(--neon); padding: 15px; margin: 10px 0; width: 100%; 
-            outline: none; font-family: inherit; letter-spacing: 2px;
+        .list-item:hover { background: rgba(0, 255, 204, 0.05); border-color: var(--border); }
+        .list-item.active { 
+            background: rgba(0, 255, 204, 0.1); 
+            border-color: var(--neon);
+            color: var(--neon);
         }
+        .list-item.locked { opacity: 0.5; border-left: 3px solid var(--alert); }
 
-        .btn { 
-            background: rgba(0, 255, 204, 0.1); color: var(--neon); border: 1px solid var(--neon); 
-            padding: 15px; cursor: pointer; width: 100%; font-weight: bold; 
-            font-family: inherit; margin-top: 15px; transition: 0.3s;
+        .mini-avatar { width: 40px; height: 40px; border: 1px solid var(--border); filter: grayscale(1); }
+
+        /* Правая колонка: Просмотр */
+        .viewer {
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
         }
-        .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 20px var(--neon); }
-
-        /* Сетка Досье */
-        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: none; }
-        
-        .header-panel { 
-            border: 1px solid var(--border); padding: 30px; 
-            background: rgba(0, 255, 204, 0.02); margin-bottom: 40px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .dossier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 30px; }
-
-        .player-card { 
-            background: var(--panel); border: 1px solid var(--border); 
-            display: flex; padding: 30px; position: relative; transition: 0.3s;
-        }
-        .player-card:hover { border-color: var(--neon); box-shadow: inset 0 0 15px rgba(0, 255, 204, 0.05); }
-        
-        .player-card::before { content: ""; position: absolute; top: 0; left: 0; width: 10px; height: 10px; border-top: 2px solid var(--neon); border-left: 2px solid var(--neon); opacity: 0; transition: 0.3s; }
-        .player-card:hover::before { opacity: 1; }
-
-        .player-card.is-locked { border-color: #311; background: rgba(50, 0, 0, 0.1); }
-        .player-card.is-locked:hover { border-color: var(--alert); }
-
-        .photo-frame { 
-            width: 130px; height: 130px; border: 1px solid var(--border); 
-            padding: 5px; background: #000; flex-shrink: 0; margin-right: 30px;
-        }
-        .photo { width: 100%; height: 100%; filter: grayscale(1) sepia(0.5) brightness(0.8); }
-        .is-locked .photo { filter: blur(5px) grayscale(1); }
-
-        .info { flex-grow: 1; }
-        .name { color: var(--neon); font-size: 1.4em; font-weight: bold; margin-bottom: 5px; letter-spacing: 2px; }
-        .dept-tag { font-size: 0.8em; color: #555; margin-bottom: 15px; }
-        
-        .bio { 
-            font-size: 0.9em; line-height: 1.5; color: #aaa; 
-            white-space: pre-wrap; border-top: 1px solid var(--border); padding-top: 15px;
+        .placeholder-text {
+            height: 100%; display: flex; align-items: center; justify-content: center;
+            color: #333; font-size: 1.5em; letter-spacing: 5px;
         }
 
-        .level-badge { 
-            position: absolute; top: 15px; right: 15px; 
-            font-size: 0.7em; border: 1px solid var(--border); padding: 3px 10px;
+        .dossier-content {
+            display: none; /* Появляется при выборе */
+            animation: fadeIn 0.4s ease-out;
         }
-        .is-locked .level-badge { color: var(--alert); border-color: var(--alert); animation: pulse 2s infinite; }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .big-photo-frame {
+            width: 200px; height: 200px; border: 1px solid var(--neon);
+            padding: 10px; background: #000; float: left; margin: 0 30px 30px 0;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.1);
+        }
 
-        .btn-exit { background: none; border: 1px solid var(--alert); color: var(--alert); cursor: pointer; padding: 10px 20px; font-family: inherit; transition: 0.3s; }
-        .btn-exit:hover { background: var(--alert); color: #000; }
+        .data-row { margin-bottom: 15px; border-bottom: 1px solid #111; padding-bottom: 5px; }
+        .label { color: #555; font-size: 0.8em; }
+        .value { color: #fff; font-size: 1.1em; letter-spacing: 1px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Кнопка выхода */
+        .btn-exit { position: absolute; top: 15px; right: 20px; border: 1px solid var(--alert); color: var(--alert); background: none; cursor: pointer; padding: 5px 10px; font-family: inherit; }
+
+        /* Окно логина (без изменений) */
+        #auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 5000; display: flex; align-items: center; justify-content: center; }
+        .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 400px; }
+        input { background: rgba(0, 255, 204, 0.05); border: 1px solid var(--border); color: var(--neon); padding: 15px; margin: 10px 0; width: 100%; outline: none; font-family: inherit; }
+        .btn { background: rgba(0, 255, 204, 0.1); color: var(--neon); border: 1px solid var(--neon); padding: 15px; cursor: pointer; width: 100%; font-family: inherit; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -139,123 +119,145 @@
 
 <div id="auth-overlay">
     <div class="login-card">
-        <h2 style="color: var(--neon); letter-spacing: 5px; margin-bottom: 30px;">PRISM_DECRYPTOR</h2>
-        <input type="text" id="uid" placeholder="IDENTIFICATION_ID">
-        <input type="password" id="ups" placeholder="SECURITY_KEY">
-        <button class="btn" onclick="tryLogin('admin')">ESTABLISH_CONNECTION</button>
-        <button class="btn" style="border-color:#333; color:#444; background:none;" onclick="tryLogin('guest')">GUEST_LINK</button>
+        <h2 style="color: var(--neon); letter-spacing: 5px;">PRISM_LOGIN</h2>
+        <input type="text" id="uid" placeholder="PERSONNEL_ID">
+        <input type="password" id="ups" placeholder="ACCESS_KEY">
+        <button class="btn" onclick="tryLogin()">ACCESS_DATABASE</button>
     </div>
 </div>
 
-<nav id="top-nav">
-    <a href="index.html">/ MAIN_TERMINAL</a>
-    <a href="dossier.html" class="active">/ PERSONNEL_ARCHIVE</a>
+<nav>
+    <a href="index.html">/ MAIN</a>
+    <a href="dossier.html" style="color:var(--neon)">/ ARCHIVE_EXPLORER</a>
+    <span id="user-display" style="margin-left:auto; padding-right:20px; color:#444;"></span>
+    <button class="btn-exit" onclick="logout()">LOGOUT</button>
 </nav>
 
-<div class="container">
-    <div class="header-panel">
-        <div>
-            <h1 style="margin:0; font-size: 1.8em; color: var(--neon); letter-spacing: 4px;">DOSSIER_DATABASE</h1>
-            <div style="font-size:0.7em; margin-top: 8px; color: #555;">OPERATOR: <span id="user-display" style="color: var(--neon);">---</span></div>
+<div class="main-layout">
+    <div class="sidebar" id="staff-list">
         </div>
-        <button class="btn-exit" onclick="logout()">TERMINATE_SESSION</button>
+    
+    <div class="viewer" id="staff-viewer">
+        <div class="placeholder-text" id="placeholder">SELECT_SUBJECT_FOR_ANALYSIS</div>
+        
+        <div class="dossier-content" id="content-box">
+            <div class="big-photo-frame">
+                <img id="v-photo" src="" style="width:100%; filter: grayscale(1);">
+            </div>
+            
+            <div style="margin-bottom: 40px;">
+                <h1 id="v-name" style="color:var(--neon); margin:0; font-size:2.5em;"></h1>
+                <div id="v-level" style="color:var(--alert); font-weight:bold;"></div>
+            </div>
+
+            <div class="data-row">
+                <div class="label">ASSIGNED_SECTION</div>
+                <div class="value" id="v-dept"></div>
+            </div>
+
+            <div class="data-row">
+                <div class="label">BIOMETRIC_DATA_&_HISTORY</div>
+                <div class="value" id="v-bio" style="white-space: pre-wrap; margin-top:10px; color:#aaa; line-height:1.6;"></div>
+            </div>
+        </div>
     </div>
-    <div class="dossier-grid" id="dossier-container"></div>
 </div>
 
 <script>
     const RENDER_URL = "https://prism-bot.onrender.com";
+    let STAFF_DATA = {};
 
-    async function tryLogin(type) {
-        if (type === 'guest') {
-            sessionStorage.setItem('prism_level', 1);
-            sessionStorage.setItem('prism_user', 'VISITOR_99');
-            location.reload(); return;
-        }
-
+    async function tryLogin() {
         const id = document.getElementById('uid').value.toUpperCase().trim();
         const rawPass = document.getElementById('ups').value;
-        if (!id || !rawPass) return;
-        
         const ps = CryptoJS.MD5(rawPass).toString();
 
         try {
             const res = await fetch(`${RENDER_URL}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id, pass: ps })
             });
-
             if (res.ok) {
                 const data = await res.json();
                 sessionStorage.setItem('prism_level', data.level);
                 sessionStorage.setItem('prism_user', data.name);
                 location.reload();
-            } else {
-                alert("ERR: AUTH_FAILED");
-            }
-        } catch (e) { alert("ERR: SERVER_OFFLINE"); }
+            } else { alert("ACCESS_DENIED"); }
+        } catch (e) { alert("OFFLINE"); }
     }
 
-    async function renderPage() {
+    async function loadArchive() {
         const myLevel = parseInt(sessionStorage.getItem('prism_level'));
         if (isNaN(myLevel)) return;
 
         document.getElementById('auth-overlay').style.display = 'none';
         document.body.classList.add('authorized');
-        document.getElementById('top-nav').style.display = 'block';
-        document.getElementById('user-display').innerText = sessionStorage.getItem('prism_user');
+        document.getElementById('user-display').innerText = `OP: ${sessionStorage.getItem('prism_user')}`;
 
         try {
             const res = await fetch(`${RENDER_URL}/get-staff`);
-            const db = await res.json();
-            const container = document.getElementById('dossier-container');
-            container.innerHTML = '';
+            STAFF_DATA = await res.json();
+            const listContainer = document.getElementById('staff-list');
 
-            for (const [id, p] of Object.entries(db)) {
+            for (const [id, p] of Object.entries(STAFF_DATA)) {
                 const isLocked = myLevel < p.level;
-                
-                const safeName = isLocked ? "CLASSIFIED" : (p.name || id);
-                const safeDept = isLocked ? "REDACTED" : (p.dept || "GENERAL_UNIT");
-                const safeBio = isLocked ? "ACCESS_DENIED. CLEARANCE_LEVEL_L" + p.level + "_REQUIRED." : (p.bio || "NO_DATA_FOUND");
-                const safeSkin = isLocked ? "Steve" : p.mc_name;
-
-                const card = document.createElement('div');
-                card.className = `player-card ${isLocked ? 'is-locked' : ''}`;
-                card.innerHTML = `
-                    <div class="level-badge">L${p.level}_CLEARANCE</div>
-                    <div class="photo-frame">
-                        <img src="https://minotar.net/armor/bust/${safeSkin}/120.png" class="photo" alt="DATA_IMG">
-                    </div>
-                    <div class="info">
-                        <div class="name">${safeName}</div>
-                        <div class="dept-tag">// SECTOR: ${safeDept}</div>
-                        <div class="bio" id="bio-${id}"></div>
+                const item = document.createElement('div');
+                item.className = `list-item ${isLocked ? 'locked' : ''}`;
+                item.innerHTML = `
+                    <img class="mini-avatar" src="https://minotar.net/avatar/${isLocked ? 'Steve' : p.mc_name}/40.png">
+                    <div>
+                        <div style="font-weight:bold; color:${isLocked ? '#400' : '#ccc'}">${isLocked ? 'CLASSIFIED' : (p.name || id)}</div>
+                        <div style="font-size:0.7em; color:#555;">CLEARANCE: L${p.level}</div>
                     </div>
                 `;
-                container.appendChild(card);
-                typeEffect(`bio-${id}`, safeBio);
+                item.onclick = () => selectStaff(id, isLocked);
+                listContainer.appendChild(item);
             }
-        } catch (err) { 
-            container.innerHTML = "CRITICAL_ERROR: DATA_STREAM_INTERRUPTED"; 
+        } catch (e) { console.error(e); }
+    }
+
+    function selectStaff(id, isLocked) {
+        // Убираем активный класс у всех и даем выбранному
+        document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+
+        const p = STAFF_DATA[id];
+        const myLevel = parseInt(sessionStorage.getItem('prism_level'));
+
+        document.getElementById('placeholder').style.display = 'none';
+        const box = document.getElementById('content-box');
+        box.style.display = 'block';
+
+        if (isLocked) {
+            document.getElementById('v-name').innerText = "RESTRICTED_DATA";
+            document.getElementById('v-photo').src = "https://minotar.net/armor/bust/Steve/200.png";
+            document.getElementById('v-dept').innerText = "REDACTED";
+            document.getElementById('v-level').innerText = `CRITICAL: LEVEL ${p.level} CLEARANCE REQUIRED`;
+            document.getElementById('v-bio').innerText = "Для доступа к данному досье требуется прямое разрешение Совета P.R.I.S.M. Ваша попытка доступа была зафиксирована.";
+        } else {
+            document.getElementById('v-name').innerText = p.name || id;
+            document.getElementById('v-photo').src = `https://minotar.net/armor/bust/${p.mc_name}/200.png`;
+            document.getElementById('v-dept').innerText = p.dept || "GENERAL_UNIT";
+            document.getElementById('v-level').innerText = `STATUS: AUTHORIZED (L${p.level})`;
+            document.getElementById('v-bio').innerText = ""; // Очищаем для эффекта печати
+            typeEffect('v-bio', p.bio || "Биографические данные отсутствуют в базе.");
         }
     }
 
     function typeEffect(id, text) {
         const el = document.getElementById(id);
-        if (!el) return;
         let i = 0;
         const timer = setInterval(() => {
-            el.innerText += text.charAt(i); 
+            el.innerText += text.charAt(i);
             i++;
             if (i >= text.length) clearInterval(timer);
-        }, 10);
+        }, 15);
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
 
     document.addEventListener("DOMContentLoaded", () => {
-        if (sessionStorage.getItem('prism_level')) renderPage();
+        if (sessionStorage.getItem('prism_level')) loadArchive();
     });
 </script>
 </body>
