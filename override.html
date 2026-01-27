@@ -255,28 +255,7 @@
 
     // --- API ВЗАИМОДЕЙСТВИЯ ---
 
-    async function addTask() {
-    const textInput = document.getElementById('new-task-text');
-    const text = textInput.value.trim();
-    if (!selectedUserId || !text) return alert("ВЫБЕРИТЕ ЮЗЕРА И ВВЕДИТЕ ТЕКСТ");
-    
-    try {
-        const res = await fetch(`${RENDER_API}/add-task`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ staff_id: selectedUserId, task_text: text })
-        });
-        
-        if (res.ok) {
-            log(`Directive issued for ${selectedUserId}`);
-            textInput.value = '';
-            await refreshData();
-            // Находим юзера уже в обновленной базе
-            const updatedUser = staffDB.find(u => u.id === selectedUserId);
-            if (updatedUser) selectUser(updatedUser);
-        }
-    } catch(e) { log("ERR: TASK_ADD_FAILED"); }
-}
+
 
     async function removeTask(sid, text) {
     if (!confirm("УДАЛИТЬ ДИРЕКТИВУ?")) return;
@@ -298,7 +277,8 @@
         log("ERR: TASK_DEL_FAILED"); 
     }
 }
-    async function registerStaff() {
+    // --- ИСПРАВЛЕННАЯ РЕГИСТРАЦИЯ ---
+async function registerStaff() {
     const idInput = document.getElementById('reg-id');
     const nameInput = document.getElementById('reg-name');
     const mcInput = document.getElementById('reg-mc');
@@ -341,6 +321,30 @@
     }
 }
 
+// --- ИСПРАВЛЕННОЕ ДОБАВЛЕНИЕ ЗАДАЧИ ---
+async function addTask() {
+    const textInput = document.getElementById('new-task-text');
+    const text = textInput.value.trim();
+    if (!selectedUserId || !text) return alert("ВЫБЕРИТЕ ЮЗЕРА И ВВЕДИТЕ ТЕКСТ");
+    
+    try {
+        const res = await fetch(`${RENDER_API}/add-task`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ staff_id: selectedUserId, task_text: text })
+        });
+        
+        if (res.ok) {
+            log(`Directive issued for ${selectedUserId}`);
+            textInput.value = '';
+            await refreshData();
+            // Находим юзера уже в обновленной базе
+            const updatedUser = staffDB.find(u => u.id === selectedUserId);
+            if (updatedUser) selectUser(updatedUser);
+        }
+    } catch(e) { log("ERR: TASK_ADD_FAILED"); }
+}
+    
     async function deleteStaff() {
     if (!selectedUserId) return alert("ОБЪЕКТ НЕ ВЫБРАН");
     
@@ -393,6 +397,7 @@
 
 </body>
 </html>
+
 
 
 
