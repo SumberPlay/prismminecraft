@@ -48,9 +48,9 @@
         .sys-status { font-size: 0.75em; color: #666; display: flex; gap: 25px; }
         .val { color: var(--neon-green); font-weight: bold; }
 
-        .workspace { display: grid; grid-template-columns: 260px 1fr; height: 100%; overflow: hidden; }
+        .workspace { display: grid; grid-template-columns: 260px 1fr; height: calc(100vh - 60px); overflow: hidden; }
 
-        aside { border-right: 1px solid var(--border); background: #020202; display: flex; flex-direction: column; }
+        aside { border-right: 1px solid var(--border); background: #020202; display: flex; flex-direction: column; overflow-y: auto; }
         .nav-header { padding: 20px; color: #555; font-size: 0.7em; border-bottom: 1px solid #111; letter-spacing: 1px; }
         
         .nav-btn { 
@@ -63,11 +63,11 @@
             background: linear-gradient(90deg, rgba(0,255,204,0.08), transparent); 
         }
 
-        main { position: relative; background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%); }
+        main { position: relative; background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%); height: 100%; overflow: hidden; }
         .view-section { display: none; height: 100%; grid-template-columns: 320px 1fr; } 
         .view-section.active { display: grid; }
 
-        .list-column { overflow-y: auto; border-right: 1px solid var(--border); background: rgba(0,0,0,0.3); }
+        .list-column { overflow-y: auto; border-right: 1px solid var(--border); background: rgba(0,0,0,0.3); height: 100%; }
         .list-item { 
             padding: 20px; border-bottom: 1px solid #111; cursor: pointer; 
             display: flex; align-items: center; gap: 15px; transition: 0.2s; opacity: 0.7;
@@ -81,7 +81,7 @@
         .m-moderate { background: var(--neon-gold); color: var(--neon-gold); }
         .m-critical { background: var(--neon-red); color: var(--neon-red); animation: pulse 1s infinite; }
 
-        .viewer-column { padding: 40px; overflow-y: auto; }
+        .viewer-column { padding: 40px; overflow-y: auto; height: 100%; }
         .empty-state { height: 100%; display: flex; align-items: center; justify-content: center; color: #333; letter-spacing: 2px; }
 
         .dossier-header { display: flex; gap: 30px; margin-bottom: 30px; border-bottom: 1px solid #222; padding-bottom: 30px; }
@@ -102,8 +102,10 @@
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
         @keyframes blink { 50% { opacity: 0; } }
         
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #222; }
+        /* СТИЛИ СКРОЛЛБАРА */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #1a3a3a; border-radius: 0; }
         ::-webkit-scrollbar-thumb:hover { background: var(--neon-blue); }
     </style>
 </head>
@@ -215,7 +217,6 @@
     let USER = { name: "", level: 0 };
     let typeTimer = null;
 
-    // --- ПРОВЕРКА LOCALSTORAGE ПРИ ЗАГРУЗКЕ ---
     window.onload = function() {
         const storedName = localStorage.getItem('prism_name');
         const storedLevel = localStorage.getItem('prism_level');
@@ -225,7 +226,6 @@
             USER.level = parseInt(storedLevel);
             initInterface();
         } else {
-            // Показываем ошибку если данных нет
             const statusBox = document.getElementById('status-box');
             statusBox.innerHTML = `
                 <div style="border: 1px solid var(--neon-red); padding: 40px; background: rgba(20,0,0,0.5);">
@@ -249,10 +249,8 @@
     }
 
     function logout() {
-       	location.href = "staff.html"; // Или reload(), если хочешь остаться на этой странице
+        location.href = "staff.html";
     }
-
-    // --- ОСТАЛЬНАЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ) ---
 
     function switchModule(modId, btn) {
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -348,18 +346,13 @@
         list.innerHTML = "<div style='padding:20px; color:#444'>СИНХРОНИЗАЦИЯ...</div>";
         try {
             const res = await fetch(`${GITHUB_JSON}?t=${Date.now()}`);
-            
-            // ПРОВЕРКА: Успешен ли запрос?
             if (!res.ok) throw new Error(`Status: ${res.status}`);
-            
             const files = await res.json();
-            
-            // ПРОВЕРКА: Пришел ли массив?
             if (!Array.isArray(files)) throw new Error("Not an array");
 
             list.innerHTML = "";
             [...files].reverse().forEach(file => {
-                const isLocked = USER.level < (file.level || 0); // Защита от undefined
+                const isLocked = USER.level < (file.level || 0);
                 const item = document.createElement('div');
                 item.className = `list-item ${isLocked ? 'locked' : ''}`;
                 item.onclick = () => openArchiveFile(file, item, isLocked);
@@ -373,7 +366,7 @@
                 list.appendChild(item);
             });
         } catch (e) { 
-            console.error("Archive Error:", e); // Увидите реальную причину в F12
+            console.error("Archive Error:", e);
             list.innerHTML = `<div style='padding:20px; color:var(--neon-red)'>ОШИБКА СИНХРОНИЗАЦИИ<br><span style="font-size:0.5em">${e.message}</span></div>`; 
         }
     }
@@ -416,6 +409,4 @@
     }
 </script>
 </body>
-
 </html>
-
