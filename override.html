@@ -273,18 +273,25 @@
     }
 
     async function removeTask(sid, text) {
-        if (!confirm("УДАЛИТЬ ДИРЕКТИВУ?")) return;
-        try {
-            await fetch(`${RENDER_API}/remove-task`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ staff_id: sid, task_text: text })
-            });
-            await refreshData();
-            selectUser(staffDB.find(u => u.id === sid));
-        } catch(e) { log("ERR: TASK_DEL_FAILED"); }
+    if (!confirm("УДАЛИТЬ ДИРЕКТИВУ?")) return;
+    try {
+        // Отправляем DELETE запрос с параметрами в URL
+        const res = await fetch(`${RENDER_API}/remove-task?staff_id=${sid}&task_text=${encodeURIComponent(text)}`, {
+            method: 'DELETE'
+        });
+        
+        if (res.ok) {
+            log(`Directive removed for ${sid}`);
+            await refreshData(); // Сначала обновляем общую базу
+            
+            // Важно: находим обновленного юзера в новой базе и перерисовываем его задачи
+            const updatedUser = staffDB.find(u => u.id === sid);
+            if (updatedUser) selectUser(updatedUser); 
+        }
+    } catch(e) { 
+        log("ERR: TASK_DEL_FAILED"); 
     }
-
+}
     async function registerStaff() {
         const data = {
             id: document.getElementById('reg-id').value,
@@ -345,3 +352,4 @@
 
 </body>
 </html>
+
