@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>P.R.I.S.M. | SECURE TERMINAL</title>
+    <style>
+        :root { 
+            --neon-blue: #00ffcc; 
+            --neon-green: #00ff41;
+            --neon-red: #ff3333; 
+            --bg-dark: #050505; 
+            --border: #1a3a3a;
+            --font-main: 'Courier New', monospace;
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            background: var(--bg-dark); color: #ccc; 
+            font-family: var(--font-main); margin: 0; 
+            height: 100vh; overflow: hidden; text-transform: uppercase;
+        }
+
+        /* --- ЭФФЕКТЫ --- */
+        .overlay { position: fixed; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, transparent 2px); pointer-events: none; z-index: 9000; }
+        .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(0, 255, 204, 0.03); z-index: 9001; pointer-events: none; animation: scan 8s linear infinite; }
+        @keyframes scan { from { top: -10%; } to { top: 110%; } }
+
+        /* --- ЭКРАН ЗАГРУЗКИ / ОШИБКИ --- */
+        #boot-screen { 
+            position: fixed; inset: 0; z-index: 10000; background: #000; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        }
+        .boot-text { color: var(--neon-blue); letter-spacing: 2px; margin-bottom: 10px; }
+        .error-text { color: var(--neon-red); display: none; text-align: center; }
+
+        /* --- ИНТЕРФЕЙС --- */
+        #main-interface { display: none; height: 100vh; grid-template-rows: 60px 1fr; }
+        header { border-bottom: 1px solid var(--border); background: #080808; display: flex; align-items: center; justify-content: space-between; padding: 0 25px; }
+        .header-title { font-size: 1.2em; letter-spacing: 4px; color: #fff; }
+        .sys-status { font-size: 0.75em; color: #666; display: flex; gap: 25px; }
+        .val { color: var(--neon-green); font-weight: bold; }
+
+        .workspace { display: grid; grid-template-columns: 260px 1fr; height: 100%; overflow: hidden; }
+        aside { border-right: 1px solid var(--border); background: #020202; }
+        .nav-btn { padding: 18px 25px; color: #777; cursor: pointer; border-left: 2px solid transparent; transition: 0.3s; }
+        .nav-btn.active { color: var(--neon-blue); border-left-color: var(--neon-blue); background: linear-gradient(90deg, rgba(0,255,204,0.08), transparent); }
+
+        main { padding: 40px; background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%); overflow-y: auto; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+
+        .module-card { background: rgba(0,0,0,0.5); border: 1px solid #222; padding: 25px; margin-bottom: 20px; position: relative; }
+        .card-header { color: var(--neon-blue); font-size: 1.1em; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 15px; }
+
+        body.red-alert { --neon-blue: var(--neon-red); }
+        .lock-overlay { 
+            display: none; position: absolute; inset: 0; background: rgba(20,0,0,0.9); 
+            z-index: 5; align-items: center; justify-content: center; color: var(--neon-red); 
+        }
+        body.red-alert .science-only .lock-overlay { display: flex; }
+
+        @keyframes scan { from { top: -10%; } to { top: 110%; } }
+        .blink { animation: pulse 1s infinite; }
+        @keyframes pulse { 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+
+<div class="overlay"></div>
+<div class="scanline"></div>
+
+<div id="boot-screen">
+    <div id="boot-loader" class="boot-text">СКАНИРОВАНИЕ БИОМЕТРИИ...</div>
+    <div id="boot-error" class="error-text">
+        <h2 style="margin-bottom:10px;">ОТКАЗ В ДОСТУПЕ</h2>
+        <p>УЧЕТНАЯ ЗАПИСЬ НЕ НАЙДЕНА В ТЕКУЩЕЙ СЕССИИ</p>
+        <a href="staff.html" style="color:var(--neon-blue); text-decoration:none; border:1px solid; padding:10px; display:inline-block; margin-top:20px;">ВЕРНУТЬСЯ К АВТОРИЗАЦИИ</a>
+    </div>
+</div>
+
+<div id="main-interface">
+    <header>
+        <div class="header-title">P.R.I.S.M. <span id="alert-tag" style="font-size:0.6em">// SECURE_LINK</span></div>
+        <div class="sys-status">
+            <span>USER: <span id="u-name" class="val">---</span></span>
+            <span>CLEARANCE: <span id="u-level" class="val">0</span></span>
+            <span style="cursor:pointer; color:var(--neon-red)" onclick="logout()">[LOGOUT]</span>
+        </div>
+    </header>
+
+    <div class="workspace">
+        <aside>
+            <div style="padding:20px; color:#444; font-size:0.7em">DATABASE MODULES</div>
+            <div class="nav-btn active" onclick="switchMod('science', this)">> НАУЧНЫЙ ОТДЕЛ</div>
+            <div class="nav-btn" onclick="switchMod('combat', this)">> ТАКТИЧЕСКИЙ СЕКТОР</div>
+        </aside>
+
+        <main>
+            <div id="mod-science" class="view-section active science-only">
+                <div class="module-card">
+                    <div class="lock-overlay">ДАННЫЕ ЗАБЛОКИРОВАНЫ: RED CODE</div>
+                    <div class="card-header">АРХИВ НИД: ОБЪЕКТ "ЭХО"</div>
+                    <p style="font-size:0.9em; color:#888;">Акустическая аномалия. Требуется уровень 2 для расшифровки логов.</p>
+                </div>
+            </div>
+
+            <div id="mod-combat" class="view-section">
+                <div class="module-card">
+                    <div class="card-header">ИНСТРУКЦИИ ВГР</div>
+                    <div id="combat-content">ОЖИДАНИЕ ДАННЫХ ОТ СЕРВЕРА...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    const RENDER_API = "https://prism-bot.onrender.com";
+    let USER_DATA = null;
+
+    // 1. ПРОВЕРКА АВТОРИЗАЦИИ ПРИ ЗАГРУЗКЕ
+    window.onload = function() {
+        const savedUser = localStorage.getItem('prism_user'); // Предполагаем, что staff.html сохраняет сюда
+        
+        if (savedUser) {
+            try {
+                USER_DATA = JSON.parse(savedUser);
+                initTerminal();
+            } catch (e) {
+                showError();
+            }
+        } else {
+            // Имитация задержки сканирования для стиля
+            setTimeout(showError, 2000);
+        }
+    };
+
+    function showError() {
+        document.getElementById('boot-loader').style.display = 'none';
+        document.getElementById('boot-error').style.display = 'block';
+    }
+
+    function initTerminal() {
+        document.getElementById('boot-screen').style.display = 'none';
+        document.getElementById('main-interface').style.display = 'grid';
+        
+        document.getElementById('u-name').innerText = USER_DATA.name || "UNKNOWN";
+        document.getElementById('u-level').innerText = "L" + (USER_DATA.level || 0);
+
+        syncStatus();
+        setInterval(syncStatus, 5000);
+    }
+
+    // 2. СИНХРОНИЗАЦИЯ С API (RED CODE)
+    async function syncStatus() {
+        try {
+            const res = await fetch(`${RENDER_API}/status`);
+            const data = await res.json();
+            
+            const body = document.body;
+            const alertTag = document.getElementById('alert-tag');
+            const combat = document.getElementById('combat-content');
+
+            if(data.state === "RED") {
+                body.classList.add('red-alert');
+                alertTag.innerText = "// EMERGENCY_LOCKDOWN";
+                alertTag.classList.add('blink');
+                combat.innerHTML = `<span style="color:var(--neon-red)">ВНИМАНИЕ:</span> ОГОНЬ НА ПОРАЖЕНИЕ РАЗРЕШЕН. ПЕРИМЕТР ЗАКРЫТ.`;
+            } else {
+                body.classList.remove('red-alert');
+                alertTag.innerText = "// SECURE_LINK";
+                alertTag.classList.remove('blink');
+                combat.innerHTML = `РЕЖИМ: ПАТРУЛИРОВАНИЕ. СОБЛЮДАЙТЕ ДИСТАНЦИЮ 50М.`;
+            }
+        } catch(e) {
+            console.log("Status sync failed");
+        }
+    }
+
+    function switchMod(mod, btn) {
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('mod-' + mod).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function logout() {
+        location.href = "staff.html";
+    }
+</script>
+
+</body>
+</html>

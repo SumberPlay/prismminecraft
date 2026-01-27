@@ -2,203 +2,254 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>P.R.I.S.M. | Council Override</title>
+    <title>P.R.I.S.M. | COUNCIL_OVERRIDE</title>
     <style>
         :root {
             --gold: #d4af37;
+            --gold-dim: #5e4d1a;
             --red: #ff4444;
-            --dark: #050505;
+            --bg: #050505;
+            --term-green: #00ff41;
         }
 
+        * { box-sizing: border-box; }
+
         body {
-            background: var(--dark);
-            color: #a0a0a0;
+            background: var(--bg);
+            color: #ccc;
             font-family: 'Courier New', monospace;
             margin: 0;
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+            text-transform: uppercase;
         }
 
-        /* Оверлей загрузки */
+        /* Фоновая сетка */
+        body::before {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(212, 175, 55, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Сканирующая линия */
+        body::after {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 2px;
+            background: rgba(212, 175, 55, 0.1);
+            box-shadow: 0 0 15px var(--gold);
+            animation: scan 8s infinite linear;
+            z-index: 1001;
+            pointer-events: none;
+        }
+
+        @keyframes scan { 0% { top: -10%; } 100% { top: 110%; } }
+
+        /* Оверлей авторизации */
         #auth-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 9999; display: flex; 
-            justify-content: center; align-items: center; color: var(--gold);
-            transition: opacity 1s;
-            letter-spacing: 5px;
-            font-weight: bold;
+            flex-direction: column; justify-content: center; align-items: center; 
+            color: var(--gold); transition: opacity 1.5s ease-in-out;
+            letter-spacing: 10px; font-weight: bold;
         }
 
-        /* Шапка */
         header {
-            padding: 20px 40px;
-            border-bottom: 1px solid #222;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #000;
-        }
-
-        .header-controls {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-        }
-
-        .btn-exit {
-            background: transparent;
-            border: 1px solid #444;
-            color: #888;
-            padding: 5px 15px;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-size: 0.8em;
-            transition: 0.3s;
-        }
-
-        .btn-exit:hover {
-            border-color: var(--gold);
-            color: var(--gold);
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--gold-dim);
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.9); z-index: 10;
         }
 
         .main-layout {
             display: grid;
-            grid-template-columns: 380px 1fr;
+            grid-template-columns: 400px 1fr;
             flex-grow: 1;
-            overflow: hidden;
+            z-index: 5;
         }
 
         /* Список протоколов */
         .protocol-list {
-            border-right: 1px solid #222;
+            background: rgba(10, 10, 10, 0.8);
+            border-right: 1px solid var(--gold-dim);
             overflow-y: auto;
-            background: #080808;
+            padding: 10px;
         }
 
         .protocol-item {
-            padding: 25px;
-            border-bottom: 1px solid #151515;
+            padding: 20px;
+            border: 1px solid transparent;
+            margin-bottom: 5px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            background: rgba(212, 175, 55, 0.02);
         }
 
-        .protocol-item:hover { background: #111; color: var(--gold); }
-        .protocol-item.active { 
-            background: #1a1a1a; 
-            border-left: 4px solid var(--gold); 
+        .protocol-item:hover {
+            border-color: var(--gold-dim);
+            background: rgba(212, 175, 55, 0.08);
+            transform: translateX(5px);
+        }
+
+        .protocol-item.active {
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid var(--gold);
             color: #fff;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
         }
 
-        .protocol-id { font-size: 0.7em; color: var(--gold); display: block; margin-bottom: 5px; opacity: 0.7; }
+        .protocol-item.active::before {
+            content: "▶";
+            position: absolute; left: 5px; color: var(--gold);
+        }
+
+        .protocol-id { font-size: 0.7em; color: var(--gold); display: block; margin-bottom: 5px; opacity: 0.6; }
 
         /* Рабочая область */
         .details-area {
-            padding: 60px;
+            padding: 50px;
             overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            background: radial-gradient(circle at center, #0a0a0a 0%, #050505 100%);
+            position: relative;
+            background: radial-gradient(circle at center, rgba(30,25,10,0.1) 0%, rgba(5,5,5,1) 80%);
+        }
+
+        /* Водяной знак */
+        .watermark {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 8em; color: rgba(255,255,255,0.02);
+            white-space: nowrap; pointer-events: none;
+            font-weight: 900; z-index: -1;
         }
 
         .protocol-header {
-            border-bottom: 1px solid var(--gold);
-            padding-bottom: 15px;
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 10px;
             color: var(--gold);
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            font-size: 2em;
+            letter-spacing: 7px;
+            font-size: 1.8em;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
         }
 
         .warning-box {
             border: 1px solid var(--red);
-            padding: 25px;
+            padding: 20px;
             color: var(--red);
-            background: rgba(255, 68, 68, 0.05);
-            font-size: 0.9em;
-            margin: 20px 0;
-            line-height: 1.5;
-        }
-
-        /* Лог снизу */
-        .console-log {
-            height: 150px;
-            background: #000;
-            border-top: 1px solid #222;
-            padding: 15px;
+            background: rgba(255, 68, 68, 0.03);
             font-size: 0.85em;
-            color: #444;
-            overflow-y: auto;
-            font-family: 'Consolas', monospace;
+            margin-top: 30px;
+            line-height: 1.6;
+            position: relative;
         }
 
-        .log-entry { margin-bottom: 5px; }
-        .log-ts { color: #222; margin-right: 10px; }
+        .warning-box::after {
+            content: "CRITICAL";
+            position: absolute; top: -10px; right: 10px;
+            background: var(--bg); padding: 0 5px; font-size: 0.8em;
+        }
 
+        /* Консоль */
+        .console-log {
+            height: 180px;
+            background: #000;
+            border-top: 1px solid var(--gold-dim);
+            padding: 15px;
+            font-size: 0.75em;
+            color: var(--gold-dim);
+            overflow-y: auto;
+        }
+
+        .log-entry { margin-bottom: 4px; border-left: 2px solid transparent; padding-left: 10px; }
+        .log-entry.secure { border-color: var(--gold); color: var(--gold); }
+        .log-ts { opacity: 0.4; margin-right: 10px; }
+
+        .btn-action {
+            background: transparent; border: 1px solid var(--gold);
+            color: var(--gold); padding: 10px 20px; cursor: not-allowed;
+            margin-top: 40px; font-family: inherit; transition: 0.3s;
+            opacity: 0.5;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--gold-dim); }
     </style>
 </head>
 <body>
 
-<div id="auth-overlay">BIOMETRIC SCAN IN PROGRESS...</div>
+<div id="auth-overlay">
+    <div style="font-size: 2em; margin-bottom: 20px;">CRYPTO_LINK_ESTABLISHED</div>
+    <div id="loading-bar" style="width: 300px; height: 2px; background: #222; position: relative;">
+        <div id="progress" style="width: 0%; height: 100%; background: var(--gold); box-shadow: 0 0 10px var(--gold);"></div>
+    </div>
+    <div style="margin-top: 20px; font-size: 0.6em; opacity: 0.5;" id="auth-text">SYNCING BIOMETRICS...</div>
+</div>
 
 <header>
     <div>
-        <span style="color: var(--gold); font-weight: bold; letter-spacing: 3px;">P.R.I.S.M. OVERRIDE</span>
-        <span style="margin-left: 20px; font-size: 0.75em; color: #444; border: 1px solid #333; padding: 2px 8px;">O5-CLEARANCE</span>
+        <span style="color: var(--gold); font-weight: bold; letter-spacing: 5px;">COUNCIL_OVERRIDE_V4</span>
+        <span style="margin-left: 20px; font-size: 0.6em; color: var(--gold); border: 1px solid var(--gold-dim); padding: 3px 10px;">LEVEL 5 ONLY</span>
     </div>
     
-    <div class="header-controls">
-        <div id="status-display" style="font-size: 0.85em; font-weight: bold;">SYSTEM: CONNECTING...</div>
-        <button class="btn-exit" onclick="location.href='profile.html'">ВЕРНУТЬСЯ В ПРОФИЛЬ</button>
+    <div style="display: flex; gap: 40px; align-items: center;">
+        <div style="font-size: 0.7em; text-align: right; line-height: 1.2;">
+            <div id="status-display" style="color: var(--gold);">STATUS: SCANNING...</div>
+            <div id="session-display" style="color: #444;">SID: ----</div>
+        </div>
+        <button class="btn-action" style="opacity: 1; cursor: pointer; border-color: #444; color: #444;" onclick="location.href='staff.html'">[ EXIT_TERMINAL ]</button>
     </div>
 </header>
 
 <div class="main-layout">
-    <div class="protocol-list" id="protocol-list"></div>
+    <div class="protocol-list" id="protocol-list">
+        <div style="padding: 20px; font-size: 0.7em; color: var(--gold-dim);">// DIRECTORY: SECURE_PROTOCOLS</div>
+    </div>
 
     <div class="details-area" id="details-area">
-        <div style="text-align: center; margin-top: 150px; color: #222; letter-spacing: 5px;">
-            ВЫБЕРИТЕ ПРОТОКОЛ ДЛЯ ИЗУЧЕНИЯ
+        <div class="watermark">RESTRICTED</div>
+        <div style="text-align: center; margin-top: 20vh; opacity: 0.3; letter-spacing: 10px;">
+            ВЫБЕРИТЕ ПРОТОКОЛ ДЛЯ ДЕШИФРОВКИ
         </div>
     </div>
 </div>
 
-<div class="console-log" id="console-log">
-    <div class="log-entry">> Secure channel established.</div>
-    <div class="log-entry">> Council session ID: <span id="session-id"></span></div>
-</div>
+<div class="console-log" id="console-log"></div>
 
 <script>
-    // --- ПОДКЛЮЧЕНИЕ ---
-    const RENDER_API = "https://prism-bot.onrender.com"; // ЗАМЕНИ НА СВОЮ
+    const RENDER_API = "https://prism-bot.onrender.com";
 
     const PROTOCOLS = [
         { 
             id: "OVR-ST", 
             name: "СТАБИЛИЗАЦИЯ (Stable)", 
-            desc: "Полная деактивация всех систем тревоги. Сброс освещения в штатный режим. Отключение сирен во всех секторах.", 
-            danger: "ВНИМАНИЕ: Протокол может быть запущен только после полной ликвидации угрозы нарушения условий содержания." 
+            desc: "Полная деактивация всех систем тревоги. Сброс освещения в штатный режим (White Light). Отключение сирен и принудительная разблокировка второстепенных шлюзов.", 
+            danger: "ВНИМАНИЕ: Протокол игнорирует локальные повреждения. Возможна утечка остаточных газов в секторах 2-4." 
         },
         { 
             id: "OVR-RED", 
             name: "КРАСНЫЙ КОД (Containment Breach)", 
-            desc: "Инициация режима глобальной тревоги. Блокировка внешних шлюзов. Активация протокола 'Слепое Пятно'.", 
-            danger: "ВНИМАНИЕ: Доступ к этой функции осуществляется только через авторизованный мобильный терминал (Telegram)." 
+            desc: "Инициация режима глобальной тревоги. Полная герметизация Зоны. Активация турелей в коридорах уровня 'Браво'. Перевод ИИ в режим 'Слепое Пятно'.", 
+            danger: "ВНИМАНИЕ: Отмена протокола возможна только через физический ключ в комнате охраны или через зашифрованный канал O5." 
         },
         { 
             id: "OVR-ZERO", 
             name: "ОБНУЛЕНИЕ (Protocol Zero)", 
-            desc: "Удаление данных о текущем инциденте из публичных архивов. Применение амнезиаков класса А для персонала секторов 4 и 5.", 
-            danger: "СОВЕРШЕННО СЕКРЕТНО: Требуется подтверждение двух членов Высшего Совета." 
+            desc: "Удаление всех цифровых следов инцидента. Принудительная очистка буфера камер наблюдения. Подготовка спецтранспорта для эвакуации Высшего Совета.", 
+            danger: "СОВЕРШЕННО СЕКРЕТНО: После выполнения записи о персонале, находящемся в Зоне, будут переведены в статус 'БЕЗ ВЕСТИ ПРОПАВШИЕ'." 
         }
     ];
 
     function init() {
-        // Генерация ID сессии
-        document.getElementById('session-id').innerText = Math.random().toString(16).substr(2, 8).toUpperCase();
+        // ID Сессии
+        const sid = Math.random().toString(16).substr(2, 8).toUpperCase();
+        document.getElementById('session-display').innerText = `SID: ${sid}`;
 
         const list = document.getElementById('protocol-list');
         PROTOCOLS.forEach(p => {
@@ -209,15 +260,26 @@
             list.appendChild(div);
         });
 
-        // Плавная загрузка
-        setTimeout(() => {
-            const overlay = document.getElementById('auth-overlay');
-            if(overlay) {
-                overlay.style.opacity = '0';
-                setTimeout(() => overlay.remove(), 1000);
+        // Анимация загрузки
+        let prog = 0;
+        const bar = document.getElementById('progress');
+        const load = setInterval(() => {
+            prog += Math.random() * 15;
+            if(prog > 100) {
+                prog = 100;
+                clearInterval(load);
+                setTimeout(unlock, 500);
             }
-            log("User verified. Level 5 access granted.");
-        }, 1500);
+            bar.style.width = prog + "%";
+        }, 100);
+    }
+
+    function unlock() {
+        const overlay = document.getElementById('auth-overlay');
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 1500);
+        log("Access verified. Welcome, Overseer.", true);
+        log("Local server time: " + new Date().toLocaleTimeString());
     }
 
     function showDetails(p, event) {
@@ -226,42 +288,52 @@
 
         const area = document.getElementById('details-area');
         area.innerHTML = `
+            <div class="watermark">RESTRICTED</div>
             <h2 class="protocol-header">${p.name}</h2>
-            <p style="color: #888; line-height: 1.8; font-size: 1.1em;">${p.desc}</p>
-            <div class="warning-box">
-                <strong style="letter-spacing: 2px;">ДИРЕКТИВА БЕЗОПАСНОСТИ:</strong><br><br>${p.danger}
+            <div style="font-family: 'Consolas', monospace; color: #888; line-height: 1.8; font-size: 1em; max-width: 800px;">
+                > INITIALIZING DECRYPTION... DONE.<br>
+                > ${p.desc}
             </div>
-            <p style="color: #333; font-size: 0.8em; margin-top: 50px;">// ПРЯМОЕ УПРАВЛЕНИЕ ЗАБЛОКИРОВАНО. ИСПОЛЬЗУЙТЕ BOT_INTERFACE ДЛЯ ВВОДА КОДОВ.</p>
+            <div class="warning-box">
+                <strong style="letter-spacing: 2px; color: var(--red);">[ ! ] ПРЕДУПРЕЖДЕНИЕ БЕЗОПАСНОСТИ:</strong><br><br>${p.danger}
+            </div>
+            
+            <div style="margin-top: 40px; border-top: 1px solid #111; padding-top: 20px;">
+                <p style="font-size: 0.7em; color: #333;">// ДИСТАНЦИОННОЕ ИСПОЛНЕНИЕ ЗАБЛОКИРОВАНО В ЦЕЛЯХ БЕЗОПАСНОСТИ.<br>
+                ОТПРАВЬТЕ КОД <span style="color:var(--gold)">${p.id}_EXECUTE</span> В ТЕРМИНАЛ СВЯЗИ.</p>
+                <button class="btn-action">ПОДТВЕРДИТЬ ИСПОЛНЕНИЕ</button>
+            </div>
         `;
-        log(`Accessed encrypted data: ${p.id}`);
+        log(`Protocol accessed: ${p.id}`);
     }
 
-    function log(msg) {
+    function log(msg, secure = false) {
         const logger = document.getElementById('console-log');
         const ts = new Date().toLocaleTimeString();
-        logger.innerHTML += `<div class="log-entry"><span class="log-ts">[${ts}]</span> > ${msg}</div>`;
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${secure ? 'secure' : ''}`;
+        entry.innerHTML = `<span class="log-ts">[${ts}]</span> > ${msg}`;
+        logger.appendChild(entry);
         logger.scrollTop = logger.scrollHeight;
     }
 
-    // Синхронизация статуса
     async function syncStatus() {
         try {
             const res = await fetch(`${RENDER_API}/status`);
             const data = await res.json();
             const disp = document.getElementById('status-display');
-            disp.innerText = `GLOBAL SYSTEM STATUS: ${data.label}`;
+            disp.innerText = `STATUS: ${data.label}`;
             disp.style.color = data.color;
         } catch (e) {
-            document.getElementById('status-display').innerText = "SYSTEM: OFFLINE";
-            document.getElementById('status-display').style.color = "red";
+            document.getElementById('status-display').innerText = "STATUS: OFFLINE";
+            document.getElementById('status-display').style.color = "var(--red)";
         }
     }
 
-    setInterval(syncStatus, 4000);
+    setInterval(syncStatus, 5000);
     syncStatus();
     init();
 </script>
 
 </body>
 </html>
-

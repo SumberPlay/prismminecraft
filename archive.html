@@ -2,187 +2,407 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>P.R.I.S.M. | ANOMALY_DATABASE</title>
+    <title>P.R.I.S.M. | SECURE TERMINAL</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         :root { 
-            --neon: #00ff41; 
-            --dim: #002200;
-            --alert: #ff0000; 
-            --bg: #050505; 
+            --neon-blue: #00ffcc; 
+            --neon-green: #00ff41;
+            --neon-red: #ff3333; 
+            --neon-gold: #ffd700;
+            --bg-dark: #050505; 
+            --panel-bg: rgba(10, 16, 16, 0.95);
+            --border: #1a3a3a;
+            --font-main: 'Courier New', monospace;
         }
 
         * { box-sizing: border-box; }
         
         body { 
-            background: var(--bg); color: var(--neon); 
-            font-family: 'Courier New', monospace; margin: 0; 
-            text-transform: uppercase; font-size: 13px;
-            line-height: 1.5; letter-spacing: 1px;
-            overflow-x: hidden;
+            background: var(--bg-dark); color: #ccc; 
+            font-family: var(--font-main); margin: 0; 
+            height: 100vh; overflow: hidden; text-transform: uppercase;
         }
 
-        /* CRT Overlay */
-        body::before {
-            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, transparent 2px);
-            pointer-events: none; z-index: 1000;
+        /* --- ЭФФЕКТЫ --- */
+        .overlay { position: fixed; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, transparent 2px); pointer-events: none; z-index: 9000; }
+        .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(0, 255, 204, 0.03); z-index: 9001; pointer-events: none; animation: scan 8s linear infinite; }
+        @keyframes scan { from { top: -10%; } to { top: 110%; } }
+
+        /* --- ЭКРАН ПРОВЕРКИ ДОСТУПА --- */
+        #access-screen { 
+            position: fixed; inset: 0; z-index: 10000; background: #000; 
+            display: flex; align-items: center; justify-content: center; text-align: center;
         }
+        .error-box { border: 1px solid var(--neon-red); padding: 40px; background: rgba(20,0,0,0.2); }
 
-        nav { border-bottom: 1px solid var(--neon); padding: 15px 25px; background: #000; display: flex; justify-content: space-between; }
-        nav a { color: var(--neon); text-decoration: none; font-weight: bold; border: 1px solid var(--dim); padding: 5px 10px; }
-        nav a:hover { background: var(--neon); color: #000; }
-
-        .container { width: 95%; max-width: 1100px; margin: 20px auto; }
-
-        .status-bar { 
-            border: 1px solid var(--neon); padding: 10px 20px; 
-            margin-bottom: 20px; display: flex; justify-content: space-between; 
-            background: rgba(0, 255, 65, 0.05); font-size: 0.9em;
-        }
-
-        .anomaly-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid var(--neon); }
-        .anomaly-table th { background: var(--neon); color: #000; padding: 12px; text-align: left; letter-spacing: 2px; }
-        .anomaly-table td { border: 1px solid var(--dim); padding: 25px 20px; vertical-align: top; }
-
-        .col-id { width: 180px; }
-        .col-status { width: 120px; text-align: center; }
-
-        .id-badge { color: #fff; background: var(--dim); padding: 4px 8px; font-weight: bold; display: inline-block; }
+        /* --- ИНТЕРФЕЙС --- */
+        #main-interface { display: none; height: 100vh; grid-template-rows: 60px 1fr; }
         
-        /* Заголовки внутри текста */
-        .data-label { color: var(--neon); font-weight: bold; text-decoration: underline; display: block; margin-top: 15px; margin-bottom: 5px; }
-        .data-label:first-child { margin-top: 0; }
+        header { 
+            border-bottom: 1px solid var(--border); background: #080808; 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 25px;
+        }
+        .header-title { font-size: 1.2em; letter-spacing: 4px; color: #fff; font-weight: bold; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        .sys-status { font-size: 0.75em; color: #666; display: flex; gap: 25px; }
+        .val { color: var(--neon-green); font-weight: bold; }
 
-        .level-tag { font-size: 0.8em; border: 1px solid; padding: 2px 6px; display: inline-block; margin-bottom: 10px; }
-        .lvl-green { border-color: var(--neon); color: var(--neon); }
-        .lvl-yellow { border-color: #ffd700; color: #ffd700; }
-        .lvl-red { border-color: var(--alert); color: var(--alert); animation: blink 1s infinite; }
+        .workspace { display: grid; grid-template-columns: 260px 1fr; height: 100%; overflow: hidden; }
 
-        .desc-text { color: #aaa; font-size: 0.9em; white-space: pre-wrap; }
+        aside { border-right: 1px solid var(--border); background: #020202; display: flex; flex-direction: column; }
+        .nav-header { padding: 20px; color: #555; font-size: 0.7em; border-bottom: 1px solid #111; letter-spacing: 1px; }
         
-        @keyframes blink { 50% { opacity: 0.3; } }
-        .row-locked { opacity: 0.5; background: rgba(255,0,0,0.03); }
-        .row-hidden { display: none; }
+        .nav-btn { 
+            padding: 18px 25px; color: #777; cursor: pointer; border-left: 2px solid transparent; 
+            transition: 0.3s; font-size: 0.9em; letter-spacing: 1px;
+        }
+        .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.03); }
+        .nav-btn.active { 
+            color: var(--neon-blue); border-left-color: var(--neon-blue); 
+            background: linear-gradient(90deg, rgba(0,255,204,0.08), transparent); 
+        }
+
+        main { position: relative; background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%); }
+        .view-section { display: none; height: 100%; grid-template-columns: 320px 1fr; } 
+        .view-section.active { display: grid; }
+
+        .list-column { overflow-y: auto; border-right: 1px solid var(--border); background: rgba(0,0,0,0.3); }
+        .list-item { 
+            padding: 20px; border-bottom: 1px solid #111; cursor: pointer; 
+            display: flex; align-items: center; gap: 15px; transition: 0.2s; opacity: 0.7;
+        }
+        .list-item:hover { opacity: 1; background: rgba(255,255,255,0.02); }
+        .list-item.active { opacity: 1; background: rgba(0, 255, 204, 0.05); border-left: 3px solid var(--neon-blue); }
+        .list-item.locked { opacity: 0.3; }
+        
+        .anomaly-marker { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 5px currentColor; }
+        .m-safe { background: var(--neon-green); color: var(--neon-green); }
+        .m-moderate { background: var(--neon-gold); color: var(--neon-gold); }
+        .m-critical { background: var(--neon-red); color: var(--neon-red); animation: pulse 1s infinite; }
+
+        .viewer-column { padding: 40px; overflow-y: auto; }
+        .empty-state { height: 100%; display: flex; align-items: center; justify-content: center; color: #333; letter-spacing: 2px; }
+
+        .dossier-header { display: flex; gap: 30px; margin-bottom: 30px; border-bottom: 1px solid #222; padding-bottom: 30px; }
+        .dossier-img { width: 160px; height: 160px; object-fit: cover; border: 1px solid #333; padding: 4px; background: #000; }
+        
+        .dossier-title { font-size: 2em; margin: 0; color: #fff; line-height: 1.1; margin-bottom: 10px; }
+        .dossier-subtitle { color: var(--neon-blue); font-size: 0.9em; letter-spacing: 2px; margin-bottom: 5px; }
+        .tag-box { display: inline-block; border: 1px solid; padding: 4px 8px; font-size: 0.7em; margin-top: 10px; }
+
+        .section-title { color: #555; margin-top: 30px; margin-bottom: 10px; font-size: 0.8em; letter-spacing: 1px; border-bottom: 1px solid #1a1a1a; display: inline-block; }
+        .text-content { font-size: 0.95em; color: #aaa; line-height: 1.6; white-space: pre-wrap; max-width: 800px; }
+        .typing-cursor::after { content: '█'; animation: blink 0.8s infinite; color: var(--neon-blue); }
+
+        .c-safe { color: var(--neon-green); border-color: var(--neon-green); }
+        .c-moderate { color: var(--neon-gold); border-color: var(--neon-gold); }
+        .c-critical { color: var(--neon-red); border-color: var(--neon-red); text-shadow: 0 0 10px var(--neon-red); }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #222; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-blue); }
     </style>
 </head>
 <body>
 
-<nav>
-    <div>[ P.R.I.S.M. INTEL_ARCHIVE ]</div>
-    <div><a href="index.html">EXIT</a> <a href="staff.html">BACK</a></div>
-</nav>
+<div class="overlay"></div>
+<div class="scanline"></div>
 
-<div class="container">
-    <div class="status-bar">
-        <div>OP_LEVEL: <span id="access-display">0</span></div>
-        <div>STATION: 0-POINT</div>
-        <div>SYNC: <span id="sync-val">...</span></div>
+<div id="access-screen">
+    <div id="status-box">
+        <div style="color: var(--neon-blue); letter-spacing: 5px; margin-bottom: 20px;" id="status-text">СКАНИРОВАНИЕ БИОМЕТРИКИ...</div>
     </div>
+</div>
 
-    <table class="anomaly-table">
-        <thead>
-            <tr>
-                <th class="col-id">ANOMALY_INDEX</th>
-                <th>ANALYSIS_REPORT</th>
-                <th class="col-status">STATUS</th>
-            </tr>
-        </thead>
-        <tbody id="archive-list">
-            <tr class="anomaly-row" data-level="3">
-                <td>
-                    <span class="id-badge">#001 "КОНЕЦ"</span>
-                    <div style="font-size: 0.7em; margin-top: 10px; color: var(--dim);">COORD: UNKNOWN</div>
-                </td>
-                <td>
-                    <span class="level-tag lvl-yellow">CLASS: MODERATE</span>
-                    <div class="desc-text" data-text="[DESCRIPTION]: Процесс атомарного стирания реальности. 
-[EFFECT]: Исчезновение объектов в радиусе поражения. 
-[PROTOCOL]: Немедленная эвакуация при падении фона ниже 0.4."></div>
-                </td>
-                <td class="col-status" id="status-001"></td>
-            </tr>
+<div id="main-interface">
+    <header>
+        <div class="header-title">P.R.I.S.M. <span style="color:var(--neon-blue); font-size:0.7em;">// DATABASE_V4</span></div>
+        <div class="sys-status">
+            <span>USER: <span id="u-name" class="val">---</span></span>
+            <span>CLEARANCE: <span id="u-level" class="val">0</span></span>
+            <span style="cursor: pointer; color: var(--neon-red);" onclick="logout()">[ВЫХОД]</span>
+        </div>
+    </header>
 
-            <tr class="anomaly-row" data-level="0">
-                <td>
-                    <span class="id-badge">#002 "РАЗЛОМ"</span>
-                    <div style="font-size: 0.7em; margin-top: 10px; color: var(--dim);">COORD: 52.36 N / 4.90 E</div>
-                </td>
-                <td>
-                    <span class="level-tag lvl-green">CLASS: SAFE</span>
-                    <div class="desc-text" data-text="[DESCRIPTION]: Стабильная пространственная брешь. 
-[EFFECT]: Позволяет транзит квантовых пакетов. 
-[PROTOCOL]: Требуется базовая защита зрения при визуальном контакте."></div>
-                </td>
+    <div class="workspace">
+        <aside>
+            <div class="nav-header">SELECT MODULE</div>
+            <div class="nav-btn active" onclick="switchModule('anomalies', this)">> РЕЕСТР АНОМАЛИЙ</div>
+            <div class="nav-btn" onclick="switchModule('staff', this)">> ЛИЧНЫЕ ДЕЛА</div>
+            <div class="nav-btn" onclick="switchModule('archive', this)">> АРХИВ</div>
+        </aside>
 
-                <td class="col-status"><span style="color:var(--neon)">[OPEN]</span></td>
-            </tr>
+        <main>
+            <div id="mod-anomalies" class="view-section active">
+                <div class="list-column" id="anomaly-list"></div>
+                <div class="viewer-column">
+                    <div id="ano-placeholder" class="empty-state">ВЫБЕРИТЕ ОБЪЕКТ ИЗ СПИСКА</div>
+                    <div id="ano-content" style="display:none;">
+                        <div class="dossier-header">
+                            <img id="a-img" src="" class="dossier-img" style="filter: sepia(1) hue-rotate(180deg) contrast(1.2);">
+                            <div>
+                                <h1 id="a-code" class="dossier-title"></h1>
+                                <div id="a-name" class="dossier-subtitle"></div>
+                                <div id="a-class" class="tag-box"></div>
+                            </div>
+                        </div>
+                        <div class="section-title">ОСОБЫЕ УСЛОВИЯ СОДЕРЖАНИЯ</div>
+                        <div id="a-proc" class="text-content" style="color: #fff; margin-bottom: 20px;"></div>
+                        <div class="section-title">ОПИСАНИЕ ОБЪЕКТА</div>
+                        <div id="a-desc" class="text-content"></div>
+                    </div>
+                </div>
+            </div>
 
-            <tr class="anomaly-row" data-level="5">
-                <td>
-                    <span class="id-badge">#003 "МАРТИ"</span>
-                    <div style="font-size: 0.7em; margin-top: 10px; color: var(--dim);">COORD: REDACTED</div>
-                </td>
-                <td>
-                    <span class="level-tag lvl-red">CLASS: CRITICAL</span>
-                    <div class="desc-text" data-text="[DESCRIPTION]: Сущность, изменяющая физические законы. 
-[EFFECT]: Мгновенное переписывание кода окружения. 
-[PROTOCOL]: Прямой контакт запрещен. Наблюдение только через фильтры."></div>
-                </td>
-                <td class="col-status" id="status-003"></td>
-            </tr>
-        </tbody>
-    </table>
+            <div id="mod-staff" class="view-section">
+                <div class="list-column" id="staff-list"></div>
+                <div class="viewer-column">
+                    <div id="staff-placeholder" class="empty-state">ВЫБЕРИТЕ ЛИЧНОЕ ДЕЛО</div>
+                    <div id="staff-content" style="display:none;">
+                        <div class="dossier-header">
+                            <img id="s-img" src="" class="dossier-img">
+                            <div>
+                                <h1 id="s-name" class="dossier-title"></h1>
+                                <div id="s-id" class="dossier-subtitle"></div>
+                                <div id="s-level" class="tag-box" style="border-color: var(--neon-blue); color: var(--neon-blue)"></div>
+                            </div>
+                        </div>
+                        <div class="section-title">БИОГРАФИЧЕСКАЯ СПРАВКА</div>
+                        <div id="s-bio" class="text-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mod-archive" class="view-section">
+                <div class="list-column" id="archive-list"></div>
+                <div class="viewer-column">
+                    <div id="archive-placeholder" class="empty-state">ВЫБЕРИТЕ ПРОТОКОЛ ДЛЯ ЧТЕНИЯ</div>
+                    <div id="archive-content" style="display:none;">
+                        <div class="dossier-header">
+                            <div style="width:160px; height:160px; border:1px solid #333; display:flex; align-items:center; justify-content:center; background:#000;">
+                                <span style="font-size:3em; color:#222;">DOC</span>
+                            </div>
+                            <div>
+                                <h1 id="r-title" class="dossier-title"></h1>
+                                <div id="r-meta" class="dossier-subtitle"></div>
+                                <div id="r-level" class="tag-box"></div>
+                            </div>
+                        </div>
+                        <div class="section-title">ТЕКСТ ПРОТОКОЛА</div>
+                        <div id="r-text" class="text-content"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 </div>
 
 <script>
-const RENDER_API = "https://prism-bot.onrender.com";
+    const RENDER_API = "https://prism-bot.onrender.com";
+    const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/data/archive.json";
+    
+    const ANOMALIES = [
+        { id: "001", code: "КОНЕЦ", lvl: 4, class: "critical", proc: "Объект должен находиться в стазис-капсуле Типа-4. Любое падение уровня энергии ниже 98% требует немедленной эвакуации Сектора.", desc: "Аномалия представляет собой точку сингулярности, вызывающую распад атомных связей в радиусе воздействия." },
+        { id: "002", code: "РАЗЛОМ", lvl: 0, class: "safe", proc: "Зона вокруг объекта огорожена периметром безопасности. Допускается проход персонала с уровнем допуска 2 и выше.", desc: "Стабильный пространственный разрыв. Ведет в карманное измерение, состоящее из [ДАННЫЕ УДАЛЕНЫ]." },
+        { id: "003", code: "МАРТИ", lvl: 5, class: "critical", proc: "Ни при каких обстоятельствах не вступать в диалог с объектом. Персонал подлежит устранению.", desc: "Гуманоидная сущность, способная менять локальную физику." },
+        { id: "004", code: "ЭХО", lvl: 2, class: "moderate", proc: "В зоне содержания должны постоянно работать генераторы белого шума мощностью не менее 120дБ.", desc: "Акустический феномен. Повторяет мысли субъекта, постепенно искажая их смысл." }
+    ];
 
-async function sync() {
-    try {
-        const res = await fetch(`${RENDER_API}/status`);
-        const data = await res.json();
-        document.getElementById('sync-val').innerText = data.label;
-    } catch (e) { document.getElementById('sync-val').innerText = "OFFLINE"; }
-}
+    let USER = { name: "", level: 0 };
+    let typeTimer = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-    let userLevel = parseInt(sessionStorage.getItem('prism_level')) || 0;
-    document.getElementById('access-display').innerText = userLevel;
+    // --- ПРОВЕРКА LOCALSTORAGE ПРИ ЗАГРУЗКЕ ---
+    window.onload = function() {
+        const storedName = localStorage.getItem('prism_name');
+        const storedLevel = localStorage.getItem('prism_level');
 
-    document.querySelectorAll('.anomaly-row').forEach((row, index) => {
-        const reqLevel = parseInt(row.getAttribute('data-level'));
-        const desc = row.querySelector('.desc-text');
-        const status = row.querySelector('.col-status');
-        const text = desc.getAttribute('data-text');
-
-        if (reqLevel > userLevel) {
-            if (reqLevel >= 5) row.classList.add('row-hidden');
-            else {
-                row.classList.add('row-locked');
-                status.innerHTML = `<span style="color:var(--alert)">[LOCKED]</span>`;
-                desc.innerHTML = "[ACCESS DENIED]\nТРЕБУЕТСЯ УРОВЕНЬ " + reqLevel;
-            }
-            return;
+        if (storedName && storedLevel !== null) {
+            USER.name = storedName;
+            USER.level = parseInt(storedLevel);
+            initInterface();
+        } else {
+            // Показываем ошибку если данных нет
+            const statusBox = document.getElementById('status-box');
+            statusBox.innerHTML = `
+                <div style="border: 1px solid var(--neon-red); padding: 40px; background: rgba(20,0,0,0.5);">
+                    <h2 style="color: var(--neon-red); letter-spacing: 10px;">ACCESS DENIED</h2>
+                    <p style="color: #666; font-size: 0.8em; margin: 20px 0;">УЧЕТНАЯ ЗАПИСЬ НЕ НАЙДЕНА В ЛОКАЛЬНОМ РЕЕСТРЕ</p>
+                    <a href="staff.html" style="color: var(--neon-blue); text-decoration: none; border: 1px solid; padding: 10px 20px; display: inline-block;">ВЕРНУТЬСЯ К АВТОРИЗАЦИИ</a>
+                </div>
+            `;
         }
+    };
 
-        if (status.innerHTML === "") status.innerHTML = `<span style="color:var(--neon)">[OPEN]</span>`;
-        
-        // Красивое появление текста
-        desc.innerText = '';
-        setTimeout(() => {
-            let i = 0;
-            let timer = setInterval(() => {
-                if (i < text.length) {
-                    desc.innerText += text.charAt(i);
-                    i++;
-                } else clearInterval(timer);
-            }, 15);
-        }, index * 400);
-    });
-});
+    function initInterface() {
+        document.getElementById('access-screen').style.display = 'none';
+        document.getElementById('main-interface').style.display = 'grid';
+        document.getElementById('u-name').innerText = USER.name;
+        document.getElementById('u-level').innerText = "LEVEL " + USER.level;
 
-sync();
-setInterval(sync, 5000);
+        renderAnomalyList();
+        loadStaff();
+        loadArchive();
+    }
+
+    function logout() {
+       	location.href = "staff.html"; // Или reload(), если хочешь остаться на этой странице
+    }
+
+    // --- ОСТАЛЬНАЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ) ---
+
+    function switchModule(modId, btn) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(`mod-${modId}`).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function renderAnomalyList() {
+        const list = document.getElementById('anomaly-list');
+        list.innerHTML = "";
+        ANOMALIES.forEach(a => {
+            const isLocked = USER.level < a.lvl;
+            const item = document.createElement('div');
+            item.className = `list-item ${isLocked ? 'locked' : ''}`;
+            item.onclick = () => openAnomaly(a, item, isLocked);
+            item.innerHTML = `<div class="anomaly-marker m-${isLocked ? 'critical' : a.class}"></div>
+                <div><div style="color:#fff">#${a.id} ${isLocked ? 'CLASSIFIED' : a.code}</div>
+                <div style="font-size:0.7em">CLASS: ${isLocked ? '???' : a.class.toUpperCase()}</div></div>`;
+            list.appendChild(item);
+        });
+    }
+
+    function openAnomaly(data, el, isLocked) {
+        document.querySelectorAll('#anomaly-list .list-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('ano-placeholder').style.display = 'none';
+        document.getElementById('ano-content').style.display = 'block';
+
+        const code = document.getElementById('a-code');
+        const badge = document.getElementById('a-class');
+        badge.className = "tag-box";
+
+        if(isLocked) {
+            document.getElementById('a-img').src = "https://via.placeholder.com/160/000000/ff3333?text=LOCKED";
+            code.innerText = `[ДОСТУП ЗАПРЕЩЕН]`; code.style.color = "var(--neon-red)";
+            document.getElementById('a-name').innerText = "ТРЕБУЕТСЯ УРОВЕНЬ " + data.lvl;
+            badge.innerText = "UNKNOWN"; badge.classList.add('c-critical');
+            document.getElementById('a-proc').innerText = "[ДАННЫЕ УДАЛЕНЫ]";
+            typeText(document.getElementById('a-desc'), "Попытка несанкционированного доступа зафиксирована.");
+        } else {
+            document.getElementById('a-img').src = `https://via.placeholder.com/160/000000/00ffcc?text=OBJ-${data.id}`;
+            code.innerText = `ОБЪЕКТ #${data.id}`; code.style.color = "#fff";
+            document.getElementById('a-name').innerText = `CODENAME: "${data.code}"`;
+            badge.innerText = data.class.toUpperCase(); badge.classList.add(`c-${data.class}`);
+            document.getElementById('a-proc').innerText = data.proc;
+            typeText(document.getElementById('a-desc'), data.desc);
+        }
+    }
+
+    async function loadStaff() {
+        try {
+            const res = await fetch(`${RENDER_API}/get-staff`);
+            const db = await res.json();
+            const list = document.getElementById('staff-list');
+            Object.entries(db).forEach(([id, p]) => {
+                const isHidden = USER.level < p.level;
+                const item = document.createElement('div');
+                item.className = "list-item";
+                item.onclick = () => openStaff(id, p, item, isHidden);
+                item.innerHTML = `<img src="https://minotar.net/helm/${isHidden ? 'Steve' : p.mc_name}/32.png" style="width:32px;filter:grayscale(1)">
+                    <div><div style="color:#fff">${isHidden ? 'ЗАСЕКРЕЧЕНО' : (p.name || id)}</div>
+                    <div style="font-size:0.7em">ID: ${id} // L${p.level}</div></div>`;
+                list.appendChild(item);
+            });
+        } catch(e) {}
+    }
+
+    function openStaff(id, p, el, isHidden) {
+        document.querySelectorAll('#staff-list .list-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('staff-placeholder').style.display = 'none';
+        document.getElementById('staff-content').style.display = 'block';
+        const lvl = document.getElementById('s-level');
+
+        if(isHidden) {
+            document.getElementById('s-img').src = "https://minotar.net/armor/bust/Steve/160.png";
+            document.getElementById('s-name').innerText = "RESTRICTED";
+            document.getElementById('s-id').innerText = "ID: [REDACTED]";
+            lvl.innerText = "LEVEL " + p.level; lvl.style.color = "var(--neon-red)";
+            typeText(document.getElementById('s-bio'), "Досье заблокировано.");
+        } else {
+            document.getElementById('s-img').src = `https://minotar.net/armor/bust/${p.mc_name}/160.png`;
+            document.getElementById('s-name').innerText = p.name || id;
+            document.getElementById('s-id').innerText = `ID: ${id} | ОТДЕЛ: ${p.dept || 'ОБЩИЙ'}`;
+            lvl.innerText = "LEVEL " + p.level; lvl.style.color = "var(--neon-blue)";
+            typeText(document.getElementById('s-bio'), p.bio || "Нет данных.");
+        }
+    }
+
+    async function loadArchive() {
+        const list = document.getElementById('archive-list');
+        list.innerHTML = "<div style='padding:20px; color:#444'>СИНХРОНИЗАЦИЯ...</div>";
+        try {
+            const res = await fetch(`${GITHUB_JSON}?t=${Date.now()}`);
+            const files = await res.json();
+            list.innerHTML = "";
+            [...files].reverse().forEach(file => {
+                const isLocked = USER.level < file.level;
+                const item = document.createElement('div');
+                item.className = `list-item ${isLocked ? 'locked' : ''}`;
+                item.onclick = () => openArchiveFile(file, item, isLocked);
+                item.innerHTML = `
+                    <div class="anomaly-marker ${isLocked ? 'm-critical' : 'm-safe'}"></div>
+                    <div>
+                        <div style="color:#fff">${isLocked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : file.title}</div>
+                        <div style="font-size:0.7em; color:#666;">${file.date || '---'} | ACCESS: L${file.level}</div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        } catch (e) { list.innerHTML = "<div style='padding:20px; color:var(--neon-red)'>ОШИБКА СИНХРОНИЗАЦИИ</div>"; }
+    }
+
+    function openArchiveFile(file, el, isLocked) {
+        document.querySelectorAll('#archive-list .list-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('archive-placeholder').style.display = 'none';
+        document.getElementById('archive-content').style.display = 'block';
+
+        const title = document.getElementById('r-title');
+        const meta = document.getElementById('r-meta');
+        const badge = document.getElementById('r-level');
+        const text = document.getElementById('r-text');
+
+        badge.className = "tag-box";
+
+        if(isLocked) {
+            title.innerText = "[ACCESS DENIED]"; title.style.color = "var(--neon-red)";
+            meta.innerText = "CRITICAL SECURITY BREACH PREVENTION";
+            badge.innerText = "REQUIRED: L" + file.level; badge.classList.add('c-critical');
+            typeText(text, "Ваш уровень допуска недостаточно высок для расшифровки данного протокола. Информация была передана в отдел внутренней безопасности.");
+        } else {
+            title.innerText = file.title; title.style.color = "#fff";
+            meta.innerText = `LOG_ID: ${file.id || 'UKN'} | DATE: ${file.date || '---'}`;
+            badge.innerText = "CLEARANCE: L" + file.level; badge.classList.add('c-safe');
+            typeText(text, file.content || "Файл пуст.");
+        }
+    }
+
+    function typeText(el, text) {
+        if(typeTimer) clearInterval(typeTimer);
+        el.innerHTML = ""; el.classList.add('typing-cursor');
+        let i = 0;
+        typeTimer = setInterval(() => {
+            el.innerText = text.substring(0, i);
+            i++;
+            if(i > text.length) { clearInterval(typeTimer); el.classList.remove('typing-cursor'); }
+        }, 10);
+    }
 </script>
 </body>
 </html>

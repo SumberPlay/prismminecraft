@@ -74,7 +74,6 @@
 
 <nav>
     <a href="index.html">ГЛАВНАЯ_ДИРЕКТОРИЯ</a>
-    <a href="dossier.html">ЛИЧНЫЕ_ДЕЛА</a>
 </nav>
 
 <div class="container">
@@ -161,18 +160,30 @@ async function checkAuth() {
 
         if (response.ok) {
             const data = await response.json();
-            sessionStorage.setItem('prism_uid', id);
-            sessionStorage.setItem('prism_level', data.level);
-            sessionStorage.setItem('prism_name', data.name);
-            
-            // Лог в ТГ
-            fetch(`${RENDER_API}/auth-log`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id, name: data.name, level: data.level })
-            });
 
-            renderDashboard({ id, level: data.level, name: data.name });
+// Создаем единый объект пользователя
+const userObj = {
+    id: id,
+    level: data.level,
+    name: data.name
+};
+
+// Сохраняем в localStorage (будет доступно во всех вкладках)
+localStorage.setItem('prism_user', JSON.stringify(userObj));
+
+// Также оставляем для совместимости старые ключи, если они нужны другим страницам
+localStorage.setItem('prism_uid', id);
+localStorage.setItem('prism_level', data.level);
+localStorage.setItem('prism_name', data.name);
+
+// Лог в ТГ остается без изменений
+fetch(`${RENDER_API}/auth-log`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userObj)
+});
+
+renderDashboard(userObj);
         } else {
             document.getElementById('err').style.display = 'block';
             setTimeout(() => document.getElementById('err').style.display = 'none', 3000);
@@ -193,13 +204,13 @@ function renderDashboard(user) {
     
     const actions = [
         { name: "ЛИЧНОЕ_ДОСЬЕ", link: "profile" }, // Исправлено на правильный файл
-        { name: "КАРТА_ОБЪЕКТА", link: "map" }
+        { name: "КАРТА_ОБЪЕКТА", link: "map" },
+	{ name: "ПРОТОКОЛЫ", link: "prot" }
     ];
 
     // Логика кнопок на основе уровня
-    if (user.level >= 3) actions.push({ name: "АРХИВ_АНОМАЛИЙ", link: "archive" });
+    if (user.level >= 3) actions.push({ name: "АРХИВ", link: "archive" });
     if (user.level >= 5) {
-        actions.push({ name: "ПОЛНЫЙ_АРХИВ", link: "archive", class: "btn-council" });
         actions.push({ name: "СПИСОК_ПЕРСОНАЛА", link: "staff_list", class: "btn-council" });
         actions.push({ name: "КОНТРОЛЬ_СОВЕТА", link: "override", class: "btn-council" });
     }
@@ -237,21 +248,37 @@ async function sendReport() {
 }
 
 function logout() {
-    sessionStorage.clear();
+    // Удаляем данные
+    localStorage.removeItem('prism_user');
+    // Очищаем старые ключи, если они использовались
+    localStorage.removeItem('prism_uid');
+    localStorage.removeItem('prism_level');
+    localStorage.removeItem('prism_name');
+    
+    // Перезагружаем, чтобы вернуться к окну логина
     location.reload();
 }
 
 window.onload = () => {
+    // 1. Запускаем фоновую синхронизацию статуса (RED CODE и т.д.)
     syncSystem();
     setInterval(syncSystem, 5000);
     
-    const savedUID = sessionStorage.getItem('prism_uid');
-    if (savedUID) {
-        renderDashboard({ 
-            id: savedUID, 
-            level: sessionStorage.getItem('prism_level'), 
-            name: sessionStorage.getItem('prism_name') 
-        });
+    // 2. Проверяем наличие данных в localStorage
+    const savedUserData = localStorage.getItem('prism_user');
+    
+    if (savedUserData) {
+        try {
+            const user = JSON.parse(savedUserData);
+            
+            // Если данные есть, сразу отрисовываем личный кабинет
+            console.log("Сессия восстановлена для:", user.name);
+            renderDashboard(user);
+        } catch (e) {
+            // Если данные в localStorage повреждены, очищаем их
+            console.error("Ошибка парсинга данных сессии");
+            localStorage.removeItem('prism_user');
+        }
     }
 };
 </script>

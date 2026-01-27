@@ -2,261 +2,225 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>P.R.I.S.M. | Employee Dossier</title>
+    <title>P.R.I.S.M. | DATA_DOSSIER</title>
     <style>
         :root { 
-            --neon-green: #00ffcc; 
-            --neon-dim: rgba(0, 255, 204, 0.2);
+            --term-green: #00ff41; 
+            --term-dim: #003b00;
+            --alert-red: #ff0000; 
             --gold: #ffd700;
-            --gold-dim: rgba(255, 215, 0, 0.2);
-            --alert: #ff4444;
             --bg-dark: #050505; 
         }
 
+        /* Убираем прокрутку и фиксируем боксы */
+        * { box-sizing: border-box; }
+
         body { 
             background: var(--bg-dark); 
-            color: #d1d1d1; 
+            color: var(--term-green); 
             font-family: 'Courier New', monospace; 
-            display: flex; 
+            margin: 0; 
+            display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 50px;
             min-height: 100vh;
-            margin: 0;
-            overflow-x: hidden;
+            text-transform: uppercase;
+            overflow-x: hidden; /* Запрет горизонтальной прокрутки */
         }
 
-        /* Эффект ЭЛТ и шума */
+        /* Эффект ЭЛТ-монитора */
         body::before {
             content: " ";
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+                        linear-gradient(90deg, rgba(0, 255, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
             background-size: 100% 3px, 3px 100%;
-            pointer-events: none; z-index: 100; opacity: 0.3;
+            pointer-events: none; z-index: 1000;
         }
 
-        body.alarm-mode { background: #1a0505; animation: red-panic 2s infinite; }
-        @keyframes red-panic { 0%, 100% { background: #050505; } 50% { background: #2a0505; } }
+        /* Шапка страницы */
+        nav { width: 100%; border-bottom: 1px solid var(--term-dim); padding: 15px; background: #000; z-index: 10; }
+        nav a { color: var(--term-green); text-decoration: none; font-size: 0.8em; opacity: 0.7; }
+        nav a:hover { opacity: 1; text-shadow: 0 0 8px var(--term-green); }
 
+        .container { max-width: 800px; width: 95%; margin: 40px auto; position: relative; }
+
+        /* Карточка досье */
         .dossier-card {
-            width: 650px;
-            border: 1px solid var(--neon-dim);
-            background: rgba(10, 10, 10, 0.95);
-            padding: 40px;
+            border: 1px solid var(--term-dim);
+            background: rgba(0, 10, 0, 0.8);
+            padding: 30px;
             position: relative;
-            box-shadow: 0 0 50px rgba(0,0,0,1), inset 0 0 20px var(--neon-dim);
-            backdrop-filter: blur(5px);
-            z-index: 5;
+            box-shadow: inset 0 0 20px #000;
         }
 
-        /* Уголки */
         .dossier-card::before {
-            content: ""; position: absolute; top: -2px; left: -2px; width: 30px; height: 30px;
-            border-top: 3px solid var(--neon-green); border-left: 3px solid var(--neon-green);
-        }
-        .dossier-card::after {
-            content: ""; position: absolute; bottom: -2px; right: -2px; width: 30px; height: 30px;
-            border-bottom: 3px solid var(--neon-green); border-right: 3px solid var(--neon-green);
+            content: "АРХИВНЫЙ_ФАЙЛ_ЛИЧНОГО_ДЕЛА";
+            position: absolute; top: -10px; left: 20px;
+            background: var(--bg-dark); padding: 0 10px;
+            font-size: 0.7em; color: var(--term-dim);
         }
 
-        .dossier-header {
+        .header-section {
             display: flex;
-            border-bottom: 1px solid var(--neon-dim);
-            padding-bottom: 30px;
-            margin-bottom: 30px;
+            gap: 30px;
+            border-bottom: 1px solid var(--term-dim);
+            padding-bottom: 25px;
+            margin-bottom: 25px;
+            flex-wrap: wrap; /* Для мобильных устройств */
         }
 
-        .photo-container {
-            position: relative;
-            width: 140px; height: 140px;
-            margin-right: 30px;
-            border: 1px solid var(--neon-green);
+        .photo-frame {
+            width: 150px; height: 150px;
+            border: 1px solid var(--term-green);
             background: #000;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
         }
 
-        .photo-stub {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            filter: brightness(1.1) grayscale(0.5) contrast(1.2);
-            image-rendering: pixelated;
-        }
+        .photo-frame img { width: 100%; height: 100%; object-fit: cover; filter: sepia(1) hue-rotate(90deg) brightness(1.2); }
 
-        .scanner-line {
-            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
-            background: var(--neon-green);
-            box-shadow: 0 0 10px var(--neon-green);
+        .scan-line {
+            position: absolute; width: 100%; height: 2px;
+            background: var(--term-green);
+            box-shadow: 0 0 10px var(--term-green);
             animation: scan 3s infinite linear;
-            z-index: 2;
         }
         @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
 
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        .info-row { border-left: 2px solid #222; padding-left: 15px; }
-        .label { color: #555; text-transform: uppercase; font-size: 0.7em; letter-spacing: 1px; }
-        .value { color: var(--neon-green); margin-top: 5px; font-size: 1.1em; }
+        /* Инфо-сетка */
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .info-item { border-left: 1px solid var(--term-dim); padding-left: 15px; }
+        .label { font-size: 0.65em; color: var(--term-dim); display: block; margin-bottom: 5px; }
+        .value { font-size: 1em; letter-spacing: 1px; }
 
-        /* Секретное примечание */
-        .note-box {
-            margin-top: 30px;
+        /* Секции заметок и задач */
+        .sub-section {
+            margin-top: 25px;
+            border: 1px solid var(--term-dim);
             padding: 15px;
-            border: 1px dashed #333;
-            background: rgba(0,0,0,0.3);
-            font-size: 0.8em;
+            background: rgba(0, 5, 0, 0.5);
         }
-        .note-title { color: #444; margin-bottom: 5px; font-weight: bold; }
-        .note-content { color: #666; font-style: italic; }
+        .sub-title { font-size: 0.75em; margin-bottom: 10px; color: var(--term-green); border-bottom: 1px solid var(--term-dim); padding-bottom: 5px; }
+        .sub-content { font-size: 0.85em; color: #888; line-height: 1.6; }
 
-        /* Стили Совета */
-        .council-theme { border-color: var(--gold) !important; box-shadow: 0 0 40px rgba(255,215,0,0.1) !important; }
-        .council-theme::before, .council-theme::after { border-color: var(--gold) !important; }
-        .council-text { color: var(--gold) !important; text-shadow: 0 0 8px rgba(255,215,0,0.3); }
-        .council-note { border-color: var(--gold-dim) !important; background: rgba(255,215,0,0.02); }
+        /* Совет (L5) */
+        .council-mode { border-color: var(--gold) !important; }
+        .council-text { color: var(--gold) !important; text-shadow: 0 0 5px var(--gold); }
 
-        .back-btn {
-            position: absolute; top: -35px; left: 0;
-            color: #444; text-decoration: none; font-size: 0.7em;
-            transition: 0.3s; letter-spacing: 1px;
-        }
-        .back-btn:hover { color: var(--neon-green); }
-
-        #sync-indicator { margin-top: 30px; font-size: 0.6em; letter-spacing: 3px; color: #333; }
-        .fade-in { animation: fadeIn 0.5s forwards; opacity: 0; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        #sync-status { position: fixed; bottom: 10px; right: 20px; font-size: 0.6em; opacity: 0.4; pointer-events: none; }
     </style>
 </head>
 <body>
 
-<div class="dossier-card" id="main-card">
-    <a href="staff.html" class="back-btn"><-- [ ВЕРНУТЬСЯ_В_ТЕРМИНАЛ ]</a>
-    
-    <div class="dossier-header" id="header-line">
-        <div class="photo-container" id="photo-box">
-            <div class="scanner-line"></div>
-            <img src="" class="photo-stub" id="user-photo" alt="SCAN">
-        </div>
-        
-        <div>
-            <h1 id="name" style="margin: 0; letter-spacing: 4px; text-transform: uppercase;">ЗАГРУЗКА...</h1>
-            <p id="id-display" style="color: #444; margin: 8px 0; font-size: 0.9em;">ID: NULL</p>
-            <div id="status-badge" style="font-size: 0.6em; border: 1px solid #333; padding: 2px 6px; display: inline-block;">STATUS: ACTIVE</div>
-        </div>
-    </div>
+<nav>
+    <a href="staff.html">< КОРНЕВОЙ_КАТАЛОГ</a>
+</nav>
 
-    <div class="info-grid">
-        <div class="info-row fade-in" style="animation-delay: 0.1s;">
-            <span class="label">Подразделение</span>
-            <div class="value" id="dept">---</div>
+<div class="container">
+    <div class="dossier-card" id="card">
+        <div class="header-section">
+            <div class="photo-frame">
+                <div class="scan-line"></div>
+                <img id="u-photo" src="" alt="NO_DATA">
+            </div>
+            <div>
+                <h1 id="u-name" style="margin: 0; font-size: 1.5em;">ЗАГРУЗКА...</h1>
+                <p id="u-id" style="color: var(--term-dim); margin: 5px 0;">ID: ---</p>
+                <div id="u-status" style="border: 1px solid var(--term-green); display: inline-block; padding: 2px 8px; font-size: 0.6em; margin-top: 10px;">СТАТУС: АКТИВЕН</div>
+            </div>
         </div>
-        <div class="info-row fade-in" style="animation-delay: 0.2s;">
-            <span class="label">Уровень допуска</span>
-            <div class="value" id="level">---</div>
-        </div>
-        <div class="info-row fade-in" style="animation-delay: 0.3s;">
-            <span class="label">Специализация</span>
-            <div class="value" id="spec">---</div>
-        </div>
-        <div class="info-row fade-in" style="animation-delay: 0.4s;">
-            <span class="label">Дата зачисления</span>
-            <div class="value" id="joined">---</div>
-        </div>
-    </div>
 
-    <div class="note-box fade-in" id="note-container" style="animation-delay: 0.5s;">
-        <div class="note-title">ОСОБЫЕ_ОТМЕТКИ:</div>
-        <div class="note-content" id="note-text">НЕТ ДОПОЛНИТЕЛЬНЫХ ЗАПИСЕЙ В ЛИЧНОМ ДЕЛЕ.</div>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="label">ОТДЕЛ_НАЗНАЧЕНИЯ</span>
+                <span class="value" id="u-dept">---</span>
+            </div>
+            <div class="info-item">
+                <span class="label">УРОВЕНЬ_ДОПУСКА</span>
+                <span class="value" id="u-level">---</span>
+            </div>
+            <div class="info-item">
+                <span class="label">СПЕЦИАЛИЗАЦИЯ</span>
+                <span class="value" id="u-spec">---</span>
+            </div>
+            <div class="info-item">
+                <span class="label">ДАТА_РЕГИСТРАЦИИ</span>
+                <span class="value" id="u-joined">---</span>
+            </div>
+        </div>
+
+        <div class="sub-section">
+            <div class="sub-title">ТЕКУЩИЕ_ДИРЕКТИВЫ</div>
+            <div class="sub-content" id="u-tasks">ОЖИДАНИЕ ОБНОВЛЕНИЯ ОТ СЕРВЕРА...</div>
+        </div>
+
+        <div class="sub-section" id="note-sec" style="display:none;">
+            <div class="sub-title">ОСОБЫЕ_ОТМЕТКИ_БЕЗОПАСНОСТИ</div>
+            <div class="sub-content" id="u-note" style="font-style: italic;">---</div>
+        </div>
     </div>
 </div>
 
-<div id="sync-indicator">СВЯЗЬ: <span id="sync-val">...</span></div>
+<div id="sync-status">СВЯЗЬ_С_БАЗОЙ: <span id="sync-val">...</span></div>
 
 <script>
     const RENDER_API = "https://prism-bot.onrender.com";
 
-    async function syncSystem() {
+    async function loadData() {
+        const session = JSON.parse(localStorage.getItem('prism_user'));
+        if (!session) { window.location.href = "staff.html"; return; }
+
+        try {
+            const res = await fetch(`${RENDER_API}/get-admin-staff`);
+            const db = await res.json();
+            const user = db[session.id];
+
+            if (!user) return;
+
+            document.getElementById('u-name').innerText = user.name;
+            document.getElementById('u-id').innerText = "ID_TOKEN: " + session.id;
+            document.getElementById('u-dept').innerText = user.dept || "GENERAL";
+            document.getElementById('u-level').innerText = "CLEARANCE_L" + user.level;
+            document.getElementById('u-spec').innerText = user.spec || "UNDEFINED";
+            document.getElementById('u-joined').innerText = user.joined || "2025-XX-XX";
+
+            document.getElementById('u-photo').src = `https://minotar.net/armor/bust/${user.mc_name || 'MHF_Question'}/120.png`;
+
+            if (user.tasks && user.tasks.length > 0) {
+                document.getElementById('u-tasks').innerHTML = user.tasks
+                    .map(t => `<div>${t.done ? '[X]' : '[ ]'} ${t.text}</div>`).join('');
+            } else {
+                document.getElementById('u-tasks').innerText = "> АКТИВНЫХ ЗАДАЧ НЕ НАЙДЕНО";
+            }
+
+            if (session.level >= 3) {
+                document.getElementById('note-sec').style.display = 'block';
+                document.getElementById('u-note').innerText = user.note || "НЕТ ЗАПИСЕЙ";
+            }
+
+            if (user.level >= 5) {
+                document.getElementById('card').classList.add('council-mode');
+                document.getElementById('u-name').classList.add('council-text');
+                document.querySelectorAll('.value').forEach(v => v.classList.add('council-text'));
+            }
+
+        } catch (e) {
+            document.getElementById('u-name').innerText = "ОШИБКА_БД";
+        }
+    }
+
+    async function sync() {
         try {
             const res = await fetch(`${RENDER_API}/status`);
             const data = await res.json();
-            const val = document.getElementById('sync-val');
-            if(val) {
-                val.innerText = data.label;
-                val.style.color = data.color;
-            }
-            if (data.state === "RED") document.body.classList.add('alarm-mode');
-            else document.body.classList.remove('alarm-mode');
-        } catch (e) { 
-            if(document.getElementById('sync-val')) document.getElementById('sync-val').innerText = "OFFLINE"; 
-        }
+            document.getElementById('sync-val').innerText = data.label;
+            document.getElementById('sync-val').style.color = data.color;
+        } catch(e) {}
     }
 
-    async function loadDossier() {
-        const uid = sessionStorage.getItem('prism_uid');
-        if (!uid) {
-            window.location.href = "staff.html";
-            return;
-        }
-
-        try {
-            // Получаем актуальный список всех сотрудников с сервера
-            const res = await fetch(`${RENDER_API}/get-admin-staff`);
-            const db = await res.json();
-            const user = db[uid];
-
-            if (!user) {
-                console.error("Сотрудник не найден в базе");
-                window.location.href = "staff.html";
-                return;
-            }
-
-            // Заполнение данных из серверной базы
-            document.getElementById('name').innerText = user.name || "UNKNOWN";
-            document.getElementById('id-display').innerText = "ID_TOKEN: " + uid;
-            document.getElementById('dept').innerText = user.dept || "---";
-            document.getElementById('level').innerText = "L" + user.level;
-            
-            // Эти поля добавим как заглушки, если их нет в server.js
-            document.getElementById('spec').innerText = user.spec;
-            document.getElementById('joined').innerText = user.joined; 
-
-            // Фото (используем имя для скина или дефолт)
-            const skin = user.mc_name || "MHF_Question";
-            document.getElementById('user-photo').src = `https://minotar.net/armor/bust/${skin}/120.png`;
-
-            // Логика секретных примечаний
-            const myLevel = parseInt(sessionStorage.getItem('prism_level')) || 0;
-            if (myLevel >= 3) {
-                document.getElementById('note-text').innerText = user.note || "ЗАПИСИ ОТСУТСТВУЮТ";
-            }
-
-            // Стилизация для Совета (уровень 5)
-            if (user.level >= 5 || user.role === 'council') {
-                document.getElementById('main-card').classList.add('council-theme');
-                document.getElementById('photo-box').style.borderColor = "var(--gold)";
-                document.getElementById('name').classList.add('council-text');
-                document.getElementById('note-container').classList.add('council-note');
-                document.querySelectorAll('.value').forEach(el => el.classList.add('council-text'));
-                const scanner = document.querySelector('.scanner-line');
-                if(scanner) {
-                    scanner.style.background = "var(--gold)";
-                    scanner.style.boxShadow = "0 0 10px var(--gold)";
-                }
-            }
-        } catch (err) {
-            console.error("Ошибка загрузки профиля:", err);
-            document.getElementById('name').innerText = "ОШИБКА СВЯЗИ";
-        }
-    }
-
-    // Инициализация
-    document.addEventListener("DOMContentLoaded", () => {
-        loadDossier();
-        syncSystem();
-        setInterval(syncSystem, 4000);
-    });
+    window.onload = () => { loadData(); sync(); setInterval(sync, 5000); };
 </script>
-
 </body>
 </html>
-
-
-

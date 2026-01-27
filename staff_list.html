@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>P.R.I.S.M. | Административный Доступ</title>
+    <title>P.R.I.S.M. | RECON_TERMINAL</title>
     <style>
         :root { 
             --term-green: #00ff41; 
@@ -11,65 +11,100 @@
             --council-gold: #ffd700;
         }
 
+        * { box-sizing: border-box; }
+
         body { 
-            background: var(--bg-dark); color: var(--term-green); 
-            font-family: 'Courier New', monospace; margin: 0; overflow: hidden;
+            background: var(--bg-dark); 
+            color: var(--term-green); 
+            font-family: 'Courier New', monospace; 
+            margin: 0; 
+            overflow: hidden;
             text-transform: uppercase;
         }
 
+        /* Эффект сканирующих линий */
         body::after {
             content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 4px; pointer-events: none; z-index: 1000;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        linear-gradient(90deg, rgba(0, 255, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 4px, 4px 100%;
+            pointer-events: none; z-index: 1000;
         }
 
-        .main-layout { display: flex; height: 100vh; border-top: 1px solid var(--term-dim); }
+        nav { 
+            padding: 15px 25px; 
+            border-bottom: 1px solid var(--term-dim); 
+            display: flex; 
+            justify-content: space-between; 
+            background: #000;
+            z-index: 10;
+            position: relative;
+        }
+        nav a { color: var(--term-dim); text-decoration: none; font-size: 0.8em; transition: 0.3s; }
+        nav a:hover { color: var(--term-green); text-shadow: 0 0 5px var(--term-green); }
 
+        .main-layout { display: flex; height: calc(100vh - 49px); }
+
+        /* Левая панель: Список */
         .sidebar { 
-            width: 300px; border-right: 1px solid var(--term-dim); 
-            overflow-y: auto; padding: 20px; background: rgba(0, 10, 0, 0.5);
+            width: 320px; 
+            border-right: 1px solid var(--term-dim); 
+            overflow-y: auto; 
+            padding: 20px; 
+            background: rgba(0, 5, 0, 0.8);
         }
 
         .staff-item { 
-            padding: 10px; border: 1px solid var(--term-dim); margin-bottom: 10px;
-            cursor: pointer; transition: 0.3s; font-size: 0.8em;
+            padding: 12px; 
+            border: 1px solid var(--term-dim); 
+            margin-bottom: 10px;
+            cursor: pointer; 
+            transition: 0.2s; 
+            font-size: 0.75em;
+            background: rgba(0,0,0,0.3);
         }
-        .staff-item:hover { background: var(--term-dim); color: var(--term-green); }
-        .staff-item.active { border-color: var(--council-gold); background: rgba(255, 215, 0, 0.1); }
+        .staff-item:hover { border-color: var(--term-green); background: rgba(0, 255, 65, 0.05); }
+        .staff-item.active { border-color: var(--council-gold); background: rgba(255, 215, 0, 0.05); box-shadow: inset 0 0 10px rgba(255,215,0,0.1); }
 
-        .terminal-view { flex-grow: 1; padding: 40px; overflow-y: auto; position: relative; }
+        /* Правая панель: Терминал */
+        .terminal-view { 
+            flex-grow: 1; 
+            padding: 40px; 
+            overflow-y: auto; 
+            position: relative; 
+            background: radial-gradient(circle at center, #0a0a0a 0%, #050505 100%);
+        }
         
-        .output-line { margin-bottom: 10px; line-height: 1.4; }
-        .gold-text { color: var(--council-gold); }
+        .output-line { margin-bottom: 8px; line-height: 1.5; font-size: 0.9em; letter-spacing: 1px; }
+        .gold-text { color: var(--council-gold); text-shadow: 0 0 5px rgba(255,215,0,0.3); }
         .dim-text { color: var(--term-dim); }
 
-        .cursor { display: inline-block; width: 10px; height: 1.2em; background: var(--term-green); animation: blink 1s infinite; }
+        .cursor { display: inline-block; width: 10px; height: 1.2em; background: var(--term-green); animation: blink 1s infinite; vertical-align: middle; }
         @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 
-        nav { padding: 15px; border-bottom: 1px solid var(--term-dim); display: flex; justify-content: space-between; }
-        nav a { color: var(--term-dim); text-decoration: none; font-size: 0.8em; }
-        nav a:hover { color: var(--term-green); }
-
-        ::-webkit-scrollbar { width: 5px; }
+        /* Скроллбары */
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: var(--term-dim); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--term-green); }
     </style>
 </head>
 <body>
 
 <nav>
-    <span>SYSTEM: PERSONNEL_RECON // ACCESS_LEVEL: 5</span>
-    <a href="staff.html">[ ВЕРНУТЬСЯ_В_МЕНЮ ]</a>
+    <span id="nav-info">SYSTEM: PERSONNEL_RECON // ACCESS_L5</span>
+    <a href="staff.html">[ ВЕРНУТЬСЯ_В_ТЕРМИНАЛ ]</a>
 </nav>
 
 <div class="main-layout">
     <div class="sidebar" id="staff-list">
-        <div class="dim-text">ЗАГРУЗКА_СПИСКА...</div>
+        <div class="dim-text">ИНИЦИАЛИЗАЦИЯ_РЕЕСТРА...</div>
     </div>
 
     <div class="terminal-view" id="terminal">
         <div id="terminal-content">
-            <div class="output-line">P.R.I.S.M. OS v.4.0.1</div>
-            <div class="output-line">ОЖИДАНИЕ ВЫБОРА ОБЪЕКТА...<span class="cursor"></span></div>
+            <div class="output-line">P.R.I.S.M. OS v.4.0.1 [RECON MODULE]</div>
+            <div class="output-line">-------------------------------------------</div>
+            <div class="output-line">ОЖИДАНИЕ ВЫБОРА ОБЪЕКТА ИЗ СПИСКА...<span class="cursor"></span></div>
         </div>
     </div>
 </div>
@@ -77,107 +112,104 @@
 <script>
     const RENDER_API = "https://prism-bot.onrender.com";
     let staffDB = {};
-    let playerLocations = {}; // Объект формата { "Ник": "Название_Сервера" }
+    let playerLocations = {};
 
     async function init() {
-        // 1. Проверка уровня допуска
-        const level = sessionStorage.getItem('prism_level');
-        if (!level || parseInt(level) < 5) {
-            document.body.innerHTML = "<h1 style='color:red; padding:50px;'>ACCESS_DENIED // INSUFFICIENT_LEVEL</h1>";
+        // Проверка через localStorage
+        const savedUser = localStorage.getItem('prism_user');
+        if (!savedUser) {
+            window.location.href = "staff.html";
+            return;
+        }
+
+        const user = JSON.parse(savedUser);
+        if (parseInt(user.level) < 5) {
+            document.body.innerHTML = "<div style='color:var(--alert-red); padding:50px; text-align:center;'><h1>ACCESS_DENIED</h1><p>ТРЕБУЕТСЯ УРОВЕНЬ ДОПУСКА 5</p></div>";
             setTimeout(() => window.location.href = "staff.html", 2000);
             return;
         }
 
-        // 2. Первичная загрузка данных
+        document.getElementById('nav-info').innerText = `SYSTEM: RECON // OPERATOR: ${user.name}`;
+
         await refreshAllData();
-        
-        // 3. Запуск цикла авто-обновления (раз в 30 секунд)
-        setInterval(refreshAllData, 30000);
+        setInterval(refreshAllData, 20000); // Обновление раз в 20 секунд
     }
 
     async function refreshAllData() {
         try {
-            // Запрашиваем данные сотрудников и статус серверов одновременно
             const [staffRes, mcRes] = await Promise.all([
                 fetch(`${RENDER_API}/get-admin-staff`),
                 fetch(`${RENDER_API}/mc-status`).catch(() => null)
             ]);
 
-            if (staffRes.ok) {
-                staffDB = await staffRes.json();
-            }
+            if (staffRes.ok) staffDB = await staffRes.json();
             
             if (mcRes && mcRes.ok) {
                 const mcData = await mcRes.json();
-                // Теперь ожидаем объект { "M4skine": "ALPHA_SITE", ... }
                 playerLocations = mcData.onlinePlayers || {}; 
             }
 
             renderList();
-            console.log("P.R.I.S.M. Data Synced:", new Date().toLocaleTimeString());
         } catch (e) {
             console.error("SYNC_ERROR:", e);
-            document.getElementById('staff-list').innerText = "ОШИБКА_СИНХРОНИЗАЦИИ";
         }
     }
 
     function renderList() {
         const list = document.getElementById('staff-list');
-        // Сохраняем активный ID, чтобы он не сбрасывался при перерисовке
         const activeItem = document.querySelector('.staff-item.active');
         const activeId = activeItem ? activeItem.dataset.id : null;
 
-        list.innerHTML = '<div class="dim-text" style="margin-bottom:15px;">РЕЕСТР_СОТРУДНИКОВ:</div>';
+        list.innerHTML = '<div class="dim-text" style="margin-bottom:15px; font-size:0.7em;">> КАТАЛОГ_СОТРУДНИКОВ:</div>';
         
-        Object.keys(staffDB).forEach(id => {
+        Object.keys(staffDB).sort().forEach(id => {
             const user = staffDB[id];
-            // Проверяем наличие ника в ключах объекта локаций
-            const currentLocation = playerLocations[user.mc_name]; 
+            const isOnline = playerLocations[user.mc_name]; 
             
             const item = document.createElement('div');
             item.className = 'staff-item';
             item.dataset.id = id;
             if (activeId === id) item.classList.add('active');
 
-            // Индикатор [ON], если игрок найден на любом из серверов
-            const statusMarker = currentLocation 
+            const statusMarker = isOnline 
                 ? `<span style="color:var(--term-green)">[ON]</span> ` 
                 : `<span style="color:var(--term-dim)">[--]</span> `;
             
-            item.innerHTML = `${statusMarker}[ID: ${id}] ${user.name}`;
+            item.innerHTML = `${statusMarker}${user.name} <span class="dim-text">/ ID:${id}</span>`;
             item.onclick = () => showDossier(id, item);
             list.appendChild(item);
         });
     }
 
     function showDossier(id, element) {
+        if (element.classList.contains('active') && document.querySelectorAll('.output-line').length > 5) return;
+
         document.querySelectorAll('.staff-item').forEach(i => i.classList.remove('active'));
         element.classList.add('active');
 
         const user = staffDB[id];
         const terminal = document.getElementById('terminal-content');
-        
-        // Определяем, на каком сервере находится игрок
         const locationName = playerLocations[user.mc_name];
+
         const statusText = locationName 
             ? `<span style="color:var(--term-green); font-weight:bold;">АКТИВЕН // ЛОКАЦИЯ: ${locationName}</span>` 
-            : `<span style="color:var(--term-dim)">ВНЕ_СЕТИ</span>`;
+            : `<span style="color:var(--term-dim)">ВНЕ_СЕТИ (OFFLINE)</span>`;
 
-        terminal.innerHTML = `<div class="output-line">ЗАПРОС ДАННЫХ: СОТРУДНИК_${id}...</div>`;
+        terminal.innerHTML = `<div class="output-line">> ЗАПРОС ПАКЕТА ДАННЫХ: ${id}...</div>`;
         
         const lines = [
-            `> ИМЯ: ${user.name || 'UNKNOWN'}`,
-            `> MC_НИК: ${user.mc_name || 'NOT_LINKED'}`,
-            `> ТЕКУЩИЙ_СТАТУС: ${statusText}`,
-            `> ДОПУСКА_УРОВЕНЬ: L${user.level || '0'}`,
-            `> ПОДРАЗДЕЛЕНИЕ: ${user.dept || 'ОТДЕЛ_НЕ_УКАЗАН'}`,
-            `> РОЛЬ_В_СИСТЕМЕ: ${user.role || 'GUEST'}`,
             `-------------------------------------------`,
-            `> ЛИЧНОЕ_ДЕЛО / ПРИМЕЧАНИЕ:`,
-            `<span class="gold-text">${user.bio || 'БИОГРАФИЯ_ЗАСЕКРЕЧЕНА'}</span>`,
-            `<span class="gold-text">ЗАМЕТКА: ${user.note || 'ОТСУТСТВУЕТ'}</span>`,
+            `[ФИО]: ${user.name || 'UNKNOWN'}`,
+            `[MC_ID]: ${user.mc_name || 'NOT_LINKED'}`,
+            `[STATUS]: ${statusText}`,
+            `[CLEARANCE]: L${user.level || '0'}`,
+            `[DEPT]: ${user.dept || 'ОТДЕЛ_НЕ_УКАЗАН'}`,
+            `[ROLE]: ${user.role || 'STAFF'}`,
             `-------------------------------------------`,
-            `СТАТУС: ДАННЫЕ_ПОЛУЧЕНЫ_ИЗ_STAFF_DB`
+            `[BIO]: <span class="${user.level >= 5 ? 'gold-text' : ''}">${user.bio || 'ДАННЫЕ ЗАСЕКРЕЧЕНЫ'}</span>`,
+            `[NOTE]: <span class="${user.level >= 5 ? 'gold-text' : ''}">${user.note || 'ЗАПИСИ ОТСУТСТВУЮТ'}</span>`,
+            `-------------------------------------------`,
+            `СТАТУС: ДАННЫЕ СИНХРОНИЗИРОВАНЫ`
         ];
 
         let i = 0;
@@ -188,19 +220,18 @@
                 lineDiv.innerHTML = lines[i];
                 terminal.appendChild(lineDiv);
                 i++;
-                setTimeout(printNextLine, 50); 
+                setTimeout(printNextLine, 30); 
+                
+                const view = document.getElementById('terminal');
+                view.scrollTop = view.scrollHeight;
             } else {
                 const cursor = document.createElement('span');
                 cursor.className = 'cursor';
                 terminal.appendChild(cursor);
-                
-                // Авто-скролл к последней строке
-                const view = document.getElementById('terminal');
-                view.scrollTop = view.scrollHeight;
             }
         }
         
-        setTimeout(printNextLine, 300);
+        setTimeout(printNextLine, 200);
     }
 
     document.addEventListener("DOMContentLoaded", init);
