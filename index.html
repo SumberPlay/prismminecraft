@@ -127,6 +127,27 @@
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
     .counter-num { display: block; font-size: 3em; color: var(--neon-green); text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); }
+
+        /* Анимация для бегущей строки */
+.alert-marquee {
+    white-space: nowrap;
+    display: inline-block;
+    animation: marquee 30s linear infinite;
+    font-size: 1.2em;
+    letter-spacing: 5px;
+}
+
+@keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); } /* Сдвигаем на половину длины повторенного текста */
+}
+
+/* Дополнительно: заставим баннер мигать для пущего эффекта */
+#emergency-alert {
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
+    box-shadow: 0 0 30px var(--alert-red);
+}    
     </style>
 </head>
 <body>
@@ -356,6 +377,7 @@ addLogLine(); // Первое сообщение сразу
 </script>
 </body>
 </html>
+
 
 
 
