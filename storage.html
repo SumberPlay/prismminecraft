@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P.R.I.S.M. | STORAGE ACCESS</title>
@@ -31,7 +30,6 @@
             pointer-events: none; z-index: 1000;
         }
 
-        /* Навигация сверху */
         .top-nav {
             padding: 20px;
             border-bottom: 1px solid var(--dim);
@@ -174,6 +172,7 @@
     <div class="header">
         <h1>DATA_ARCHIVE_V4</h1>
         <p>ДОСТУП ПРЕДОСТАВЛЕН: <span id="op-name" style="color:var(--neon)"></span></p>
+        <p id="sync-status" style="font-size: 0.6em; color: var(--dim);">СИНХРОНИЗАЦИЯ: OK</p>
     </div>
     <div class="grid" id="file-list"></div>
     <button class="btn" onclick="location.reload()" style="margin-top:40px; border-color:var(--alert); color:var(--alert)">[ ВЫХОД ИЗ СИСТЕМЫ ]</button>
@@ -190,16 +189,13 @@
 
 <script>
     const API_URL = "https://prism-bot.onrender.com";
-    
-    // Функция авторизации (оставляем без изменений, она уже работает с API)
+    let autoRefresh = null;
+
     async function attemptLogin() {
         const id = document.getElementById('inp-id').value.toUpperCase();
-        const rawPass = document.getElementById('inp-pass').value;
+        const pass = document.getElementById('inp-pass').value; // Без шифрования
 
-        if(!id || !rawPass) return alert("ЗАПОЛНИТЕ ВСЕ ПОЛЯ");
-
-        // Используем MD5 для совместимости с твоей БД staff
-        const pass = CryptoJS.MD5(rawPass).toString();
+        if(!id || !pass) return alert("ЗАПОЛНИТЕ ВСЕ ПОЛЯ");
 
         try {
             const res = await fetch(`${API_URL}/login`, {
@@ -226,64 +222,68 @@
     }
 
     function startSession(user) {
-        // Сохраняем уровень доступа для проверки файлов
         sessionStorage.setItem('p_lvl', user.level);
         document.getElementById('screen-auth').style.display = 'none';
         document.getElementById('screen-storage').style.display = 'block';
         document.getElementById('op-name').innerText = `${user.name} (L${user.level})`;
+        
         loadFiles();
+
+        // Автообновление каждые 60 секунд
+        if(autoRefresh) clearInterval(autoRefresh);
+        autoRefresh = setInterval(loadFiles, 60000);
     }
 
-    // --- ГЛАВНОЕ ИЗМЕНЕНИЕ: ЗАГРУЗКА ИЗ БД ---
     async function loadFiles() {
         const list = document.getElementById('file-list');
+        const syncLabel = document.getElementById('sync-status');
         const myLvl = parseInt(sessionStorage.getItem('p_lvl')) || 1;
-        list.innerHTML = "<div style='color:var(--dim)'>ПОДКЛЮЧЕНИЕ К ЦЕНТРАЛЬНОМУ АРХИВУ...</div>";
+        
+        syncLabel.innerText = "СИНХРОНИЗАЦИЯ: В ПРОЦЕССЕ...";
         
         try {
-            // Запрос к твоему новому эндпоинту в server.js
             const res = await fetch(`${API_URL}/get-archive`);
-            
             if (!res.ok) throw new Error("API_ERROR");
 
             const files = await res.json();
-            
             list.innerHTML = "";
             
             if (!files || files.length === 0) {
                 list.innerHTML = "<div style='color:var(--dim)'>АРХИВ ПУСТ</div>";
-                return;
+            } else {
+                files.forEach(file => {
+                    const fLvl = parseInt(file.level) || 0;
+                    const locked = myLvl < fLvl;
+                    
+                    const card = document.createElement('div');
+                    card.className = `card ${locked ? 'locked' : ''}`;
+                    card.innerHTML = `
+                        <div class="card-info">${file.date || '---'} | REQ: L${fLvl}</div>
+                        <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (file.title || 'БЕЗ НАЗВАНИЯ')}</div>
+                    `;
+                    
+                    card.onclick = () => {
+                        if (locked) {
+                            alert("ОШИБКА: НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОПУСКА (L" + fLvl + ")");
+                        } else {
+                            openReader(file);
+                        }
+                    };
+                    list.appendChild(card);
+                });
             }
-
-            // Рендерим файлы из БД
-            files.forEach(file => {
-                const fLvl = parseInt(file.level) || 0;
-                const locked = myLvl < fLvl;
-                
-                const card = document.createElement('div');
-                card.className = `card ${locked ? 'locked' : ''}`;
-                card.innerHTML = `
-                    <div class="card-info">${file.date || '---'} | REQ: L${fLvl}</div>
-                    <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (file.title || 'БЕЗ НАЗВАНИЯ')}</div>
-                `;
-                
-                card.onclick = () => {
-                    if (locked) {
-                        alert("ОШИБКА: НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОПУСКА (L" + fLvl + ")");
-                    } else {
-                        openReader(file);
-                    }
-                };
-                list.appendChild(card);
-            });
+            syncLabel.innerText = "СИНХРОНИЗАЦИЯ: OK (" + new Date().toLocaleTimeString() + ")";
 
         } catch (e) {
             console.error("ОШИБКА ЗАГРУЗКИ:", e);
-            list.innerHTML = "<div style='color:var(--alert)'>КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ С БД.</div>";
+            syncLabel.innerText = "СИНХРОНИЗАЦИЯ: ОШИБКА ПОДКЛЮЧЕНИЯ";
         }
     }
 
     function openReader(file) {
+        // Останавливаем автообновление пока открыт документ, чтобы не сбивать чтение
+        if(autoRefresh) clearInterval(autoRefresh);
+
         document.getElementById('reader').style.display = 'block';
         document.getElementById('r-title').innerText = file.title || "БЕЗ НАЗВАНИЯ";
         document.getElementById('r-meta').innerText = `LOG_ID: ${file.id || '??'} | DATE: ${file.date || '---'} | ACCESS: L${file.level || 0}`;
@@ -294,26 +294,31 @@
         let content = file.content || "НЕТ ДАННЫХ";
         let i = 0;
         
-        // Очищаем старые таймеры если есть
         if (window.typeInterval) clearInterval(window.typeInterval);
         
-        // Эффект печати
         window.typeInterval = setInterval(() => {
             if (i < content.length) {
                 textEl.innerText += content.charAt(i);
                 i++;
-                // Скроллим вниз при печати
-                document.getElementById('reader').scrollTop = document.getElementById('reader').scrollHeight;
+                // Авто-скролл для длинных текстов
+                const reader = document.getElementById('reader');
+                if (reader.scrollHeight - reader.scrollTop < 1000) {
+                    reader.scrollTop = reader.scrollHeight;
+                }
             } else {
                 clearInterval(window.typeInterval);
             }
-        }, 10);
+        }, 15);
     }
 
     function closeReader() {
         if (window.typeInterval) clearInterval(window.typeInterval);
         document.getElementById('reader').style.display = 'none';
+        
+        // Возобновляем автообновление после закрытия ридера
+        autoRefresh = setInterval(loadFiles, 60000);
     }
 </script>
+
 </body>
 </html>
