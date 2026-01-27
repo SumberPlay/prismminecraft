@@ -156,83 +156,95 @@
     }
 
     function renderList() {
-        const list = document.getElementById('staff-list');
-        const activeItem = document.querySelector('.staff-item.active');
-        const activeId = activeItem ? activeItem.dataset.id : null;
+    const list = document.getElementById('staff-list');
+    const activeItem = document.querySelector('.staff-item.active');
+    const activeId = activeItem ? activeItem.dataset.id : null;
 
-        list.innerHTML = '<div class="dim-text" style="margin-bottom:15px; font-size:0.7em;">> КАТАЛОГ_СОТРУДНИКОВ:</div>';
-        
-        Object.keys(staffDB).sort().forEach(id => {
-            const user = staffDB[id];
-            const isOnline = playerLocations[user.mc_name]; 
-            
-            const item = document.createElement('div');
-            item.className = 'staff-item';
-            item.dataset.id = id;
-            if (activeId === id) item.classList.add('active');
+    list.innerHTML = '<div class="dim-text" style="margin-bottom:15px; font-size:0.7em;">> КАТАЛОГ_СОТРУДНИКОВ:</div>';
+    
+    // Проверка: если staffDB это массив (как присылает сервер)
+    const staffArray = Array.isArray(staffDB) ? staffDB : [];
 
-            const statusMarker = isOnline 
-                ? `<span style="color:var(--term-green)">[ON]</span> ` 
-                : `<span style="color:var(--term-dim)">[--]</span> `;
-            
-            item.innerHTML = `${statusMarker}${user.name} <span class="dim-text">/ ID:${id}</span>`;
-            item.onclick = () => showDossier(id, item);
-            list.appendChild(item);
-        });
-    }
+    staffArray.forEach(user => {
+        const id = user.id;
+        const isOnline = playerLocations[user.mc_name]; 
+        const item = document.createElement('div');
+        item.className = 'staff-item';
+        item.dataset.id = id;
+        if (activeId === id) item.classList.add('active');
+
+        const statusMarker = isOnline 
+             ? `<span style="color:var(--term-green)">[ON]</span> ` 
+             : `<span style="color:var(--term-dim)">[--]</span> `;
+             
+        item.innerHTML = `${statusMarker}${user.name} <span class="dim-text">/ ID:${id}</span>`;
+        item.onclick = () => showDossier(id, item); // Передаем ID для поиска в массиве
+        list.appendChild(item);
+    });
+}
 
     function showDossier(id, element) {
-        if (element.classList.contains('active') && document.querySelectorAll('.output-line').length > 5) return;
+    if (element.classList.contains('active') && document.querySelectorAll('.output-line').length > 10) return;
 
-        document.querySelectorAll('.staff-item').forEach(i => i.classList.remove('active'));
-        element.classList.add('active');
+    document.querySelectorAll('.staff-item').forEach(i => i.classList.remove('active'));
+    element.classList.add('active');
 
-        const user = staffDB[id];
-        const terminal = document.getElementById('terminal-content');
-        const locationName = playerLocations[user.mc_name];
+    const user = staffDB[id];
+    const terminal = document.getElementById('terminal-content');
+    const locationName = playerLocations[user.mc_name];
 
-        const statusText = locationName 
-            ? `<span style="color:var(--term-green); font-weight:bold;">АКТИВЕН // ЛОКАЦИЯ: ${locationName}</span>` 
-            : `<span style="color:var(--term-dim)">ВНЕ_СЕТИ (OFFLINE)</span>`;
+    const statusText = locationName 
+        ? `<span style="color:var(--term-green); font-weight:bold;">АКТИВЕН // ЛОКАЦИЯ: ${locationName}</span>` 
+        : `<span style="color:var(--term-dim)">ВНЕ_СЕТИ (OFFLINE)</span>`;
 
-        terminal.innerHTML = `<div class="output-line">> ЗАПРОС ПАКЕТА ДАННЫХ: ${id}...</div>`;
-        
-        const lines = [
-            `-------------------------------------------`,
-            `[ФИО]: ${user.name || 'UNKNOWN'}`,
-            `[MC_ID]: ${user.mc_name || 'NOT_LINKED'}`,
-            `[STATUS]: ${statusText}`,
-            `[CLEARANCE]: L${user.level || '0'}`,
-            `[DEPT]: ${user.dept || 'ОТДЕЛ_НЕ_УКАЗАН'}`,
-            `[ROLE]: ${user.role || 'STAFF'}`,
-            `-------------------------------------------`,
-            `[BIO]: <span class="${user.level >= 5 ? 'gold-text' : ''}">${user.bio || 'ДАННЫЕ ЗАСЕКРЕЧЕНЫ'}</span>`,
-            `[NOTE]: <span class="${user.level >= 5 ? 'gold-text' : ''}">${user.note || 'ЗАПИСИ ОТСУТСТВУЮТ'}</span>`,
-            `-------------------------------------------`,
-            `СТАТУС: ДАННЫЕ СИНХРОНИЗИРОВАНЫ`
-        ];
-
-        let i = 0;
-        function printNextLine() {
-            if (i < lines.length) {
-                const lineDiv = document.createElement('div');
-                lineDiv.className = 'output-line';
-                lineDiv.innerHTML = lines[i];
-                terminal.appendChild(lineDiv);
-                i++;
-                setTimeout(printNextLine, 30); 
-                
-                const view = document.getElementById('terminal');
-                view.scrollTop = view.scrollHeight;
-            } else {
-                const cursor = document.createElement('span');
-                cursor.className = 'cursor';
-                terminal.appendChild(cursor);
-            }
-        }
-        
-        setTimeout(printNextLine, 200);
+    // Формируем блок задач (директив)
+    let taskLines = [];
+    if (user.tasks && Array.isArray(user.tasks) && user.tasks.length > 0) {
+        taskLines = user.tasks.map(t => 
+            `  ${t.done ? '[X]' : '[ ]'} ${t.text.toUpperCase()}`
+        );
+    } else {
+        taskLines = ["  > АКТИВНЫХ ДИРЕКТИВ НЕ НАЙДЕНО"];
     }
+
+    terminal.innerHTML = `<div class="output-line">> ЗАПРОС ПАКЕТА ДАННЫХ: ${id}...</div>`;
+    
+    const lines = [
+        `-------------------------------------------`,
+        `[ФИО]: ${user.name || 'UNKNOWN'}`,
+        `[MC_ID]: ${user.mc_name || 'NOT_LINKED'}`,
+        `[STATUS]: ${statusText}`,
+        `[CLEARANCE]: L${user.level || '0'}`,
+        `[DEPT]: ${user.dept || 'ОТДЕЛ_НЕ_УКАЗАН'}`,
+        `-------------------------------------------`,
+        `[ТЕКУЩИЕ_ДИРЕКТИВЫ]:`,
+        ...taskLines, // Вставляем список задач
+        `-------------------------------------------`,
+        `[BIO]: <span class="${user.level >= 5 ? 'gold-text' : ''}">${user.bio || 'ДАННЫЕ ЗАСЕКРЕЧЕНЫ'}</span>`,
+        `[NOTE]: <span class="${user.level >= 5 ? 'gold-text' : ''}">${user.note || 'ЗАПИСИ ОТСУТСТВУЮТ'}</span>`,
+        `-------------------------------------------`,
+        `СТАТУС: ДАННЫЕ СИНХРОНИЗИРОВАНЫ`
+    ];
+
+    let i = 0;
+    function printNextLine() {
+        if (i < lines.length) {
+            const lineDiv = document.createElement('div');
+            lineDiv.className = 'output-line';
+            lineDiv.innerHTML = lines[i];
+            terminal.appendChild(lineDiv);
+            i++;
+            setTimeout(printNextLine, 30);
+            const view = document.getElementById('terminal');
+            view.scrollTop = view.scrollHeight;
+        } else {
+            const cursor = document.createElement('span');
+            cursor.className = 'cursor';
+            terminal.appendChild(cursor);
+        }
+    }
+    setTimeout(printNextLine, 200);
+}
 
     document.addEventListener("DOMContentLoaded", init);
 </script>
