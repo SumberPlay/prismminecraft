@@ -199,12 +199,41 @@
             document.getElementById('u-photo').src = `https://minotar.net/armor/bust/${skinName}/150.png`;
 
             // Задачи (Проверяем, есть ли они вообще)
-            if (user.tasks && Array.isArray(user.tasks) && user.tasks.length > 0) {
-                document.getElementById('u-tasks').innerHTML = user.tasks
-                    .map(t => `<div>${t.done ? '[X]' : '[ ]'} ${t.text}</div>`).join('');
+            // Задачи (Директивы)
+const tasksCont = document.getElementById('u-tasks');
+if (user.tasks && Array.isArray(user.tasks) && user.tasks.length > 0) {
+    tasksCont.innerHTML = user.tasks
+        .map(t => {
+            if (t.done) {
+                // Выполненная задача: тусклая и без кнопки
+                return `<div style="opacity: 0.4; margin-bottom: 8px;">[X] ${t.text}</div>`;
             } else {
-                document.getElementById('u-tasks').innerText = "> АКТИВНЫХ ДИРЕКТИВ НЕ ОБНАРУЖЕНО";
+                // Активная задача: с кнопкой подтверждения
+                return `
+                    <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                        <span>[ ] ${t.text}</span>
+                        <button onclick="completeTask('${session.id}', '${t.text}')" 
+                                style="background: none; border: 1px solid var(--term-green); color: var(--term-green); cursor: pointer; font-family: inherit; font-size: 0.6em; padding: 2px 6px; flex-shrink: 0;">
+                            ПОДТВЕРДИТЬ_ВЫПОЛНЕНИЕ
+                        </button>
+                    </div>`;
             }
+        }).join('');
+} else {
+    tasksCont.innerText = "> АКТИВНЫХ ДИРЕКТИВ НЕ ОБНАРУЖЕНО";
+}
+
+// Биографическая справка (Добавляем вывод поля bio)
+// Если хочешь, можешь добавить <div id="u-bio"> в HTML или просто дописать в существующий блок
+if (user.bio) {
+    const bioSection = document.createElement('div');
+    bioSection.className = 'sub-section';
+    bioSection.innerHTML = `
+        <div class="sub-title">БИОГРАФИЧЕСКИЙ_ПРОФИЛЬ</div>
+        <div class="sub-content">${user.bio}</div>
+    `;
+    document.getElementById('card').appendChild(bioSection);
+}
 
             // Секретные заметки (видны только с 3 уровня)
             if (session.level >= 3) {
@@ -242,7 +271,31 @@
     }
 
     window.onload = () => { loadData(); sync(); setInterval(sync, 5000); };
+
+    async function completeTask(staffId, taskText) {
+    if (!confirm("ВНИМАНИЕ: ВЫ ПОДТВЕРЖДАЕТЕ ВЫПОЛНЕНИЕ ДИРЕКТИВЫ?")) return;
+
+    try {
+        const res = await fetch(`${RENDER_API}/complete-task`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ staff_id: staffId, task_text: taskText })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+            // Мгновенное обновление страницы для отображения изменений
+            location.reload();
+        } else {
+            alert("ОШИБКА: ДОСТУП К ТАБЛИЦЕ ЗАДАЧ ОГРАНИЧЕН");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("КРИТИЧЕСКИЙ СБОЙ СВЯЗИ С СЕРВЕРОМ");
+    }
+}
 </script>
 </body>
 </html>
+
 
