@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>P.R.I.S.M. | ARCHIVE_EXPLORER</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         :root { 
             --neon: #00ffcc; 
@@ -25,7 +24,6 @@
         .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(0, 255, 204, 0.05); z-index: 1001; pointer-events: none; animation: scan 8s linear infinite; }
         @keyframes scan { from { top: -5%; } to { top: 105%; } }
 
-        /* ИСПРАВЛЕННАЯ НАВИГАЦИЯ */
         nav { 
             position: fixed; top: 0; width: 100%; height: 60px;
             background: #000; border-bottom: 1px solid var(--border);
@@ -41,7 +39,6 @@
         .nav-user-info { margin-left: auto; display: flex; align-items: center; gap: 20px; }
         #user-display { color: #444; font-size: 0.9em; }
 
-        /* Структура экрана */
         .main-layout {
             display: none;
             grid-template-columns: 350px 1fr;
@@ -54,40 +51,38 @@
         .sidebar::-webkit-scrollbar { width: 4px; }
         .sidebar::-webkit-scrollbar-thumb { background: var(--border); }
 
-        /* Найти и заменить существующий .mini-avatar и .list-item */
-.mini-avatar { 
-    width: 40px; height: 40px; 
-    border: 1px solid var(--border); 
-    filter: grayscale(1); 
-    transition: 0.3s ease; 
-}
+        .mini-avatar { 
+            width: 40px; height: 40px; 
+            border: 1px solid var(--border); 
+            filter: grayscale(1); 
+            transition: 0.3s ease; 
+        }
 
-.list-item {
-    padding: 15px; border: 1px solid transparent; 
-    margin-bottom: 5px; cursor: pointer; 
-    transition: 0.3s; display: flex; 
-    align-items: center; gap: 15px;
-    position: relative; overflow: hidden;
-}
+        .list-item {
+            padding: 15px; border: 1px solid transparent; 
+            margin-bottom: 5px; cursor: pointer; 
+            transition: 0.3s; display: flex; 
+            align-items: center; gap: 15px;
+            position: relative; overflow: hidden;
+        }
 
-/* Эффекты при наведении */
-.list-item:hover { 
-    background: rgba(0, 255, 204, 0.08); 
-    border-color: var(--border);
-    padding-left: 20px; 
-}
+        .list-item:hover { 
+            background: rgba(0, 255, 204, 0.08); 
+            border-color: var(--border);
+            padding-left: 20px; 
+        }
 
-.list-item:hover .mini-avatar, .list-item.active .mini-avatar { 
-    filter: grayscale(0); 
-    border-color: var(--neon);
-    box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
-}
+        .list-item:hover .mini-avatar, .list-item.active .mini-avatar { 
+            filter: grayscale(0); 
+            border-color: var(--neon);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+        }
 
-.list-item.active { 
-    background: rgba(0, 255, 204, 0.1); 
-    border-color: var(--neon); 
-    color: var(--neon); 
-}
+        .list-item.active { 
+            background: rgba(0, 255, 204, 0.1); 
+            border-color: var(--neon); 
+            color: var(--neon); 
+        }
 
         .viewer { padding: 40px; overflow-y: auto; position: relative; }
         .placeholder-text { height: 100%; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1.5em; letter-spacing: 5px; }
@@ -104,7 +99,6 @@
         .btn-exit { border: 1px solid var(--alert); color: var(--alert); background: none; cursor: pointer; padding: 5px 15px; font-family: inherit; transition: 0.3s; }
         .btn-exit:hover { background: var(--alert); color: #000; }
 
-        /* Окно логина */
         #auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 5000; display: flex; align-items: center; justify-content: center; }
         .login-card { border: 1px solid var(--neon); padding: 40px; background: #000; text-align: center; width: 400px; position: relative; }
         input { background: rgba(0, 255, 204, 0.05); border: 1px solid var(--border); color: var(--neon); padding: 15px; margin: 10px 0; width: 100%; outline: none; font-family: inherit; }
@@ -170,7 +164,7 @@
 <script>
     const RENDER_URL = "https://prism-bot.onrender.com";
     let STAFF_DATA = {};
-    let typeTimer = null; // ОСТАВЛЯЕМ ТОЛЬКО ОДИН РАЗ
+    let typeTimer = null;
 
     async function tryLogin(type) {
         if (type === 'guest') {
@@ -178,57 +172,82 @@
             sessionStorage.setItem('prism_user', 'VISITOR_01');
             location.reload(); return;
         }
+        
         const id = document.getElementById('uid').value.toUpperCase().trim();
-        const rawPass = document.getElementById('ups').value;
-        const ps = CryptoJS.MD5(rawPass).toString();
+        const pass = document.getElementById('ups').value; // Отправляем как есть
+
+        if (!id || !pass) return alert("FIELDS_REQUIRED");
+
         try {
             const res = await fetch(`${RENDER_URL}/login`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, pass: ps })
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, pass })
             });
-            if (res.ok) {
-                const data = await res.json();
+
+            const data = await res.json();
+
+            if (data.success) {
                 sessionStorage.setItem('prism_level', data.level);
                 sessionStorage.setItem('prism_user', data.name);
                 location.reload();
-            } else { alert("ACCESS_DENIED"); }
-        } catch (e) { alert("OFFLINE"); }
+            } else { 
+                alert("ACCESS_DENIED: INVALID_ID_OR_KEY"); 
+            }
+        } catch (e) { 
+            console.error(e);
+            alert("SERVER_OFFLINE"); 
+        }
     }
 
     async function loadArchive() {
         const myLevel = parseInt(sessionStorage.getItem('prism_level'));
         if (isNaN(myLevel)) return;
+
         document.getElementById('auth-overlay').style.display = 'none';
         document.body.classList.add('authorized');
-        document.getElementById('user-display').innerText = `OP: ${sessionStorage.getItem('prism_user')}`;
+        document.getElementById('user-display').innerText = `OP: ${sessionStorage.getItem('prism_user')} (L${myLevel})`;
 
         try {
             const res = await fetch(`${RENDER_URL}/get-staff`);
+            if (!res.ok) throw new Error("Load Error");
+            
             STAFF_DATA = await res.json();
             const listContainer = document.getElementById('staff-list');
-            for (const [id, p] of Object.entries(STAFF_DATA)) {
+            listContainer.innerHTML = ""; // Очистка перед загрузкой
+
+            // Проходим по данным (может быть массив или объект)
+            const entries = Array.isArray(STAFF_DATA) ? STAFF_DATA : Object.entries(STAFF_DATA).map(([id, p]) => ({...p, id}));
+
+            entries.forEach(p => {
                 const isLocked = myLevel < p.level;
                 const item = document.createElement('div');
                 item.className = `list-item ${isLocked ? 'locked' : ''}`;
+                
+                // Используем p.mc_name или p.id для аватара
+                const skinName = p.mc_name || "Steve";
+
                 item.innerHTML = `
-                    <img class="mini-avatar" src="https://minotar.net/avatar/${isLocked ? 'Steve' : p.mc_name}/40.png">
+                    <img class="mini-avatar" src="https://minotar.net/avatar/${isLocked ? 'Steve' : skinName}/40.png">
                     <div>
-                        <div style="font-weight:bold; color:${isLocked ? '#400' : '#ccc'}">${isLocked ? 'CLASSIFIED' : (p.name || id)}</div>
+                        <div style="font-weight:bold; color:${isLocked ? '#400' : '#ccc'}">${isLocked ? 'CLASSIFIED' : (p.name || p.id)}</div>
                         <div style="font-size:0.7em; color:#555;">CLEARANCE: L${p.level}</div>
                     </div>
                 `;
-                item.onclick = (event) => selectStaff(id, isLocked, event);
+                item.onclick = (event) => selectStaff(p, isLocked, event);
                 listContainer.appendChild(item);
-            }
-        } catch (e) { console.error(e); }
+            });
+        } catch (e) { 
+            console.error(e); 
+            document.getElementById('staff-list').innerText = "ERROR_LOADING_DATABASE";
+        }
     }
 
-    function selectStaff(id, isLocked, event) {
+    function selectStaff(p, isLocked, event) {
         if (typeTimer) clearInterval(typeTimer);
         document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active'));
         event.currentTarget.classList.add('active');
 
-        const p = STAFF_DATA[id];
         document.getElementById('placeholder').style.display = 'none';
         document.getElementById('content-box').style.display = 'block';
         const bioEl = document.getElementById('v-bio');
@@ -238,13 +257,13 @@
             document.getElementById('v-photo').src = "https://minotar.net/armor/bust/Steve/200.png";
             document.getElementById('v-dept').innerText = "REDACTED";
             document.getElementById('v-level').innerText = `CRITICAL: LEVEL ${p.level} REQUIRED`;
-            startDecryptionEffect(bioEl, "Доступ заблокирован. Недостаточный уровень допуска.");
+            startDecryptionEffect(bioEl, "Доступ заблокирован. Требуется уровень допуска L" + p.level);
         } else {
-            document.getElementById('v-name').innerText = p.name || id;
-            document.getElementById('v-photo').src = `https://minotar.net/armor/bust/${p.mc_name}/200.png`;
+            document.getElementById('v-name').innerText = p.name || p.id;
+            document.getElementById('v-photo').src = `https://minotar.net/armor/bust/${p.mc_name || 'Steve'}/200.png`;
             document.getElementById('v-dept').innerText = p.dept || "GENERAL_UNIT";
             document.getElementById('v-level').innerText = `STATUS: AUTHORIZED (L${p.level})`;
-            startDecryptionEffect(bioEl, p.bio || "Биографические данные отсутствуют.");
+            startDecryptionEffect(bioEl, p.bio || "Биографические данные отсутствуют в базе.");
         }
     }
 
@@ -272,15 +291,19 @@
                 clearInterval(typeTimer);
                 typeTimer = null;
             }
-        }, 8);
+        }, 10);
     }
 
-    function logout() { sessionStorage.clear(); location.reload(); }
+    function logout() { 
+        sessionStorage.clear(); 
+        location.reload(); 
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
-        if (sessionStorage.getItem('prism_level')) loadArchive();
+        if (sessionStorage.getItem('prism_level')) {
+            loadArchive();
+        }
     });
 </script>
 </body>
 </html>
-
-
