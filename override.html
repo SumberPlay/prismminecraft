@@ -256,21 +256,27 @@
     // --- API ВЗАИМОДЕЙСТВИЯ ---
 
     async function addTask() {
-        const text = document.getElementById('new-task-text').value;
-        if (!selectedUserId || !text) return alert("ВЫБЕРИТЕ ЮЗЕРА И ВВЕДИТЕ ТЕКСТ");
+    const textInput = document.getElementById('new-task-text');
+    const text = textInput.value.trim();
+    if (!selectedUserId || !text) return alert("ВЫБЕРИТЕ ЮЗЕРА И ВВЕДИТЕ ТЕКСТ");
+    
+    try {
+        const res = await fetch(`${RENDER_API}/add-task`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ staff_id: selectedUserId, task_text: text })
+        });
         
-        try {
-            await fetch(`${RENDER_API}/add-task`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ staff_id: selectedUserId, task_text: text })
-            });
+        if (res.ok) {
             log(`Directive issued for ${selectedUserId}`);
-            document.getElementById('new-task-text').value = '';
+            textInput.value = '';
             await refreshData();
-            selectUser(staffDB.find(u => u.id === selectedUserId));
-        } catch(e) { log("ERR: TASK_ADD_FAILED"); }
-    }
+            // Находим юзера уже в обновленной базе
+            const updatedUser = staffDB.find(u => u.id === selectedUserId);
+            if (updatedUser) selectUser(updatedUser);
+        }
+    } catch(e) { log("ERR: TASK_ADD_FAILED"); }
+}
 
     async function removeTask(sid, text) {
     if (!confirm("УДАЛИТЬ ДИРЕКТИВУ?")) return;
@@ -303,7 +309,7 @@
     const data = {
         id: idInput.value.trim(),
         name: nameInput.value.trim(),
-        mc_name: mc_name.value.trim(),
+        mc_name: mcInput.value.trim(), // ИСПРАВЛЕНО ЗДЕСЬ
         level: lvlInput.value
     };
     
@@ -321,7 +327,6 @@
             log(`SUCCESS: ${data.id} added. Temporary key: ${result.password}`);
             alert(`ОБЪЕКТ ЗАРЕГИСТРИРОВАН\nВременный ключ: ${result.password}`);
             
-            // Очистка полей
             idInput.value = '';
             nameInput.value = '';
             mcInput.value = '';
@@ -329,7 +334,7 @@
             await refreshData();
         } else {
             log(`ERROR: ${result.error}`);
-            alert(`ОШИБКА: ${result.error}`);
+            alert(`ОБЪЕКТ С ТАКИМ ID УЖЕ СУЩЕСТВУЕТ`);
         }
     } catch(e) { 
         log("ERR: DATABASE_OFFLINE"); 
@@ -388,5 +393,6 @@
 
 </body>
 </html>
+
 
 
