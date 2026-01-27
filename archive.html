@@ -242,7 +242,6 @@
     }
 
     function logout() {
-        localStorage.removeItem('prism_user');
         location.href = "staff.html";
     }
 
@@ -329,33 +328,38 @@
        ----------------------------------------------------------- */
     async function loadStaff() {
         const list = document.getElementById('staff-list');
-        list.innerHTML = "<div style='padding:20px; color:#444'>ЗАГРУЗКА ЛИЧНЫХ ДЕЛ...</div>";
+        list.innerHTML = "<div style='padding:20px; color:#444'>ЗАГРУЗКА БАЗЫ СУБЪЕКТОВ...</div>";
 
         try {
-            const res = await fetch(`${RENDER_API}/get-admin-staff`);
+            // МЕНЯЕМ ЭНДПОИНТ: теперь тянем данные игроков
+            const res = await fetch(`${RENDER_API}/get-staff`); 
             const db = await res.json();
             list.innerHTML = "";
 
             if (Array.isArray(db)) {
                 db.forEach(p => {
-                    const isHidden = USER.level < p.level;
+                    // Для обычных игроков (субъектов) скрытие обычно не нужно, 
+                    // но оставим проверку, если ты хочешь прятать высокоуровневых игроков
+                    const isHidden = USER.level < (p.level || 0) && p.level > 3; 
                     const item = document.createElement('div');
                     item.className = "list-item";
                     item.onclick = () => openStaff(p, item, isHidden);
                     
-                    const skin = p.mc_name ? p.mc_name : 'MHF_Question';
+                    // Используем mc_name или id для скина
+                    const skin = p.mc_name || p.id || 'MHF_Question';
 
                     item.innerHTML = `
                         <img src="https://minotar.net/helm/${isHidden ? 'MHF_Question' : skin}/32.png" style="width:32px;filter:grayscale(1)">
                         <div>
-                            <div style="color:#fff">${isHidden ? 'ЗАСЕКРЕЧЕНО' : (p.name || 'UNKNOWN')}</div>
-                            <div style="font-size:0.7em">ID: ${p.id} // L${p.level}</div>
+                            <div style="color:#fff">${isHidden ? 'ЗАСЕКРЕЧЕНО' : (p.display_name || p.id)}</div>
+                            <div style="font-size:0.7em">RANK: ${p.rank || 'CITIZEN'} // L${p.level || 1}</div>
                         </div>`;
                     list.appendChild(item);
                 });
             }
         } catch(e) {
-            list.innerHTML = "<div style='padding:20px; color:var(--neon-red)'>СЕРВЕР НЕДОСТУПЕН</div>";
+            console.error("Staff load error:", e);
+            list.innerHTML = "<div style='padding:20px; color:var(--neon-red)'>ОШИБКА ДОСТУПА К РЕЕСТРУ</div>";
         }
     }
 
@@ -369,16 +373,17 @@
         if(isHidden) {
             document.getElementById('s-img').src = "https://minotar.net/armor/bust/MHF_Question/160.png";
             document.getElementById('s-name').innerText = "RESTRICTED";
-            document.getElementById('s-id').innerText = "ID: [REDACTED]";
-            lvl.innerText = "LEVEL " + p.level; lvl.style.color = "var(--neon-red)";
-            typeText(document.getElementById('s-bio'), "Досье заблокировано для вашего уровня допуска.");
+            document.getElementById('s-id').innerText = "SUBJECT_ID: [REDACTED]";
+            lvl.innerText = "ACCESS LEVEL " + (p.level || "?"); lvl.style.color = "var(--neon-red)";
+            typeText(document.getElementById('s-bio'), "Данные субъекта защищены протоколом безопасности.");
         } else {
-            const skin = p.mc_name ? p.mc_name : 'MHF_Question';
+            const skin = p.mc_name || p.id || 'MHF_Question';
             document.getElementById('s-img').src = `https://minotar.net/armor/bust/${skin}/160.png`;
-            document.getElementById('s-name').innerText = p.name || 'UNKNOWN';
-            document.getElementById('s-id').innerText = `ID: ${p.id} | ОТДЕЛ: ${p.dept || 'ОБЩИЙ'}`;
-            lvl.innerText = "LEVEL " + p.level; lvl.style.color = "var(--neon-blue)";
-            typeText(document.getElementById('s-bio'), p.bio || "Нет биографических данных.");
+            document.getElementById('s-name').innerText = p.display_name || p.id;
+            document.getElementById('s-id').innerText = `ID: ${p.id} | РАНГ: ${p.rank || 'НЕ УКАЗАН'}`;
+            lvl.innerText = "LEVEL " + (p.level || 1); lvl.style.color = "var(--neon-blue)";
+            // Если в таблице players есть поле bio — покажет его, если нет — стандартную фразу
+            typeText(document.getElementById('s-bio'), p.bio || "Дополнительная информация в личном деле отсутствует.");
         }
     }
 
@@ -475,3 +480,4 @@
 </script>
 </body>
 </html>
+
