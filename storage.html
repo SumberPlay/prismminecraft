@@ -190,15 +190,15 @@
 
 <script>
     const API_URL = "https://prism-bot.onrender.com";
-    // Вместо raw.githubusercontent.com используем прокси jsDelivr
-const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/data/archive.json";
-
+    
+    // Функция авторизации (оставляем без изменений, она уже работает с API)
     async function attemptLogin() {
         const id = document.getElementById('inp-id').value.toUpperCase();
         const rawPass = document.getElementById('inp-pass').value;
 
         if(!id || !rawPass) return alert("ЗАПОЛНИТЕ ВСЕ ПОЛЯ");
 
+        // Используем MD5 для совместимости с твоей БД staff
         const pass = CryptoJS.MD5(rawPass).toString();
 
         try {
@@ -226,6 +226,7 @@ const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/
     }
 
     function startSession(user) {
+        // Сохраняем уровень доступа для проверки файлов
         sessionStorage.setItem('p_lvl', user.level);
         document.getElementById('screen-auth').style.display = 'none';
         document.getElementById('screen-storage').style.display = 'block';
@@ -233,71 +234,84 @@ const GITHUB_JSON = "https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/
         loadFiles();
     }
 
+    // --- ГЛАВНОЕ ИЗМЕНЕНИЕ: ЗАГРУЗКА ИЗ БД ---
     async function loadFiles() {
         const list = document.getElementById('file-list');
         const myLvl = parseInt(sessionStorage.getItem('p_lvl')) || 1;
-        list.innerHTML = "<div style='color:var(--dim)'>СИНХРОНИЗАЦИЯ...</div>";
+        list.innerHTML = "<div style='color:var(--dim)'>ПОДКЛЮЧЕНИЕ К ЦЕНТРАЛЬНОМУ АРХИВУ...</div>";
         
-        // Пробуем два источника: прямой RAW и стабильный jsDelivr
-        const sources = [
-            `https://raw.githubusercontent.com/SumberPlay/prismminecraft/main/data/archive.json?t=${Date.now()}`,
-            `https://cdn.jsdelivr.net/gh/SumberPlay/prismminecraft@main/data/archive.json?v=${Date.now()}`
-        ];
+        try {
+            // Запрос к твоему новому эндпоинту в server.js
+            const res = await fetch(`${API_URL}/get-archive`);
+            
+            if (!res.ok) throw new Error("API_ERROR");
 
-        for (let url of sources) {
-            try {
-                console.log("ПОПЫТКА ЗАГРУЗКИ:", url);
-                const res = await fetch(url, { cache: "no-store" });
-                
-                if (!res.ok) {
-                    console.warn(`Источник ${url} ответил ошибкой ${res.status}`);
-                    continue;
-                }
-
-                const files = await res.json();
-                
-                list.innerHTML = "";
-                [...files].reverse().forEach(file => {
-                    const locked = myLvl < file.level;
-                    const card = document.createElement('div');
-                    card.className = `card ${locked ? 'locked' : ''}`;
-                    card.innerHTML = `
-                        <div class="card-info">${file.date || '---'} | REQ: L${file.level}</div>
-                        <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (file.title || 'БЕЗ НАЗВАНИЯ')}</div>
-                    `;
-                    card.onclick = () => locked ? alert("ОШИБКА: НЕДОСТАТОЧНЫЙ ДОПУСК") : openReader(file);
-                    list.appendChild(card);
-                });
-                
-                return; // Успешно загружено, выходим из функции
-
-            } catch (e) {
-                console.error("ОШИБКА ИСТОЧНИКА:", url, e);
+            const files = await res.json();
+            
+            list.innerHTML = "";
+            
+            if (!files || files.length === 0) {
+                list.innerHTML = "<div style='color:var(--dim)'>АРХИВ ПУСТ</div>";
+                return;
             }
-        }
 
-        list.innerHTML = "<div style='color:var(--alert)'>КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ.</div>";
+            // Рендерим файлы из БД
+            files.forEach(file => {
+                const fLvl = parseInt(file.level) || 0;
+                const locked = myLvl < fLvl;
+                
+                const card = document.createElement('div');
+                card.className = `card ${locked ? 'locked' : ''}`;
+                card.innerHTML = `
+                    <div class="card-info">${file.date || '---'} | REQ: L${fLvl}</div>
+                    <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (file.title || 'БЕЗ НАЗВАНИЯ')}</div>
+                `;
+                
+                card.onclick = () => {
+                    if (locked) {
+                        alert("ОШИБКА: НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОПУСКА (L" + fLvl + ")");
+                    } else {
+                        openReader(file);
+                    }
+                };
+                list.appendChild(card);
+            });
+
+        } catch (e) {
+            console.error("ОШИБКА ЗАГРУЗКИ:", e);
+            list.innerHTML = "<div style='color:var(--alert)'>КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ С БД.</div>";
+        }
     }
 
     function openReader(file) {
         document.getElementById('reader').style.display = 'block';
-        document.getElementById('r-title').innerText = file.title;
-        document.getElementById('r-meta').innerText = `LOG_ID: ${file.id} | DATE: ${file.date} | ACCESS: L${file.level}`;
+        document.getElementById('r-title').innerText = file.title || "БЕЗ НАЗВАНИЯ";
+        document.getElementById('r-meta').innerText = `LOG_ID: ${file.id || '??'} | DATE: ${file.date || '---'} | ACCESS: L${file.level || 0}`;
         
         const textEl = document.getElementById('r-text');
         textEl.innerText = "";
+        
+        let content = file.content || "НЕТ ДАННЫХ";
         let i = 0;
-        function type() {
-            if (i < file.content.length) {
-                textEl.innerText += file.content.charAt(i);
+        
+        // Очищаем старые таймеры если есть
+        if (window.typeInterval) clearInterval(window.typeInterval);
+        
+        // Эффект печати
+        window.typeInterval = setInterval(() => {
+            if (i < content.length) {
+                textEl.innerText += content.charAt(i);
                 i++;
-                setTimeout(type, 10);
+                // Скроллим вниз при печати
+                document.getElementById('reader').scrollTop = document.getElementById('reader').scrollHeight;
+            } else {
+                clearInterval(window.typeInterval);
             }
-        }
-        type();
+        }, 10);
     }
 
     function closeReader() {
+        if (window.typeInterval) clearInterval(window.typeInterval);
         document.getElementById('reader').style.display = 'none';
     }
 </script>
