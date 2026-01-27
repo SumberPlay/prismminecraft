@@ -149,47 +149,48 @@ async function syncSystem() {
 
 async function checkAuth() {
     const id = document.getElementById('uid').value.toUpperCase().trim();
-    const ps = CryptoJS.MD5(document.getElementById('ups').value).toString();
+    const password = document.getElementById('ups').value; // Берем чистый пароль
+    const errorMsg = document.getElementById('err');
+
+    if (!id || !password) return;
 
     try {
         const response = await fetch(`${RENDER_API}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, pass: ps })
+            body: JSON.stringify({ id, pass: password }) // Сервер ждет 'pass'
         });
 
         if (response.ok) {
             const data = await response.json();
+            
+            // Формируем объект игрока из данных базы
+            const userObj = {
+                id: id,
+                level: data.level,
+                name: data.name,
+                role: data.role || "СОТРУДНИК"
+            };
 
-// Создаем единый объект пользователя
-const userObj = {
-    id: id,
-    level: data.level,
-    name: data.name
-};
+            // Сохраняем сессию
+            localStorage.setItem('prism_user', JSON.stringify(userObj));
+            
+            // Логируем вход в Telegram через твой сервер
+            fetch(`${RENDER_API}/auth-log`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userObj)
+            });
 
-// Сохраняем в localStorage (будет доступно во всех вкладках)
-localStorage.setItem('prism_user', JSON.stringify(userObj));
-
-// Также оставляем для совместимости старые ключи, если они нужны другим страницам
-localStorage.setItem('prism_uid', id);
-localStorage.setItem('prism_level', data.level);
-localStorage.setItem('prism_name', data.name);
-
-// Лог в ТГ остается без изменений
-fetch(`${RENDER_API}/auth-log`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(userObj)
-});
-
-renderDashboard(userObj);
+            renderDashboard(userObj);
         } else {
-            document.getElementById('err').style.display = 'block';
-            setTimeout(() => document.getElementById('err').style.display = 'none', 3000);
+            errorMsg.style.display = 'block';
+            errorMsg.innerText = "[!] ОШИБКА: НЕВЕРНЫЙ ИДЕНТИФИКАТОР ИЛИ КЛЮЧ";
+            setTimeout(() => errorMsg.style.display = 'none', 3000);
         }
     } catch (e) {
-        alert("СБОЙ ТЕРМИНАЛА");
+        console.error(e);
+        alert("КРИТИЧЕСКАЯ ОШИБКА СВЯЗИ С ЯДРОМ");
     }
 }
 
@@ -226,24 +227,32 @@ function renderDashboard(user) {
 
 async function sendReport() {
     const text = document.getElementById('reportText').value.trim();
-    const uid = sessionStorage.getItem('prism_uid') || "НЕИЗВЕСТНО";
     const status = document.getElementById('reportStatus');
-    if (!text) return;
+    
+    // Достаем данные пользователя правильно
+    const savedUser = localStorage.getItem('prism_user');
+    const user = savedUser ? JSON.parse(savedUser) : null;
 
-    status.innerText = "> ЗАГРУЗКА_НА_СЕРВЕР...";
+    if (!text || !user) return;
+
+    status.innerText = "> ПОДГОТОВКА ПАКЕТА...";
     try {
         const res = await fetch(`${RENDER_API}/send-report`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user: uid, text: text, timestamp: new Date().toLocaleString() })
+            body: JSON.stringify({ 
+                user: user.name, // Отправляем имя сотрудника
+                text: text, 
+                timestamp: new Date().toLocaleString('ru-RU') 
+            })
         });
         if (res.ok) {
-            status.innerText = "> УСПЕХ: ДАННЫЕ_ПЕРЕДАНЫ";
+            status.innerText = "> УСПЕХ: ЛОГ СОХРАНЕН";
             document.getElementById('reportText').value = "";
             setTimeout(() => status.innerText = "", 3000);
-        } else { throw new Error(); }
+        }
     } catch (e) {
-        status.innerText = "> ОШИБКА: СБОЙ_ПЕРЕДАЧИ";
+        status.innerText = "> ОШИБКА: КАНАЛ ЗАНЯТ";
     }
 }
 
@@ -284,4 +293,5 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
