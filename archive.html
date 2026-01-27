@@ -5,115 +5,83 @@
     <title>P.R.I.S.M. | SECURE TERMINAL</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        :root { 
-            --neon-blue: #00ffcc; 
-            --neon-green: #00ff41;
-            --neon-red: #ff3333; 
-            --neon-gold: #ffd700;
-            --bg-dark: #050505; 
-            --panel-bg: rgba(10, 16, 16, 0.95);
-            --border: #1a3a3a;
+        :root {
+            --neon-blue: #00ffcc; --neon-green: #00ff41; --neon-red: #ff3333;
+            --neon-gold: #ffd700; --bg-dark: #050505; --border: #1a3a3a;
             --font-main: 'Courier New', monospace;
         }
 
         * { box-sizing: border-box; }
-        
-        body { 
-            background: var(--bg-dark); color: #ccc; 
-            font-family: var(--font-main); margin: 0; 
+        body {
+            background: var(--bg-dark); color: #ccc;
+            font-family: var(--font-main); margin: 0;
             height: 100vh; overflow: hidden; text-transform: uppercase;
         }
 
-        /* --- ЭФФЕКТЫ --- */
+        /* ЭФФЕКТЫ */
         .overlay { position: fixed; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, transparent 2px); pointer-events: none; z-index: 9000; }
         .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(0, 255, 204, 0.03); z-index: 9001; pointer-events: none; animation: scan 8s linear infinite; }
         @keyframes scan { from { top: -10%; } to { top: 110%; } }
 
-        /* --- ЭКРАН ПРОВЕРКИ ДОСТУПА --- */
-        #access-screen { 
-            position: fixed; inset: 0; z-index: 10000; background: #000; 
-            display: flex; align-items: center; justify-content: center; text-align: center;
+        /* ИНТЕРФЕЙС */
+        #main-interface { display: none; height: 100vh; flex-direction: column; }
+        header {
+            height: 60px; border-bottom: 1px solid var(--border); background: #080808;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 25px;
+            flex-shrink: 0;
         }
-        .error-box { border: 1px solid var(--neon-red); padding: 40px; background: rgba(20,0,0,0.2); }
 
-        /* --- ИНТЕРФЕЙС --- */
-        #main-interface { display: none; height: 100vh; grid-template-rows: 60px 1fr; }
+        .workspace { display: flex; flex: 1; overflow: hidden; }
         
-        header { 
-            border-bottom: 1px solid var(--border); background: #080808; 
-            display: flex; align-items: center; justify-content: space-between; 
-            padding: 0 25px;
-        }
-        .header-title { font-size: 1.2em; letter-spacing: 4px; color: #fff; font-weight: bold; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
-        .sys-status { font-size: 0.75em; color: #666; display: flex; gap: 25px; }
-        .val { color: var(--neon-green); font-weight: bold; }
+        /* Боковая навигация */
+        aside { width: 260px; border-right: 1px solid var(--border); background: #020202; flex-shrink: 0; }
+        .nav-btn { padding: 18px 25px; color: #777; cursor: pointer; border-left: 2px solid transparent; transition: 0.3s; font-size: 0.9em; }
+        .nav-btn.active { color: var(--neon-blue); border-left-color: var(--neon-blue); background: linear-gradient(90deg, rgba(0,255,204,0.08), transparent); }
 
-        .workspace { display: grid; grid-template-columns: 260px 1fr; height: 100%; overflow: hidden; }
-
-        aside { border-right: 1px solid var(--border); background: #020202; display: flex; flex-direction: column; }
-        .nav-header { padding: 20px; color: #555; font-size: 0.7em; border-bottom: 1px solid #111; letter-spacing: 1px; }
-        
-        .nav-btn { 
-            padding: 18px 25px; color: #777; cursor: pointer; border-left: 2px solid transparent; 
-            transition: 0.3s; font-size: 0.9em; letter-spacing: 1px;
-        }
-        .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.03); }
-        .nav-btn.active { 
-            color: var(--neon-blue); border-left-color: var(--neon-blue); 
-            background: linear-gradient(90deg, rgba(0,255,204,0.08), transparent); 
-        }
-
-        main { position: relative; background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%); }
-        .view-section { display: none; height: 100%; grid-template-columns: 320px 1fr; } 
+        /* Основная область */
+        main { flex: 1; position: relative; overflow: hidden; }
+        .view-section { display: none; height: 100%; grid-template-columns: 320px 1fr; }
         .view-section.active { display: grid; }
-        .list-column { overflow-y: auto; border-right: 1px solid var(--border); background: rgba(0,0,0,0.3); }
-        .list-item { 
-            padding: 20px; border-bottom: 1px solid #111; cursor: pointer; 
-            display: flex; align-items: center; gap: 15px; transition: 0.2s; opacity: 0.7;
-        }
-        .list-item:hover { opacity: 1; background: rgba(255,255,255,0.02); }
-        .list-item.active { opacity: 1; background: rgba(0, 255, 204, 0.05); border-left: 3px solid var(--neon-blue); }
-        .list-item.locked { opacity: 0.3; }
-        
-        .anomaly-marker { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 5px currentColor; }
-        .m-safe { background: var(--neon-green); color: var(--neon-green); }
-        .m-moderate { background: var(--neon-gold); color: var(--neon-gold); }
-        .m-critical { background: var(--neon-red); color: var(--neon-red); animation: pulse 1s infinite; }
 
-        .viewer-column { padding: 40px; overflow-y: auto; }
-        .empty-state { height: 100%; display: flex; align-items: center; justify-content: center; color: #333; letter-spacing: 2px; }
+        /* Колонки со скроллом */
+        .list-column { height: 100%; overflow-y: auto; border-right: 1px solid var(--border); background: rgba(0,0,0,0.3); }
+        .viewer-column { height: 100%; overflow-y: auto; padding: 40px; scroll-behavior: smooth; position: relative; }
 
+        /* Элементы списка */
+        .list-item { padding: 20px; border-bottom: 1px solid #111; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.2s; opacity: 0.7; }
+        .list-item:hover, .list-item.active { opacity: 1; background: rgba(255,255,255,0.02); }
+        .list-item.active { border-left: 3px solid var(--neon-blue); background: rgba(0, 255, 204, 0.05); }
+
+        /* Досье и текст */
         .dossier-header { display: flex; gap: 30px; margin-bottom: 30px; border-bottom: 1px solid #222; padding-bottom: 30px; }
         .dossier-img { width: 160px; height: 160px; object-fit: cover; border: 1px solid #333; padding: 4px; background: #000; }
-        
-        .dossier-title { font-size: 2em; margin: 0; color: #fff; line-height: 1.1; margin-bottom: 10px; }
-        .dossier-subtitle { color: var(--neon-blue); font-size: 0.9em; letter-spacing: 2px; margin-bottom: 5px; }
         .tag-box { display: inline-block; border: 1px solid; padding: 4px 8px; font-size: 0.7em; margin-top: 10px; }
-
-        .section-title { color: #555; margin-top: 30px; margin-bottom: 10px; font-size: 0.8em; letter-spacing: 1px; border-bottom: 1px solid #1a1a1a; display: inline-block; }
-        .text-content { font-size: 0.95em; color: #aaa; line-height: 1.6; white-space: pre-wrap; max-width: 800px; }
+        .text-content { font-size: 0.95em; color: #aaa; line-height: 1.6; white-space: pre-wrap; padding-bottom: 50px; }
+        
+        /* Служебные классы */
+        .anomaly-marker { width: 10px; height: 10px; border-radius: 50%; }
+        .m-safe { background: var(--neon-green); box-shadow: 0 0 5px var(--neon-green); }
+        .m-critical { background: var(--neon-red); box-shadow: 0 0 5px var(--neon-red); animation: pulse 1s infinite; }
+        .c-safe { color: var(--neon-green); border-color: var(--neon-green); }
+        .c-critical { color: var(--neon-red); border-color: var(--neon-red); }
         .typing-cursor::after { content: '█'; animation: blink 0.8s infinite; color: var(--neon-blue); }
 
-        .c-safe { color: var(--neon-green); border-color: var(--neon-green); }
-        .c-moderate { color: var(--neon-gold); border-color: var(--neon-gold); }
-        .c-critical { color: var(--neon-red); border-color: var(--neon-red); text-shadow: 0 0 10px var(--neon-red); }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        @keyframes pulse { 50% { opacity: 0.3; } }
         @keyframes blink { 50% { opacity: 0; } }
-        
-        ::-webkit-scrollbar { width: 5px; }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #222; }
         ::-webkit-scrollbar-thumb:hover { background: var(--neon-blue); }
     </style>
 </head>
 <body>
 
-<div class="overlay"></div>
-<div class="scanline"></div>
+<div class="overlay"></div><div class="scanline"></div>
 
 <div id="access-screen">
     <div id="status-box">
-        <div style="color: var(--neon-blue); letter-spacing: 5px; margin-bottom: 20px;" id="status-text">СКАНИРОВАНИЕ БИОМЕТРИКИ...</div>
+        <div id="status-text" style="color: var(--neon-blue); letter-spacing: 5px;">СКАНИРОВАНИЕ БИОМЕТРИКИ...</div>
     </div>
 </div>
 
@@ -128,29 +96,26 @@
     </header>
 
     <div class="workspace">
-        <aside>
-            <div class="nav-header">SELECT MODULE</div>
+        <aside id="nav-aside">
             <div class="nav-btn active" onclick="switchModule('anomalies', this)">> РЕЕСТР АНОМАЛИЙ</div>
             <div class="nav-btn" onclick="switchModule('staff', this)">> ЛИЧНЫЕ ДЕЛА</div>
             <div class="nav-btn" onclick="switchModule('archive', this)">> АРХИВ</div>
         </aside>
-<main>
+
+        <main>
             <div id="mod-anomalies" class="view-section active">
                 <div class="list-column" id="anomaly-list"></div>
-                <div class="viewer-column">
-                    <div id="ano-placeholder" class="empty-state">ВЫБЕРИТЕ ОБЪЕКТ ИЗ СПИСКА</div>
+                <div class="viewer-column" id="ano-viewer-cont">
+                    <div id="ano-placeholder" class="empty-state">ВЫБЕРИТЕ ОБЪЕКТ</div>
                     <div id="ano-content" style="display:none;">
                         <div class="dossier-header">
-                            <img id="a-img" src="" class="dossier-img" style="filter: sepia(1) hue-rotate(180deg) contrast(1.2);">
+                            <img id="a-img" class="dossier-img">
                             <div>
                                 <h1 id="a-code" class="dossier-title"></h1>
                                 <div id="a-name" class="dossier-subtitle"></div>
                                 <div id="a-class" class="tag-box"></div>
                             </div>
                         </div>
-                        <div class="section-title">ОСОБЫЕ УСЛОВИЯ СОДЕРЖАНИЯ</div>
-                        <div id="a-proc" class="text-content" style="color: #fff; margin-bottom: 20px;"></div>
-                        <div class="section-title">ОПИСАНИЕ ОБЪЕКТА</div>
                         <div id="a-desc" class="text-content"></div>
                     </div>
                 </div>
@@ -158,18 +123,16 @@
 
             <div id="mod-staff" class="view-section">
                 <div class="list-column" id="staff-list"></div>
-                <div class="viewer-column">
-                    <div id="staff-placeholder" class="empty-state">ВЫБЕРИТЕ ЛИЧНОЕ ДЕЛО</div>
+                <div class="viewer-column" id="staff-viewer-cont">
                     <div id="staff-content" style="display:none;">
                         <div class="dossier-header">
-                            <img id="s-img" src="" class="dossier-img">
+                            <img id="s-img" class="dossier-img">
                             <div>
                                 <h1 id="s-name" class="dossier-title"></h1>
                                 <div id="s-id" class="dossier-subtitle"></div>
-                                <div id="s-level" class="tag-box" style="border-color: var(--neon-blue); color: var(--neon-blue)"></div>
+                                <div id="s-level" class="tag-box"></div>
                             </div>
                         </div>
-                        <div class="section-title">БИОГРАФИЧЕСКАЯ СПРАВКА</div>
                         <div id="s-bio" class="text-content"></div>
                     </div>
                 </div>
@@ -177,20 +140,10 @@
 
             <div id="mod-archive" class="view-section">
                 <div class="list-column" id="archive-list"></div>
-                <div class="viewer-column">
-                    <div id="archive-placeholder" class="empty-state">ВЫБЕРИТЕ ПРОТОКОЛ ДЛЯ ЧТЕНИЯ</div>
+                <div class="viewer-column" id="archive-viewer-cont">
                     <div id="archive-content" style="display:none;">
-                        <div class="dossier-header">
-                            <div style="width:160px; height:160px; border:1px solid #333; display:flex; align-items:center; justify-content:center; background:#000;">
-                                <span style="font-size:3em; color:#222;">DOC</span>
-                            </div>
-                            <div>
-                                <h1 id="r-title" class="dossier-title"></h1>
-                                <div id="r-meta" class="dossier-subtitle"></div>
-                                <div id="r-level" class="tag-box"></div>
-                            </div>
-                        </div>
-                        <div class="section-title">ТЕКСТ ПРОТОКОЛА</div>
+                        <h1 id="r-title" class="dossier-title"></h1>
+                        <div id="r-meta" class="dossier-subtitle"></div>
                         <div id="r-text" class="text-content"></div>
                     </div>
                 </div>
@@ -198,58 +151,42 @@
         </main>
     </div>
 </div>
+
 <script>
     const RENDER_API = "https://prism-bot.onrender.com";
     const GITHUB_JSON = "https://raw.githubusercontent.com/SumberPlay/prismminecraft/main/data/archive.json";
     
-    const ANOMALIES = [
-        { id: "001", code: "КОНЕЦ", lvl: 4, class: "critical", proc: "Объект должен находиться в стазис-капсуле Типа-4. Любое падение уровня энергии ниже 98% требует немедленной эвакуации Сектора.", desc: "Аномалия представляет собой точку сингулярности, вызывающую распад атомных связей в радиусе воздействия." },
-        { id: "002", code: "РАЗЛОМ", lvl: 0, class: "safe", proc: "Зона вокруг объекта огорожена периметром безопасности. Допускается проход персонала с уровнем допуска 2 и выше.", desc: "Стабильный пространственный разрыв. Ведет в карманное измерение, состоящее из [ДАННЫЕ УДАЛЕНЫ]." },
-        { id: "003", code: "МАРТИ", lvl: 5, class: "critical", proc: "Ни при каких обстоятельствах не вступать в диалог с объектом. Персонал подлежит устранению.", desc: "Гуманоидная сущность, способная менять локальную физику." },
-        { id: "004", code: "ЭХО", lvl: 2, class: "moderate", proc: "В зоне содержания должны постоянно работать генераторы белого шума мощностью не менее 120дБ.", desc: "Акустический феномен. Повторяет мысли субъекта, постепенно искажая их смысл." }
-    ];
-
     let USER = { name: "", level: 0 };
     let typeTimer = null;
 
-    // --- ПРОВЕРКА LOCALSTORAGE ПРИ ЗАГРУЗКЕ ---
+    const ANOMALIES = [
+        { id: "001", code: "КОНЕЦ", lvl: 4, class: "critical", desc: "Точка сингулярности, вызывающая распад атомных связей в радиусе воздействия." },
+        { id: "002", code: "РАЗЛОМ", lvl: 0, class: "safe", desc: "Стабильный пространственный разрыв. Ведет в карманное измерение." },
+        { id: "003", code: "МАРТИ", lvl: 5, class: "critical", desc: "Гуманоидная сущность, способная менять локальную физику." },
+        { id: "004", code: "ЭХО", lvl: 2, class: "moderate", desc: "Акустический феномен. Повторяет мысли субъекта." }
+    ];
+
     window.onload = function() {
         const storedName = localStorage.getItem('prism_name');
         const storedLevel = localStorage.getItem('prism_level');
-
-        if (storedName && storedLevel !== null) {
+        if (storedName) {
             USER.name = storedName;
             USER.level = parseInt(storedLevel);
             initInterface();
         } else {
-            // Показываем ошибку если данных нет
-            const statusBox = document.getElementById('status-box');
-            statusBox.innerHTML = `
-                <div style="border: 1px solid var(--neon-red); padding: 40px; background: rgba(20,0,0,0.5);">
-                    <h2 style="color: var(--neon-red); letter-spacing: 10px;">ACCESS DENIED</h2>
-                    <p style="color: #666; font-size: 0.8em; margin: 20px 0;">УЧЕТНАЯ ЗАПИСЬ НЕ НАЙДЕНА В ЛОКАЛЬНОМ РЕЕСТРЕ</p>
-                    <a href="staff.html" style="color: var(--neon-blue); text-decoration: none; border: 1px solid; padding: 10px 20px; display: inline-block;">ВЕРНУТЬСЯ К АВТОРИЗАЦИИ</a>
-                </div>
-            `;
+            document.getElementById('status-box').innerHTML = `<h2 style="color:var(--neon-red)">ACCESS DENIED</h2><a href="staff.html" style="color:var(--neon-blue)">ВЕРНУТЬСЯ</a>`;
         }
     };
 
     function initInterface() {
         document.getElementById('access-screen').style.display = 'none';
-        document.getElementById('main-interface').style.display = 'grid';
+        document.getElementById('main-interface').style.display = 'flex';
         document.getElementById('u-name').innerText = USER.name;
         document.getElementById('u-level').innerText = "LEVEL " + USER.level;
-
         renderAnomalyList();
         loadStaff();
         loadArchive();
     }
-
-    function logout() {
-         location.href = "staff.html"; // Или reload(), если хочешь остаться на этой странице
-    }
-
-    // --- ОСТАЛЬНАЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ) ---
 
     function switchModule(modId, btn) {
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -257,6 +194,7 @@
         document.getElementById(`mod-${modId}`).classList.add('active');
         btn.classList.add('active');
     }
+
     function renderAnomalyList() {
         const list = document.getElementById('anomaly-list');
         list.innerHTML = "";
@@ -264,140 +202,88 @@
             const isLocked = USER.level < a.lvl;
             const item = document.createElement('div');
             item.className = `list-item ${isLocked ? 'locked' : ''}`;
-            item.onclick = () => openAnomaly(a, item, isLocked);
             item.innerHTML = `<div class="anomaly-marker m-${isLocked ? 'critical' : a.class}"></div>
-                <div><div style="color:#fff">#${a.id} ${isLocked ? 'CLASSIFIED' : a.code}</div>
-                <div style="font-size:0.7em">CLASS: ${isLocked ? '???' : a.class.toUpperCase()}</div></div>`;
+                              <div><div>#${a.id} ${isLocked ? 'CLASSIFIED' : a.code}</div></div>`;
+            item.onclick = () => {
+                if(isLocked) return alert("ДОСТУП ЗАПРЕЩЕН");
+                openAnomaly(a, item);
+            };
             list.appendChild(item);
         });
     }
 
-    function openAnomaly(data, el, isLocked) {
+    function openAnomaly(data, el) {
         document.querySelectorAll('#anomaly-list .list-item').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
         document.getElementById('ano-placeholder').style.display = 'none';
         document.getElementById('ano-content').style.display = 'block';
-
-        const code = document.getElementById('a-code');
+        document.getElementById('a-img').src = `https://via.placeholder.com/160/000000/00ffcc?text=OBJ-${data.id}`;
+        document.getElementById('a-code').innerText = data.code;
         const badge = document.getElementById('a-class');
-        badge.className = "tag-box";
-
-        if(isLocked) {
-            document.getElementById('a-img').src = "https://via.placeholder.com/160/000000/ff3333?text=LOCKED";
-            code.innerText = [ДОСТУП ЗАПРЕЩЕН]; code.style.color = "var(--neon-red)";
-            document.getElementById('a-name').innerText = "ТРЕБУЕТСЯ УРОВЕНЬ " + data.lvl;
-            badge.innerText = "UNKNOWN"; badge.classList.add('c-critical');
-            document.getElementById('a-proc').innerText = "[ДАННЫЕ УДАЛЕНЫ]";
-            typeText(document.getElementById('a-desc'), "Попытка несанкционированного доступа зафиксирована.");
-        } else {
-            document.getElementById('a-img').src = `https://via.placeholder.com/160/000000/00ffcc?text=OBJ-${data.id}`;
-            code.innerText = ОБЪЕКТ #${data.id}; code.style.color = "#fff";
-            document.getElementById('a-name').innerText = CODENAME: "${data.code}";
-            badge.innerText = data.class.toUpperCase(); badge.classList.add(c-${data.class});
-            document.getElementById('a-proc').innerText = data.proc;
-            typeText(document.getElementById('a-desc'), data.desc);
-        }
+        badge.innerText = data.class.toUpperCase();
+        badge.className = `tag-box c-${data.class}`;
+        typeText(document.getElementById('a-desc'), data.desc, document.getElementById('ano-viewer-cont'));
     }
+
     async function loadStaff() {
         try {
-            const res = await fetch(${RENDER_API}/get-staff);
+            const res = await fetch(`${RENDER_API}/get-staff`);
             const db = await res.json();
             const list = document.getElementById('staff-list');
             Object.entries(db).forEach(([id, p]) => {
                 const isHidden = USER.level < p.level;
                 const item = document.createElement('div');
                 item.className = "list-item";
-                item.onclick = () => openStaff(id, p, item, isHidden);
-                item.innerHTML = `<img src="https://minotar.net/helm/${isHidden ? 'Steve' : p.mc_name}/32.png" style="width:32px;filter:grayscale(1)">
-                    <div><div style="color:#fff">${isHidden ? 'ЗАСЕКРЕЧЕНО' : (p.name  id)}</div>
-                    <div style="font-size:0.7em">ID: ${id} // L${p.level}</div></div>`;
+                item.innerHTML = `<img src="https://minotar.net/helm/${isHidden ? 'Steve' : p.mc_name}/32.png" style="width:24px;">
+                                  <div>${isHidden ? 'ЗАСЕКРЕЧЕНО' : (p.name || id)}</div>`;
+                item.onclick = () => {
+                    document.getElementById('staff-content').style.display = 'block';
+                    document.getElementById('s-img').src = `https://minotar.net/armor/bust/${isHidden ? 'Steve' : p.mc_name}/160.png`;
+                    document.getElementById('s-name').innerText = isHidden ? "???" : p.name;
+                    typeText(document.getElementById('s-bio'), isHidden ? "ДОСТУП ОГРАНИЧЕН" : p.bio, document.getElementById('staff-viewer-cont'));
+                };
                 list.appendChild(item);
             });
         } catch(e) {}
     }
 
-    function openStaff(id, p, el, isHidden) {
-        document.querySelectorAll('#staff-list .list-item').forEach(i => i.classList.remove('active'));
-        el.classList.add('active');
-        document.getElementById('staff-placeholder').style.display = 'none';
-        document.getElementById('staff-content').style.display = 'block';
-        const lvl = document.getElementById('s-level');
-
-        if(isHidden) {
-            document.getElementById('s-img').src = "https://minotar.net/armor/bust/Steve/160.png";
-            document.getElementById('s-name').innerText = "RESTRICTED";
-            document.getElementById('s-id').innerText = "ID: [REDACTED]";
-            lvl.innerText = "LEVEL " + p.level; lvl.style.color = "var(--neon-red)";
-            typeText(document.getElementById('s-bio'), "Досье заблокировано.");
-        } else {
-            document.getElementById('s-img').src = `https://minotar.net/armor/bust/${p.mc_name}/160.png`;
-            document.getElementById('s-name').innerText = p.name  id;
-            document.getElementById('s-id').innerText = ID: ${id} | ОТДЕЛ: ${p.dept || 'ОБЩИЙ'};
-            lvl.innerText = "LEVEL " + p.level; lvl.style.color = "var(--neon-blue)";
-            typeText(document.getElementById('s-bio'), p.bio || "Нет данных.");
-        }
-    }
     async function loadArchive() {
-        const list = document.getElementById('archive-list');
-        list.innerHTML = "<div style='padding:20px; color:#444'>СИНХРОНИЗАЦИЯ...</div>";
         try {
-            const res = await fetch(${GITHUB_JSON}?t=${Date.now()});
+            const res = await fetch(`${GITHUB_JSON}?t=${Date.now()}`);
             const files = await res.json();
+            const list = document.getElementById('archive-list');
             list.innerHTML = "";
-            [...files].reverse().forEach(file => {
-                const isLocked = USER.level < file.level;
+            files.reverse().forEach(f => {
                 const item = document.createElement('div');
-                item.className = list-item ${isLocked ? 'locked' : ''};
-                item.onclick = () => openArchiveFile(file, item, isLocked);
-                item.innerHTML = `
-                    <div class="anomaly-marker ${isLocked ? 'm-critical' : 'm-safe'}"></div>
-                    <div>
-                        <div style="color:#fff">${isLocked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : file.title}</div>
-                        <div style="font-size:0.7em; color:#666;">${file.date  '---'} | ACCESS: L${file.level}</div>
-                    </div>
-                `;
+                item.className = "list-item";
+                item.innerHTML = `<div>${f.title}</div>`;
+                item.onclick = () => {
+                    document.getElementById('archive-content').style.display = 'block';
+                    document.getElementById('r-title').innerText = f.title;
+                    typeText(document.getElementById('r-text'), f.content, document.getElementById('archive-viewer-cont'));
+                };
                 list.appendChild(item);
             });
-        } catch (e) { list.innerHTML = "<div style='padding:20px; color:var(--neon-red)'>ОШИБКА СИНХРОНИЗАЦИИ</div>"; }
+        } catch(e) {}
     }
 
-    function openArchiveFile(file, el, isLocked) {
-        document.querySelectorAll('#archive-list .list-item').forEach(i => i.classList.remove('active'));
-        el.classList.add('active');
-        document.getElementById('archive-placeholder').style.display = 'none';
-        document.getElementById('archive-content').style.display = 'block';
-
-        const title = document.getElementById('r-title');
-        const meta = document.getElementById('r-meta');
-        const badge = document.getElementById('r-level');
-        const text = document.getElementById('r-text');
-
-        badge.className = "tag-box";
-
-        if(isLocked) {
-            title.innerText = "[ACCESS DENIED]"; title.style.color = "var(--neon-red)";
-            meta.innerText = "CRITICAL SECURITY BREACH PREVENTION";
-            badge.innerText = "REQUIRED: L" + file.level; badge.classList.add('c-critical');
-            typeText(text, "Ваш уровень допуска недостаточно высок для расшифровки данного протокола. Информация была передана в отдел внутренней безопасности.");
-        } else {
-            title.innerText = file.title; title.style.color = "#fff";
-            meta.innerText = `LOG_ID: ${file.id  'UKN'} | DATE: ${file.date  '---'}`;
-            badge.innerText = "CLEARANCE: L" + file.level; badge.classList.add('c-safe');
-            typeText(text, file.content  "Файл пуст.");
-        }
-    }
-
-    function typeText(el, text) {
+    function typeText(el, text, container) {
         if(typeTimer) clearInterval(typeTimer);
-        el.innerHTML = ""; el.classList.add('typing-cursor');
+        el.innerText = "";
+        el.classList.add('typing-cursor');
+        if(container) container.scrollTop = 0; // СБРОС СКРОЛЛА В НАЧАЛО
         let i = 0;
         typeTimer = setInterval(() => {
             el.innerText = text.substring(0, i);
             i++;
-            if(i > text.length) { clearInterval(typeTimer); el.classList.remove('typing-cursor'); }
-        }, 10);
+            if(i > text.length) {
+                clearInterval(typeTimer);
+                el.classList.remove('typing-cursor');
+            }
+        }, 5);
     }
+
+    function logout() { localStorage.clear(); location.href = "staff.html"; }
 </script>
 </body>
-
 </html>
