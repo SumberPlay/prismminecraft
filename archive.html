@@ -348,23 +348,34 @@
         list.innerHTML = "<div style='padding:20px; color:#444'>СИНХРОНИЗАЦИЯ...</div>";
         try {
             const res = await fetch(`${GITHUB_JSON}?t=${Date.now()}`);
+            
+            // ПРОВЕРКА: Успешен ли запрос?
+            if (!res.ok) throw new Error(`Status: ${res.status}`);
+            
             const files = await res.json();
+            
+            // ПРОВЕРКА: Пришел ли массив?
+            if (!Array.isArray(files)) throw new Error("Not an array");
+
             list.innerHTML = "";
             [...files].reverse().forEach(file => {
-                const isLocked = USER.level < file.level;
+                const isLocked = USER.level < (file.level || 0); // Защита от undefined
                 const item = document.createElement('div');
                 item.className = `list-item ${isLocked ? 'locked' : ''}`;
                 item.onclick = () => openArchiveFile(file, item, isLocked);
                 item.innerHTML = `
                     <div class="anomaly-marker ${isLocked ? 'm-critical' : 'm-safe'}"></div>
                     <div>
-                        <div style="color:#fff">${isLocked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : file.title}</div>
-                        <div style="font-size:0.7em; color:#666;">${file.date || '---'} | ACCESS: L${file.level}</div>
+                        <div style="color:#fff">${isLocked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (file.title || "ПРОТОКОЛ")}</div>
+                        <div style="font-size:0.7em; color:#666;">${file.date || '---'} | ACCESS: L${file.level || 0}</div>
                     </div>
                 `;
                 list.appendChild(item);
             });
-        } catch (e) { list.innerHTML = "<div style='padding:20px; color:var(--neon-red)'>ОШИБКА СИНХРОНИЗАЦИИ</div>"; }
+        } catch (e) { 
+            console.error("Archive Error:", e); // Увидите реальную причину в F12
+            list.innerHTML = `<div style='padding:20px; color:var(--neon-red)'>ОШИБКА СИНХРОНИЗАЦИИ<br><span style="font-size:0.5em">${e.message}</span></div>`; 
+        }
     }
 
     function openArchiveFile(file, el, isLocked) {
@@ -407,3 +418,4 @@
 </body>
 
 </html>
+
