@@ -293,40 +293,76 @@
     }
 }
     async function registerStaff() {
-        const data = {
-            id: document.getElementById('reg-id').value,
-            name: document.getElementById('reg-name').value,
-            mc_name: document.getElementById('reg-mc').value,
-            level: document.getElementById('reg-level').value
-        };
-        
-        try {
-            const res = await fetch(`${RENDER_API}/register-staff`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            if (res.ok) {
-                log(`New personnel registered: ${data.id}`);
-                await refreshData();
-            }
-        } catch(e) { log("ERR: REGISTRATION_FAILED"); }
+    const idInput = document.getElementById('reg-id');
+    const nameInput = document.getElementById('reg-name');
+    const mcInput = document.getElementById('reg-mc');
+    const lvlInput = document.getElementById('reg-level');
+
+    if (!idInput.value || !nameInput.value) return alert("ЗАПОЛНИТЕ ID И ИМЯ");
+
+    const data = {
+        id: idInput.value.trim(),
+        name: nameInput.value.trim(),
+        mc_name: mc_name.value.trim(),
+        level: lvlInput.value
+    };
+    
+    try {
+        log(`Registering new subject: ${data.id}...`);
+        const res = await fetch(`${RENDER_API}/register-staff`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+            log(`SUCCESS: ${data.id} added. Temporary key: ${result.password}`);
+            alert(`ОБЪЕКТ ЗАРЕГИСТРИРОВАН\nВременный ключ: ${result.password}`);
+            
+            // Очистка полей
+            idInput.value = '';
+            nameInput.value = '';
+            mcInput.value = '';
+            
+            await refreshData();
+        } else {
+            log(`ERROR: ${result.error}`);
+            alert(`ОШИБКА: ${result.error}`);
+        }
+    } catch(e) { 
+        log("ERR: DATABASE_OFFLINE"); 
     }
+}
 
     async function deleteStaff() {
-        if (!selectedUserId || !confirm(`ВНИМАНИЕ: УДАЛИТЬ ${selectedUserId} ИЗ СИСТЕМЫ?`)) return;
-        try {
-            await fetch(`${RENDER_API}/delete-staff`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ staff_id: selectedUserId })
-            });
-            log(`Subject ${selectedUserId} terminated from records.`);
-            selectedUserId = null;
-            await refreshData();
-        } catch(e) { log("ERR: DELETION_FAILED"); }
-    }
+    if (!selectedUserId) return alert("ОБЪЕКТ НЕ ВЫБРАН");
+    
+    if (!confirm(`КРИТИЧЕСКОЕ ДЕЙСТВИЕ: УДАЛИТЬ ${selectedUserId} ИЗ СИСТЕМЫ БЕЗВОЗВРАТНО?`)) return;
 
+    try {
+        log(`Initiating termination for ${selectedUserId}...`);
+        
+        const res = await fetch(`${RENDER_API}/delete-staff`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ staff_id: selectedUserId })
+        });
+
+        if (res.ok) {
+            log(`SUCCESS: Subject ${selectedUserId} purged.`);
+            selectedUserId = null;
+            document.getElementById('delete-target').innerText = "ОБЪЕКТ УДАЛЕН";
+            await refreshData(); // Обновляем список слева
+        } else {
+            const errData = await res.json();
+            log(`ERROR: ${errData.error || 'Server rejected request'}`);
+        }
+    } catch(e) { 
+        log("ERR: CONNECTION_LOST_DURING_PURGE"); 
+    }
+}
     function log(msg) {
         const c = document.getElementById('console');
         const ts = new Date().toLocaleTimeString();
@@ -352,4 +388,5 @@
 
 </body>
 </html>
+
 
