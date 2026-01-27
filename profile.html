@@ -169,45 +169,62 @@
     const RENDER_API = "https://prism-bot.onrender.com";
 
     async function loadData() {
+        // Получаем ID текущего пользователя из памяти браузера
         const session = JSON.parse(localStorage.getItem('prism_user'));
         if (!session) { window.location.href = "staff.html"; return; }
 
         try {
+            // Запрашиваем список всех сотрудников
             const res = await fetch(`${RENDER_API}/get-admin-staff`);
             const db = await res.json();
-            const user = db[session.id];
+            
+            // Ищем нашего пользователя в массиве по ID
+            const user = db.find(u => u.id === session.id);
 
-            if (!user) return;
+            if (!user) {
+                document.getElementById('u-name').innerText = "ОШИБКА: ID НЕ НАЙДЕН";
+                return;
+            }
 
+            // Заполняем поля
             document.getElementById('u-name').innerText = user.name;
             document.getElementById('u-id').innerText = "ID_TOKEN: " + session.id;
-            document.getElementById('u-dept').innerText = user.dept || "GENERAL";
+            document.getElementById('u-dept').innerText = user.dept || "ОБЩИЙ ОТДЕЛ";
             document.getElementById('u-level').innerText = "CLEARANCE_L" + user.level;
-            document.getElementById('u-spec').innerText = user.spec || "UNDEFINED";
-            document.getElementById('u-joined').innerText = user.joined || "2025-XX-XX";
+            document.getElementById('u-spec').innerText = user.spec || "НЕ НАЗНАЧЕНА";
+            document.getElementById('u-joined').innerText = user.created_at ? new Date(user.created_at).toLocaleDateString() : "НЕИЗВЕСТНО";
 
-            document.getElementById('u-photo').src = `https://minotar.net/armor/bust/${user.mc_name || 'MHF_Question'}/120.png`;
+            // Фото (используем MC Name или заглушку)
+            const skinName = user.mc_name || 'MHF_Question';
+            document.getElementById('u-photo').src = `https://minotar.net/armor/bust/${skinName}/150.png`;
 
-            if (user.tasks && user.tasks.length > 0) {
+            // Задачи (Проверяем, есть ли они вообще)
+            if (user.tasks && Array.isArray(user.tasks) && user.tasks.length > 0) {
                 document.getElementById('u-tasks').innerHTML = user.tasks
                     .map(t => `<div>${t.done ? '[X]' : '[ ]'} ${t.text}</div>`).join('');
             } else {
-                document.getElementById('u-tasks').innerText = "> АКТИВНЫХ ЗАДАЧ НЕ НАЙДЕНО";
+                document.getElementById('u-tasks').innerText = "> АКТИВНЫХ ДИРЕКТИВ НЕ ОБНАРУЖЕНО";
             }
 
+            // Секретные заметки (видны только с 3 уровня)
             if (session.level >= 3) {
                 document.getElementById('note-sec').style.display = 'block';
-                document.getElementById('u-note').innerText = user.note || "НЕТ ЗАПИСЕЙ";
+                document.getElementById('u-note').innerText = user.note || "ЗАПИСИ ОТСУТСТВУЮТ";
             }
 
+            // Режим Совета (Золотой стиль для L5)
             if (user.level >= 5) {
                 document.getElementById('card').classList.add('council-mode');
                 document.getElementById('u-name').classList.add('council-text');
-                document.querySelectorAll('.value').forEach(v => v.classList.add('council-text'));
+                // Добавляем золотой класс всем значениям
+                const values = document.querySelectorAll('.value');
+                values.forEach(v => v.classList.add('council-text'));
             }
 
         } catch (e) {
-            document.getElementById('u-name').innerText = "ОШИБКА_БД";
+            console.error(e);
+            document.getElementById('u-name').innerText = "ОШИБКА_СВЯЗИ";
+            document.getElementById('u-dept').innerText = "СЕРВЕР НЕДОСТУПЕН";
         }
     }
 
@@ -215,9 +232,13 @@
         try {
             const res = await fetch(`${RENDER_API}/status`);
             const data = await res.json();
-            document.getElementById('sync-val').innerText = data.label;
-            document.getElementById('sync-val').style.color = data.color;
-        } catch(e) {}
+            const syncLabel = document.getElementById('sync-val');
+            syncLabel.innerText = data.label;
+            syncLabel.style.color = data.color;
+        } catch(e) {
+            document.getElementById('sync-val').innerText = "OFFLINE";
+            document.getElementById('sync-val').style.color = "red";
+        }
     }
 
     window.onload = () => { loadData(); sync(); setInterval(sync, 5000); };
