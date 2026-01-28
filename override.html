@@ -268,20 +268,18 @@
         }
     }
 
-    function selectReport(doc) {
+   function selectReport(doc) {
         selectedReportId = doc.id;
         renderSideList();
-        // ИСПРАВЛЕНО: ID должен быть report-details
         const details = document.getElementById('report-details'); 
         
+        // Убираем лишние пробелы перед переменной внутри кавычек
         details.innerHTML = `
             <div style="border-bottom: 1px solid var(--gold-dim); padding-bottom:10px; margin-bottom:20px;">
                 <h3 style="color:var(--gold); margin:0;">REPORT_#${doc.id}</h3>
                 <small>AUTHOR: ${doc.staff_name} | STATUS: ${doc.status || 'SENT'}</small>
             </div>
-            <div style="white-space: pre-wrap; color:#ccc; line-height:1.6; margin-bottom:30px; font-size:0.9em;">
-                ${doc.report_text || 'ТЕКСТ ПУСТ'} 
-            </div>
+            <div style="white-space: pre-wrap; color:#ccc; line-height:1.6; margin-bottom:30px; font-size:0.9em;">${doc.report_text ? doc.report_text.trim() : 'ТЕКСТ ПУСТ'}</div>
             <button class="btn-danger" style="width:100%" onclick="deleteReport(${doc.id})">УДАЛИТЬ РАПОРТ ИЗ АРХИВА</button>
         `;
     }
@@ -424,6 +422,7 @@
 </script>
 </body>
 </html>
+
 
 
 
