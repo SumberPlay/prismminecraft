@@ -196,13 +196,6 @@
         setInterval(syncStatus, 5000);
     }
 
-    async function refreshData() {
-        try {
-            const res = await fetch(`${RENDER_API}/get-admin-staff`);
-            staffDB = await res.json();
-            renderSideList();
-        } catch (e) { log("ERR: DATA_SYNC_FAILED"); }
-    }
 
     function switchTab(tab) {
         currentTab = tab;
@@ -214,34 +207,105 @@
         renderSideList();
     }
 
-    function renderSideList() {
-        const list = document.getElementById('side-list');
-        list.innerHTML = '';
+    let reportsDB = []; // Добавить в начало скрипта к остальным let
+let selectedReportId = null;
 
-        if (currentTab === 'protocols') {
-            PROTOCOLS.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'item-card';
-                div.innerHTML = `<span style="color:var(--gold)">[${p.id}]</span><br>${p.name}`;
-                div.onclick = () => {
-                    document.getElementById('protocol-details').innerHTML = `
-                        <h3 style="color:var(--gold)">${p.name}</h3>
-                        <p>${p.desc}</p>
-                        <button class="btn-gold" style="margin-top:20px">АКТИВИРОВАТЬ ЧЕРЕЗ ТГ: ${p.id}_EXECUTE</button>
-                    `;
-                };
-                list.appendChild(div);
-            });
-        } else {
-            staffDB.forEach(user => {
-                const div = document.createElement('div');
-                div.className = `item-card ${selectedUserId === user.id ? 'active' : ''}`;
-                div.innerHTML = `<span style="opacity:0.5">L${user.level}</span> | ${user.name}`;
-                div.onclick = () => selectUser(user);
-                list.appendChild(div);
-            });
-        }
+// Обнови функцию refreshData, чтобы она тянула и рапорты тоже
+async function refreshData() {
+    try {
+        const staffRes = await fetch(`${RENDER_API}/get-admin-staff`);
+        staffDB = await staffRes.json();
+        
+        const reportRes = await fetch(`${RENDER_API}/get-archive`);
+        reportsDB = await reportRes.json();
+        
+        renderSideList();
+    } catch (e) { log("ERR: GLOBAL_DATA_SYNC_FAILED"); }
+}
+
+// Обнови renderSideList, чтобы она умела рисовать список рапортов
+function renderSideList() {
+    const list = document.getElementById('side-list');
+    list.innerHTML = '';
+
+    if (currentTab === 'protocols') {
+        PROTOCOLS.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'item-card';
+            div.innerHTML = `<span style="color:var(--gold)">[${p.id}]</span><br>${p.name}`;
+            div.onclick = () => {
+                document.getElementById('protocol-details').innerHTML = `
+                    <h3 style="color:var(--gold)">${p.name}</h3>
+                    <p>${p.desc}</p>
+                    <button class="btn-gold" style="margin-top:20px">АКТИВИРОВАТЬ ЧЕРЕЗ ТГ: ${p.id}_EXECUTE</button>
+                `;
+            };
+            list.appendChild(div);
+        });
+    } else if (currentTab === 'reports') {
+        // Рендер списка рапортов
+        reportsDB.forEach(doc => {
+            const div = document.createElement('div');
+            div.className = `item-card ${selectedReportId === doc.id ? 'active' : ''}`;
+            div.innerHTML = `<span style="opacity:0.5">${doc.date || '??'}</span> | ${doc.title || 'UNTITLED'}`;
+            div.onclick = () => selectReport(doc);
+            list.appendChild(div);
+        });
+    } else {
+        // Рендер персонала (tasks / personnel)
+        staffDB.forEach(user => {
+            const div = document.createElement('div');
+            div.className = `item-card ${selectedUserId === user.id ? 'active' : ''}`;
+            div.innerHTML = `<span style="opacity:0.5">L${user.level}</span> | ${user.name}`;
+            div.onclick = () => selectUser(user);
+            list.appendChild(div);
+        });
     }
+}
+
+// Новая функция выбора рапорта
+function selectReport(doc) {
+    selectedReportId = doc.id;
+    renderSideList();
+    
+    const area = document.getElementById('report-details');
+    area.innerHTML = `
+        <div style="border-bottom: 1px solid var(--gold-dim); padding-bottom: 15px; margin-bottom: 15px;">
+            <div style="font-size: 0.8em; color: var(--gold);">DOC_ID: ${doc.id} | DATE: ${doc.date}</div>
+            <h3 style="margin: 10px 0; color: #fff;">${doc.title}</h3>
+            <div style="font-size: 0.7em;">ACCESS_LEVEL: L${doc.level} | TYPE: ${doc.sort_type}</div>
+        </div>
+        <div style="color: #ccc; white-space: pre-wrap; font-size: 0.9em; line-height: 1.6; margin-bottom: 30px;">
+            ${doc.content}
+        </div>
+        <button class="btn-danger" style="width: 200px" onclick="deleteReport(${doc.id})">УДАЛИТЬ ИЗ АРХИВА</button>
+    `;
+}
+
+// Функция удаления рапорта
+async function deleteReport(id) {
+    if (!confirm(`КРИТИЧЕСКОЕ ДЕЙСТВИЕ: УДАЛИТЬ ДОКУМЕНТ #${id} НАВСЕГДА?`)) return;
+    
+    try {
+        log(`Purging document #${id}...`);
+        const res = await fetch(`${RENDER_API}/delete-report`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ report_id: id })
+        });
+
+        if (res.ok) {
+            log(`SUCCESS: Document #${id} erased.`);
+            selectedReportId = null;
+            document.getElementById('report-details').innerHTML = '<p style="opacity:0.3">ОБЪЕКТ УДАЛЕН ИЗ РЕЕСТРА.</p>';
+            await refreshData();
+        } else {
+            log("ERR: DELETE_REQUEST_REJECTED");
+        }
+    } catch(e) {
+        log("ERR: ARCHIVE_CONNECTION_LOST");
+    }
+}
 
     function selectUser(user) {
         selectedUserId = user.id;
@@ -405,6 +469,7 @@ async function addTask() {
 
 </body>
 </html>
+
 
 
 
