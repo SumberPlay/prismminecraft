@@ -403,9 +403,23 @@ window.addEventListener('mousedown', () => {
     document.querySelector('.btn').addEventListener('click', () => {
         sysLog("Запрос доступа к базе данных персонала...", "WARN");
     });
+    window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C') || e.key === 'F12') {
+        sysLog("🚨 ПОПЫТКА ВЗЛОМА ОБОЛОЧКИ: Доступ к исходному коду блокирован.", "ERROR");
+    }
+});
+    document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        // Лог сработает, когда пользователь ушел с вкладки
+        console.log("ВНИМАНИЕ: Визуальный контакт разорван."); 
+    } else {
+        sysLog("Связь восстановлена. Авторизация сессии подтверждена.", "SYNC");
+    }
+});
 </script>
 </body>
 </html>
+
 
 
 
