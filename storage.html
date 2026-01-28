@@ -19,7 +19,9 @@
             font-family: 'Courier New', monospace;
             margin: 0;
             text-transform: uppercase;
-            overflow-x: hidden;
+            /* Изменено: предотвращаем общий скролл страницы, чтобы работали внутренние */
+            overflow: hidden; 
+            height: 100vh;
         }
 
         .scanline {
@@ -31,12 +33,9 @@
         }
 
         .top-nav {
-            padding: 20px;
+            padding: 15px 20px;
             border-bottom: 1px solid var(--dim);
             background: rgba(0,0,0,0.8);
-            position: sticky;
-            top: 0;
-            z-index: 100;
             display: flex;
             justify-content: flex-start;
         }
@@ -55,6 +54,12 @@
             border-color: var(--neon);
             box-shadow: 0 0 10px var(--dim);
         }
+
+        /* Кастомные скроллбары для стиля терминала */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--dim); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon); }
 
         .container { max-width: 800px; margin: 40px auto; padding: 20px; }
 
@@ -86,8 +91,6 @@
             box-sizing: border-box;
         }
 
-        input:focus { border-color: var(--neon); }
-
         .btn {
             background: none;
             border: 1px solid var(--neon);
@@ -101,24 +104,14 @@
 
         .btn:hover { background: var(--neon); color: #000; }
 
-        .btn-guest {
-            border-color: #444;
-            color: #444;
-            margin-top: 20px;
-            font-size: 0.8em;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-        }
-
+        /* Сетка хранилища */
         .card {
             border: 1px solid var(--dim);
-            padding: 20px;
+            padding: 15px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: 0.2s;
+            margin-bottom: 10px;
+            background: rgba(0,0,0,0.3);
         }
 
         .card:hover { border-color: var(--neon); background: rgba(0,255,204,0.05); }
@@ -126,17 +119,27 @@
         .card-name { color: #eee; font-weight: bold; margin-bottom: 5px; }
         .card-info { font-size: 0.7em; color: var(--dim); }
 
-        #reader {
-            display: none;
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); z-index: 2000; padding: 40px; box-sizing: border-box;
-            overflow-y: auto;
+        /* ВАЖНО: Настройки прокрутки */
+        #file-list {
+            flex-grow: 1;
+            overflow-y: scroll; /* Всегда показываем область скролла */
+            padding: 10px;
+            border-right: 1px solid rgba(0, 255, 204, 0.05);
         }
 
-        .reader-wrap { max-width: 700px; margin: 0 auto; }
+        #reader-view {
+            border: 1px solid var(--dim);
+            background: rgba(0,5,5,0.8);
+            padding: 30px;
+            overflow-y: auto; /* ВКЛЮЧАЕТ ПРОКРУТКУ ТЕКСТА */
+            position: relative;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
         .reader-meta { font-size: 0.8em; color: var(--dim); border-bottom: 1px solid var(--dim); padding-bottom: 10px; margin-bottom: 20px; }
         .reader-title { color: var(--neon); font-size: 1.8em; margin-bottom: 15px; }
-        .reader-text { color: #ccc; line-height: 1.6; white-space: pre-wrap; }
+        .reader-text { color: #ccc; line-height: 1.6; white-space: pre-wrap; padding-bottom: 60px; }
     </style>
 </head>
 <body>
@@ -161,35 +164,34 @@
             <input type="password" id="inp-pass" placeholder="Введите пароль...">
         </div>
         <button class="btn" onclick="attemptLogin()">АВТОРИЗАЦИЯ</button>
-        <br>
-        <button class="btn btn-guest" onclick="enterAsGuest()">[ ВОЙТИ КАК ГОСТЬ (L1) ]</button>
+        <button class="btn" style="border-color:#444; color:#444; margin-left: 10px;" onclick="enterAsGuest()">[ ГОСТЬ ]</button>
     </div>
 </div>
 
-<div id="screen-storage" style="display:none; height: calc(100vh - 80px); margin: 20px;">
+<div id="screen-storage" style="display:none; height: calc(100vh - 70px); padding: 20px; box-sizing: border-box;">
     <div style="display: grid; grid-template-columns: 350px 1fr; gap: 20px; height: 100%;">
         
-        <div style="display: flex; flex-direction: column; border: 1px solid var(--dim); background: rgba(0,10,5,0.6);">
+        <div style="display: flex; flex-direction: column; border: 1px solid var(--dim); background: rgba(0,10,5,0.6); height: 100%; overflow: hidden;">
             <div style="padding: 15px; border-bottom: 1px solid var(--dim);">
                 <div style="color: var(--neon); font-size: 0.8em; margin-bottom: 10px;">ARCHIVE_BROWSER_V4</div>
                 <input type="text" id="archive-search" placeholder="ПОИСК..." style="margin-bottom: 10px; font-size: 0.8em;">
-                <select id="archive-sort" style="width: 100%; background: #000; border: 1px solid var(--dim); color: var(--text); padding: 5px; font-family: inherit; text-transform: uppercase;">
+                <select id="archive-sort" style="width: 100%; background: #000; border: 1px solid var(--dim); color: var(--text); padding: 5px; font-family: inherit; text-transform: uppercase; outline: none;">
                     <option value="newest">ПО ДАТЕ (НОВЫЕ)</option>
-                    <option value="type">ПО ТИПУ (SORT_TYPE)</option>
+                    <option value="type">ПО ТИПУ</option>
                     <option value="level">ПО ДОПУСКУ</option>
                 </select>
             </div>
             
-            <div id="file-list" style="flex-grow: 1; overflow-y: auto; padding: 10px;">
+            <div id="file-list">
                 </div>
 
-            <div style="padding: 10px; border-top: 1px solid var(--dim); font-size: 0.6em;">
+            <div style="padding: 10px; border-top: 1px solid var(--dim); font-size: 0.6em; background: #000;">
                 STATUS: <span id="sync-status" style="color: var(--neon)">IDLE</span>
             </div>
         </div>
 
-        <div id="reader-view" style="border: 1px solid var(--dim); background: rgba(0,5,5,0.8); padding: 30px; overflow-y: auto; position: relative;">
-            <div id="reader-placeholder" class="empty-state" style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--dim);">
+        <div id="reader-view">
+            <div id="reader-placeholder" style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--dim);">
                 ОЖИДАНИЕ ВЫБОРА ОБЪЕКТА...
             </div>
             <div id="reader-content" style="display: none;">
@@ -198,7 +200,7 @@
                 <div id="r-text" class="reader-text"></div>
             </div>
             
-            <button class="btn" onclick="location.reload()" style="position: absolute; bottom: 20px; right: 20px; border-color: var(--alert); color: var(--alert); font-size: 0.7em;">
+            <button class="btn" onclick="location.reload()" style="position: absolute; bottom: 20px; right: 20px; border-color: var(--alert); color: var(--alert); font-size: 0.7em; background: rgba(0,0,0,0.8);">
                 [ LOGOUT ]
             </button>
         </div>
@@ -208,7 +210,6 @@
 <script>
     const API_URL = "https://prism-bot.onrender.com";
     let archiveData = [];
-    let autoRefresh = null;
     let typeInterval = null;
 
     async function attemptLogin() {
@@ -238,7 +239,6 @@
         loadFiles();
         document.getElementById('archive-search').oninput = renderFiles;
         document.getElementById('archive-sort').onchange = renderFiles;
-        autoRefresh = setInterval(loadFiles, 60000);
     }
 
     async function loadFiles() {
@@ -258,10 +258,8 @@
         const sortType = document.getElementById('archive-sort').value;
         const myLvl = parseInt(sessionStorage.getItem('p_lvl')) || 1;
 
-        // Фильтрация
         let filtered = archiveData.filter(f => (f.title || "").toLowerCase().includes(searchTerm));
 
-        // Сортировка
         filtered.sort((a, b) => {
             if (sortType === 'newest') return b.id - a.id;
             if (sortType === 'level') return (a.level || 0) - (b.level || 0);
@@ -275,10 +273,9 @@
             const locked = myLvl < fLvl;
             const card = document.createElement('div');
             card.className = `card ${locked ? 'locked' : ''}`;
-            card.style.marginBottom = "10px";
             card.innerHTML = `
                 <div class="card-info">${file.date || '---'} | L${fLvl} | ${file.sort_type || 'LOG'}</div>
-                <div class="card-name" style="font-size:0.9em;">${locked ? '[LOCKED]' : (file.title || 'UNKNOWN')}</div>
+                <div class="card-name">${locked ? '[LOCKED]' : (file.title || 'UNKNOWN')}</div>
             `;
             card.onclick = () => {
                 if (locked) alert("НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОПУСКА");
@@ -289,6 +286,7 @@
     }
 
     function openFile(file) {
+        const readerView = document.getElementById('reader-view');
         document.getElementById('reader-placeholder').style.display = 'none';
         document.getElementById('reader-content').style.display = 'block';
         document.getElementById('r-title').innerText = file.title || "БЕЗ НАЗВАНИЯ";
@@ -296,15 +294,23 @@
         
         const textEl = document.getElementById('r-text');
         textEl.innerText = "";
-        let content = file.content || "ДАННЫЕ ОТСУТСТВУЮТ";
+        let content = (file.content || "ДАННЫЕ ОТСУТСТВУЮТ").trim();
         let i = 0;
         
         if (typeInterval) clearInterval(typeInterval);
+        
+        // Сбрасываем скролл наверх при открытии нового файла
+        readerView.scrollTop = 0;
+
         typeInterval = setInterval(() => {
             if (i < content.length) {
                 textEl.innerText += content.charAt(i);
                 i++;
-            } else clearInterval(typeInterval);
+                // Автоматическая прокрутка вниз по мере печати
+                readerView.scrollTop = readerView.scrollHeight;
+            } else {
+                clearInterval(typeInterval);
+            }
         }, 10);
     }
 </script>
