@@ -248,26 +248,30 @@
         const resonanceElem = document.getElementById('resonance-index');
 
         if (riskElem && resonanceElem) {
-            // Имитируем микродрожание риска (от 0.0025 до 0.0039)
-            const risk = (0.003 + (Math.random() * 0.001)).toFixed(4);
-            riskElem.innerText = `${risk}%`;
+            let risk, resonance;
 
-            // Имитируем колебания резонанса вокруг 1.0000
-            // При состоянии RED (тревога) можно увеличивать амплитуду
-            const drift = (Math.sin(Date.now() / 2000) * 0.0005);
-            const noise = (Math.random() * 0.0002);
-            const resonance = (1.0000 + drift + noise).toFixed(4);
-            resonanceElem.innerText = resonance;
-
-            // Если статус RED — подсвечиваем цифры красным
-            const status = document.getElementById('status-text').innerText;
-            if (status === "RED" || status === "КРИТИЧЕСКИЙ") {
+            if (isAlarmPlaying) {
+                // СОСТОЯНИЕ ТРЕВОГИ: Цифры ведут себя агрессивно
+                risk = (Math.random() * 80 + 15).toFixed(4); // Прыгает от 15% до 95%
+                resonance = (Math.random() * 4 + 0.1).toFixed(4); // Хаос от 0.1 до 4.1
+                
                 riskElem.style.color = "var(--alert-red)";
                 resonanceElem.style.color = "var(--alert-red)";
+                
+                // Добавим эффект "дрожания" текста при тревоге
+                riskElem.style.transform = `translateX(${Math.random()*2-1}px)`;
             } else {
+                // ШТАТНЫЙ РЕЖИМ: Минимальные колебания
+                risk = (0.001 + (Math.sin(Date.now() / 5000) * 0.0005) + Math.random() * 0.0002).toFixed(4);
+                resonance = (1.0000 + (Math.sin(Date.now() / 3000) * 0.0008)).toFixed(4);
+                
                 riskElem.style.color = "var(--neon-green)";
                 resonanceElem.style.color = "var(--neon-green)";
+                riskElem.style.transform = "none";
             }
+
+            riskElem.innerText = `${risk}%`;
+            resonanceElem.innerText = resonance;
         }
     }
 
@@ -377,6 +381,7 @@ addLogLine(); // Первое сообщение сразу
 </script>
 </body>
 </html>
+
 
 
 
