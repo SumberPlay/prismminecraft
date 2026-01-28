@@ -206,11 +206,11 @@ function renderDashboard(user) {
     const actions = [
         { name: "ЛИЧНОЕ_ДОСЬЕ", link: "profile" }, // Исправлено на правильный файл
         { name: "КАРТА_ОБЪЕКТА", link: "map" },
-	{ name: "ПРОТОКОЛЫ", link: "prot" }
+		{ name: "ПРОТОКОЛЫ", link: "prot" },
+		{ name: "АРХИВ", link: "archive" }
     ];
 
     // Логика кнопок на основе уровня
-    if (user.level >= 3) actions.push({ name: "АРХИВ", link: "archive" });
     if (user.level >= 5) {
         actions.push({ name: "СПИСОК_ПЕРСОНАЛА", link: "staff_list", class: "btn-council" });
         actions.push({ name: "КОНТРОЛЬ_СОВЕТА", link: "override", class: "btn-council" });
@@ -293,5 +293,6 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
