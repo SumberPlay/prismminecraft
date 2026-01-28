@@ -177,7 +177,7 @@
     const RENDER_API = "https://prism-bot.onrender.com";
     let currentTab = 'protocols';
     let staffDB = [];
-    let reportsDB = []; // Массив для рапортов
+    let reportsDB = []; 
     let selectedUserId = null;
     let selectedReportId = null;
 
@@ -201,11 +201,11 @@
         try {
             const [resStaff, resRep] = await Promise.all([
                 fetch(`${RENDER_API}/get-admin-staff`),
-                fetch(`${RENDER_API}/get-reports`) // Тянем именно рапорты
+                fetch(`${RENDER_API}/get-reports`) 
             ]);
             
             staffDB = await resStaff.json();
-            reportsDB = await resRep.json(); // Исправлено: записываем в reportsDB
+            reportsDB = await resRep.json(); 
             
             renderSideList();
             log("DATA_SYNC_COMPLETE");
@@ -250,11 +250,9 @@
             reportsDB.forEach(doc => {
                 const div = document.createElement('div');
                 div.className = `item-card ${selectedReportId === doc.id ? 'active' : ''}`;
-                
-                // Исправлено: берем дату и имя сотрудника из твоей таблицы
                 const date = doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '??';
-                div.innerHTML = `<span style="color:var(--gold)">[${date}]</span><br>ОТ: ${doc.staff_name || 'СИСТЕМА'}`;
-                
+                // Используем staff_name из твоей таблицы
+                div.innerHTML = `<span style="color:var(--gold)">[${date}]</span><br>ОТ: ${doc.staff_name || 'UNKNOWN'}`;
                 div.onclick = () => selectReport(doc);
                 list.appendChild(div);
             });
@@ -273,13 +271,17 @@
     function selectReport(doc) {
         selectedReportId = doc.id;
         renderSideList();
-        const details = document.getElementById('report-text');
+        // ИСПРАВЛЕНО: ID должен быть report-details
+        const details = document.getElementById('report-details'); 
+        
         details.innerHTML = `
             <div style="border-bottom: 1px solid var(--gold-dim); padding-bottom:10px; margin-bottom:20px;">
-                <h3 style="color:var(--gold); margin:0;">${doc.title || 'БЕЗ НАЗВАНИЯ'}</h3>
-                <small>ID: ${doc.id} | TYPE: ${doc.sort_type || 'LOG'} | ACCESS: L${doc.level || 1}</small>
+                <h3 style="color:var(--gold); margin:0;">REPORT_#${doc.id}</h3>
+                <small>AUTHOR: ${doc.staff_name} | STATUS: ${doc.status || 'SENT'}</small>
             </div>
-            <div style="white-space: pre-wrap; color:#ccc; line-height:1.6; margin-bottom:30px; font-size:0.9em;">${doc.content || 'НЕТ СОДЕРЖИМОГО'}</div>
+            <div style="white-space: pre-wrap; color:#ccc; line-height:1.6; margin-bottom:30px; font-size:0.9em;">
+                ${doc.report_text || 'ТЕКСТ ПУСТ'} 
+            </div>
             <button class="btn-danger" style="width:100%" onclick="deleteReport(${doc.id})">УДАЛИТЬ РАПОРТ ИЗ АРХИВА</button>
         `;
     }
@@ -295,7 +297,7 @@
             if(res.ok) {
                 log(`REPORT #${id} PURGED FROM ARCHIVE`);
                 selectedReportId = null;
-                document.getElementById('report-details').innerHTML = "ОБЪЕКТ УДАЛЕН";
+                document.getElementById('report-details').innerHTML = "<p style='opacity:0.3'>ОБЪЕКТ УДАЛЕН ИЗ РЕЕСТРА</p>";
                 await refreshData();
             }
         } catch(e) { log("ERR: ARCHIVE_DELETE_FAILED"); }
@@ -399,6 +401,7 @@
 
     function log(msg) {
         const c = document.getElementById('console');
+        if(!c) return;
         const ts = new Date().toLocaleTimeString();
         c.innerHTML += `<br>[${ts}] > ${msg}`;
         c.scrollTop = c.scrollHeight;
@@ -421,6 +424,7 @@
 </script>
 </body>
 </html>
+
 
 
 
