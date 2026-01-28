@@ -142,7 +142,6 @@
 <body>
 
 <div class="scanline"></div>
-
 <nav class="top-nav">
     <a href="index.html" class="nav-link"> < [ ВЕРНУТЬСЯ_НА_ГЛАВНУЮ ] </a>
 </nav>
@@ -152,7 +151,6 @@
         <h1>TERMINAL_ACCESS_REQUIRED</h1>
         <p>ПРЕДЪЯВИТЕ УДОСТОВЕРЕНИЕ ЛИЧНОСТИ</p>
     </div>
-    
     <div class="login-form">
         <div class="input-group">
             <label>STAFF_ID</label>
@@ -168,33 +166,54 @@
     </div>
 </div>
 
-<div id="screen-storage" class="container" style="display:none;">
-    <div class="header">
-        <h1>DATA_ARCHIVE_V4</h1>
-        <p>ДОСТУП ПРЕДОСТАВЛЕН: <span id="op-name" style="color:var(--neon)"></span></p>
-        <p id="sync-status" style="font-size: 0.6em; color: var(--dim);">СИНХРОНИЗАЦИЯ: OK</p>
-    </div>
-    <div class="grid" id="file-list"></div>
-    <button class="btn" onclick="location.reload()" style="margin-top:40px; border-color:var(--alert); color:var(--alert)">[ ВЫХОД ИЗ СИСТЕМЫ ]</button>
-</div>
+<div id="screen-storage" style="display:none; height: calc(100vh - 80px); margin: 20px;">
+    <div style="display: grid; grid-template-columns: 350px 1fr; gap: 20px; height: 100%;">
+        
+        <div style="display: flex; flex-direction: column; border: 1px solid var(--dim); background: rgba(0,10,5,0.6);">
+            <div style="padding: 15px; border-bottom: 1px solid var(--dim);">
+                <div style="color: var(--neon); font-size: 0.8em; margin-bottom: 10px;">ARCHIVE_BROWSER_V4</div>
+                <input type="text" id="archive-search" placeholder="ПОИСК..." style="margin-bottom: 10px; font-size: 0.8em;">
+                <select id="archive-sort" style="width: 100%; background: #000; border: 1px solid var(--dim); color: var(--text); padding: 5px; font-family: inherit; text-transform: uppercase;">
+                    <option value="newest">ПО ДАТЕ (НОВЫЕ)</option>
+                    <option value="type">ПО ТИПУ (SORT_TYPE)</option>
+                    <option value="level">ПО ДОПУСКУ</option>
+                </select>
+            </div>
+            
+            <div id="file-list" style="flex-grow: 1; overflow-y: auto; padding: 10px;">
+                </div>
 
-<div id="reader">
-    <div class="reader-wrap">
-        <div id="r-meta" class="reader-meta"></div>
-        <div id="r-title" class="reader-title"></div>
-        <div id="r-text" class="reader-text"></div>
-        <button class="btn" onclick="closeReader()">[ ЗАКРЫТЬ ПРОТОКОЛ ]</button>
+            <div style="padding: 10px; border-top: 1px solid var(--dim); font-size: 0.6em;">
+                STATUS: <span id="sync-status" style="color: var(--neon)">IDLE</span>
+            </div>
+        </div>
+
+        <div id="reader-view" style="border: 1px solid var(--dim); background: rgba(0,5,5,0.8); padding: 30px; overflow-y: auto; position: relative;">
+            <div id="reader-placeholder" class="empty-state" style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--dim);">
+                ОЖИДАНИЕ ВЫБОРА ОБЪЕКТА...
+            </div>
+            <div id="reader-content" style="display: none;">
+                <div id="r-meta" class="reader-meta"></div>
+                <div id="r-title" class="reader-title"></div>
+                <div id="r-text" class="reader-text"></div>
+            </div>
+            
+            <button class="btn" onclick="location.reload()" style="position: absolute; bottom: 20px; right: 20px; border-color: var(--alert); color: var(--alert); font-size: 0.7em;">
+                [ LOGOUT ]
+            </button>
+        </div>
     </div>
 </div>
 
 <script>
     const API_URL = "https://prism-bot.onrender.com";
+    let archiveData = [];
     let autoRefresh = null;
+    let typeInterval = null;
 
     async function attemptLogin() {
         const id = document.getElementById('inp-id').value.toUpperCase();
-        const pass = document.getElementById('inp-pass').value; // Без шифрования
-
+        const pass = document.getElementById('inp-pass').value;
         if(!id || !pass) return alert("ЗАПОЛНИТЕ ВСЕ ПОЛЯ");
 
         try {
@@ -203,122 +222,91 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ id, pass })
             });
-            
             const data = await res.json();
-            
-            if(data.success) {
-                startSession(data);
-            } else {
-                alert("ОШИБКА: НЕДОПУСТИМАЯ КОМБИНАЦИЯ ID/KEY");
-            }
-        } catch (e) { 
-            console.error(e);
-            alert("КРИТИЧЕСКАЯ ОШИБКА СЕРВЕРА"); 
-        }
+            if(data.success) startSession(data);
+            else alert("ДОСТУП ЗАПРЕЩЕН");
+        } catch (e) { alert("ОШИБКА СЕРВЕРА"); }
     }
 
-    function enterAsGuest() {
-        startSession({ name: "VISITOR_GUEST", level: 1 });
-    }
+    function enterAsGuest() { startSession({ name: "VISITOR_GUEST", level: 1 }); }
 
     function startSession(user) {
         sessionStorage.setItem('p_lvl', user.level);
         document.getElementById('screen-auth').style.display = 'none';
         document.getElementById('screen-storage').style.display = 'block';
-        document.getElementById('op-name').innerText = `${user.name} (L${user.level})`;
         
         loadFiles();
-
-        // Автообновление каждые 60 секунд
-        if(autoRefresh) clearInterval(autoRefresh);
+        document.getElementById('archive-search').oninput = renderFiles;
+        document.getElementById('archive-sort').onchange = renderFiles;
         autoRefresh = setInterval(loadFiles, 60000);
     }
 
     async function loadFiles() {
-        const list = document.getElementById('file-list');
         const syncLabel = document.getElementById('sync-status');
-        const myLvl = parseInt(sessionStorage.getItem('p_lvl')) || 1;
-        
-        syncLabel.innerText = "СИНХРОНИЗАЦИЯ: В ПРОЦЕССЕ...";
-        
+        syncLabel.innerText = "SYNCING...";
         try {
             const res = await fetch(`${API_URL}/get-archive`);
-            if (!res.ok) throw new Error("API_ERROR");
-
-            const files = await res.json();
-            list.innerHTML = "";
-            
-            if (!files || files.length === 0) {
-                list.innerHTML = "<div style='color:var(--dim)'>АРХИВ ПУСТ</div>";
-            } else {
-                files.forEach(file => {
-                    const fLvl = parseInt(file.level) || 0;
-                    const locked = myLvl < fLvl;
-                    
-                    const card = document.createElement('div');
-                    card.className = `card ${locked ? 'locked' : ''}`;
-                    card.innerHTML = `
-                        <div class="card-info">${file.date || '---'} | REQ: L${fLvl}</div>
-                        <div class="card-name">${locked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (file.title || 'БЕЗ НАЗВАНИЯ')}</div>
-                    `;
-                    
-                    card.onclick = () => {
-                        if (locked) {
-                            alert("ОШИБКА: НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОПУСКА (L" + fLvl + ")");
-                        } else {
-                            openReader(file);
-                        }
-                    };
-                    list.appendChild(card);
-                });
-            }
-            syncLabel.innerText = "СИНХРОНИЗАЦИЯ: OK (" + new Date().toLocaleTimeString() + ")";
-
-        } catch (e) {
-            console.error("ОШИБКА ЗАГРУЗКИ:", e);
-            syncLabel.innerText = "СИНХРОНИЗАЦИЯ: ОШИБКА ПОДКЛЮЧЕНИЯ";
-        }
+            archiveData = await res.json();
+            renderFiles();
+            syncLabel.innerText = "OK " + new Date().toLocaleTimeString();
+        } catch (e) { syncLabel.innerText = "SYNC_ERROR"; }
     }
 
-    function openReader(file) {
-        // Останавливаем автообновление пока открыт документ, чтобы не сбивать чтение
-        if(autoRefresh) clearInterval(autoRefresh);
+    function renderFiles() {
+        const list = document.getElementById('file-list');
+        const searchTerm = document.getElementById('archive-search').value.toLowerCase();
+        const sortType = document.getElementById('archive-sort').value;
+        const myLvl = parseInt(sessionStorage.getItem('p_lvl')) || 1;
 
-        document.getElementById('reader').style.display = 'block';
+        // Фильтрация
+        let filtered = archiveData.filter(f => (f.title || "").toLowerCase().includes(searchTerm));
+
+        // Сортировка
+        filtered.sort((a, b) => {
+            if (sortType === 'newest') return b.id - a.id;
+            if (sortType === 'level') return (a.level || 0) - (b.level || 0);
+            if (sortType === 'type') return (a.sort_type || "").localeCompare(b.sort_type || "");
+            return 0;
+        });
+
+        list.innerHTML = "";
+        filtered.forEach(file => {
+            const fLvl = parseInt(file.level) || 0;
+            const locked = myLvl < fLvl;
+            const card = document.createElement('div');
+            card.className = `card ${locked ? 'locked' : ''}`;
+            card.style.marginBottom = "10px";
+            card.innerHTML = `
+                <div class="card-info">${file.date || '---'} | L${fLvl} | ${file.sort_type || 'LOG'}</div>
+                <div class="card-name" style="font-size:0.9em;">${locked ? '[LOCKED]' : (file.title || 'UNKNOWN')}</div>
+            `;
+            card.onclick = () => {
+                if (locked) alert("НЕДОСТАТОЧНЫЙ УРОВЕНЬ ДОПУСКА");
+                else openFile(file);
+            };
+            list.appendChild(card);
+        });
+    }
+
+    function openFile(file) {
+        document.getElementById('reader-placeholder').style.display = 'none';
+        document.getElementById('reader-content').style.display = 'block';
         document.getElementById('r-title').innerText = file.title || "БЕЗ НАЗВАНИЯ";
-        document.getElementById('r-meta').innerText = `LOG_ID: ${file.id || '??'} | DATE: ${file.date || '---'} | ACCESS: L${file.level || 0}`;
+        document.getElementById('r-meta').innerText = `ID: ${file.id} | TYPE: ${file.sort_type || 'UNKNOWN'} | ACCESS: L${file.level}`;
         
         const textEl = document.getElementById('r-text');
         textEl.innerText = "";
-        
-        let content = file.content || "НЕТ ДАННЫХ";
+        let content = file.content || "ДАННЫЕ ОТСУТСТВУЮТ";
         let i = 0;
         
-        if (window.typeInterval) clearInterval(window.typeInterval);
-        
-        window.typeInterval = setInterval(() => {
+        if (typeInterval) clearInterval(typeInterval);
+        typeInterval = setInterval(() => {
             if (i < content.length) {
                 textEl.innerText += content.charAt(i);
                 i++;
-                // Авто-скролл для длинных текстов
-                const reader = document.getElementById('reader');
-                if (reader.scrollHeight - reader.scrollTop < 1000) {
-                    reader.scrollTop = reader.scrollHeight;
-                }
-            } else {
-                clearInterval(window.typeInterval);
-            }
-        }, 15);
-    }
-
-    function closeReader() {
-        if (window.typeInterval) clearInterval(window.typeInterval);
-        document.getElementById('reader').style.display = 'none';
-        
-        // Возобновляем автообновление после закрытия ридера
-        autoRefresh = setInterval(loadFiles, 60000);
+            } else clearInterval(typeInterval);
+        }, 10);
     }
 </script>
-
 </body>
 </html>
