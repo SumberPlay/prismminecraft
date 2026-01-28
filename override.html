@@ -103,6 +103,7 @@
     <button class="tab-btn active" onclick="switchTab('protocols')">01_PROTOCOLS</button>
     <button class="tab-btn" onclick="switchTab('tasks')">02_TASK_MANAGER</button>
     <button class="tab-btn" onclick="switchTab('personnel')">03_PERSONNEL_DEPT</button>
+    <button class="tab-btn" onclick="switchTab('reports')">04_REPORTS_MOD</button>
     <button class="tab-btn" style="border-right:none" onclick="location.href='staff.html'">[ EXIT ]</button>
 </div>
 
@@ -157,7 +158,14 @@
                 </div>
             </div>
         </div>
-
+    <div id="mod-reports" class="content-block">
+    <h2>ARCHIVE_MODERATION</h2>
+    <div id="report-view-area" style="background: rgba(212,175,55,0.02); border: 1px solid #222; padding: 30px; min-height: 400px;">
+        <div id="report-details">
+            <p style="opacity:0.3">ВЫБЕРИТЕ ДОКУМЕНТ ИЗ СПИСКА ДЛЯ РЕВИЗИИ...</p>
+        </div>
+    </div>
+</div>
     </div>
 </div>
 
@@ -397,6 +405,7 @@ async function addTask() {
 
 </body>
 </html>
+
 
 
 
