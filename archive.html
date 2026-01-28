@@ -180,25 +180,42 @@
             </div>
 
             <div id="mod-archive" class="view-section">
-                <div class="list-column" id="archive-list"></div>
-                <div class="viewer-column">
-                    <div id="archive-placeholder" class="empty-state">ВЫБЕРИТЕ ПРОТОКОЛ ДЛЯ ЧТЕНИЯ</div>
-                    <div id="archive-content" style="display:none;">
-                        <div class="dossier-header">
-                            <div style="width:160px; height:160px; border:1px solid #333; display:flex; align-items:center; justify-content:center; background:#000;">
-                                <span style="font-size:3em; color:#222;">DOC</span>
-                            </div>
-                            <div>
-                                <h1 id="r-title" class="dossier-title"></h1>
-                                <div id="r-meta" class="dossier-subtitle"></div>
-                                <div id="r-level" class="tag-box"></div>
-                            </div>
-                        </div>
-                        <div class="section-title">ТЕКСТ ПРОТОКОЛА</div>
-                        <div id="r-text" class="text-content"></div>
-                    </div>
+    <div class="list-column" style="display: flex; flex-direction: column;">
+        <div style="padding: 15px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.8);">
+            <input type="text" id="archive-search" placeholder="ПОИСК ПО НАЗВАНИЮ..." 
+                   style="width: 100%; background: #000; border: 1px solid var(--border); color: var(--neon-blue); padding: 10px; font-family: inherit; margin-bottom: 10px; outline: none;">
+            
+            <div style="display: flex; gap: 10px;">
+                <select id="archive-sort" style="flex-grow: 1; background: #000; border: 1px solid var(--border); color: #888; padding: 5px; font-family: inherit; cursor: pointer;">
+                    <option value="newest">СНАЧАЛА НОВЫЕ</option>
+                    <option value="oldest">СНАЧАЛА СТАРЫЕ</option>
+                    <option value="type">ПО ТИПУ (SORT_TYPE)</option>
+                    <option value="level">ПО ДОПУСКУ (L1-L5)</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="archive-list" style="flex-grow: 1; overflow-y: auto;"></div>
+    </div>
+
+    <div class="viewer-column">
+        <div id="archive-placeholder" class="empty-state">ВЫБЕРИТЕ ПРОТОКОЛ ДЛЯ ЧТЕНИЯ</div>
+        <div id="archive-content" style="display:none;">
+            <div class="dossier-header">
+                <div style="width:160px; height:160px; border:1px solid #333; display:flex; align-items:center; justify-content:center; background:#000;">
+                    <span id="r-type-icon" style="font-size:1.5em; color:var(--neon-blue); text-align:center;">DOC</span>
+                </div>
+                <div>
+                    <h1 id="r-title" class="dossier-title"></h1>
+                    <div id="r-meta" class="dossier-subtitle"></div>
+                    <div id="r-level" class="tag-box"></div>
                 </div>
             </div>
+            <div class="section-title">ТЕКСТ ПРОТОКОЛА</div>
+            <div id="r-text" class="text-content"></div>
+        </div>
+    </div>
+</div>
         </main>
     </div>
 </div>
@@ -390,49 +407,81 @@
     /* -----------------------------------------------------------
        МОДУЛЬ 3: АРХИВ (ГРУЗИМ ИЗ БД /get-archive)
        ----------------------------------------------------------- */
-    async function loadArchive() {
-        const list = document.getElementById('archive-list');
-        list.innerHTML = "<div style='padding:20px; color:#444'>СИНХРОНИЗАЦИЯ С АРХИВОМ...</div>";
+    let archiveData = []; // Хранилище для всех записей из БД
+
+async function loadArchive() {
+    const list = document.getElementById('archive-list');
+    list.innerHTML = "<div style='padding:20px; color:#444'>СИНХРОНИЗАЦИЯ С АРХИВОМ...</div>";
+    
+    try {
+        const res = await fetch(`${RENDER_API}/get-archive`);
+        if (!res.ok) throw new Error("API_ERROR");
         
-        try {
-            // ТЕПЕРЬ ЗАПРОС ИДЕТ К ТВОЕЙ БД
-            const res = await fetch(`${RENDER_API}/get-archive`);
-            if (!res.ok) throw new Error("Server Error");
-            
-            const files = await res.json();
-            list.innerHTML = "";
+        archiveData = await res.json();
+        
+        // Привязываем функции к элементам управления
+        document.getElementById('archive-search').oninput = renderArchive;
+        document.getElementById('archive-sort').onchange = renderArchive;
 
-            if (!files || files.length === 0) {
-                 list.innerHTML = "<div style='padding:20px; color:#666'>АРХИВ ПУСТ</div>";
-                 return;
-            }
+        renderArchive(); // Первичный запуск
 
-            // Рендерим полученные файлы
-            files.reverse().forEach(file => {
-                // Ожидаем поля: title, date, level, content, id
-                const fLevel = file.level || 0;
-                const isLocked = USER.level < fLevel;
-                
-                const item = document.createElement('div');
-                item.className = `list-item ${isLocked ? 'locked' : ''}`;
-                item.onclick = () => openArchiveFile(file, item, isLocked);
-                
-                item.innerHTML = `
-                    <div class="anomaly-marker ${isLocked ? 'm-critical' : 'm-safe'}"></div>
-                    <div>
-                        <div style="color:#fff">${isLocked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (file.title || "ДОКУМЕНТ БЕЗ НАЗВАНИЯ")}</div>
-                        <div style="font-size:0.7em; color:#666;">${file.date || '---'} | ACCESS: L${fLevel}</div>
-                    </div>
-                `;
-                list.appendChild(item);
-            });
+    } catch (e) {
+        console.error("Archive Error:", e);
+        list.innerHTML = `<div style='padding:20px; color:var(--neon-red)'>ОШИБКА СВЯЗИ С ЯДРОМ</div>`;
+    }
+}
 
-        } catch (e) { 
-            console.error("Archive fetch error:", e);
-            list.innerHTML = `<div style='padding:20px; color:var(--neon-red)'>ОШИБКА СВЯЗИ С АРХИВОМ</div>`;
+function renderArchive() {
+    const list = document.getElementById('archive-list');
+    const searchTerm = document.getElementById('archive-search').value.toLowerCase();
+    const sortMethod = document.getElementById('archive-sort').value;
+
+    // 1. ФИЛЬТРАЦИЯ
+    let filtered = archiveData.filter(item => {
+        const titleMatch = (item.title || "").toLowerCase().includes(searchTerm);
+        return titleMatch;
+    });
+
+    // 2. СОРТИРОВКА
+    filtered.sort((a, b) => {
+        if (sortMethod === 'newest') return b.id - a.id;
+        if (sortMethod === 'oldest') return a.id - b.id;
+        if (sortMethod === 'level') return (a.level || 0) - (b.level || 0);
+        if (sortMethod === 'type') {
+            return (a.sort_type || "Z").localeCompare(b.sort_type || "Z");
         }
+        return 0;
+    });
+
+    // 3. ОТРИСОВКА
+    list.innerHTML = "";
+    if (filtered.length === 0) {
+        list.innerHTML = "<div style='padding:20px; color:#666'>НЕТ СОВПАДЕНИЙ В РЕЕСТРЕ</div>";
+        return;
     }
 
+    filtered.forEach(file => {
+        const fLevel = file.level || 0;
+        const isLocked = USER.level < fLevel;
+        const sType = file.sort_type || "LOG";
+        
+        const item = document.createElement('div');
+        item.className = `list-item ${isLocked ? 'locked' : ''}`;
+        item.onclick = () => openArchiveFile(file, item, isLocked);
+
+        item.innerHTML = `
+            <div class="anomaly-marker ${isLocked ? 'm-critical' : 'm-safe'}"></div>
+            <div style="flex-grow: 1">
+                <div style="color:#fff">${isLocked ? '[ДАННЫЕ ЗАБЛОКИРОВАНЫ]' : (file.title || "Untitled")}</div>
+                <div style="font-size:0.75em; color:#555; display:flex; justify-content:space-between; margin-top:5px;">
+                    <span>${file.date || '---'} | L${fLevel}</span>
+                    <span style="color:var(--neon-blue)">[${sType}]</span>
+                </div>
+            </div>
+        `;
+        list.appendChild(item);
+    });
+}
     function openArchiveFile(file, el, isLocked) {
         document.querySelectorAll('#archive-list .list-item').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
@@ -480,4 +529,5 @@
 </script>
 </body>
 </html>
+
 
