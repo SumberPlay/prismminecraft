@@ -250,9 +250,11 @@
             reportsDB.forEach(doc => {
                 const div = document.createElement('div');
                 div.className = `item-card ${selectedReportId === doc.id ? 'active' : ''}`;
-                // Проверь названия колонок: created_at и title
+                
+                // Исправлено: берем дату и имя сотрудника из твоей таблицы
                 const date = doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '??';
-                div.innerHTML = `<span style="color:var(--gold)">[${date}]</span><br>${doc.title || 'REPORT #' + doc.id}`;
+                div.innerHTML = `<span style="color:var(--gold)">[${date}]</span><br>ОТ: ${doc.staff_name || 'СИСТЕМА'}`;
+                
                 div.onclick = () => selectReport(doc);
                 list.appendChild(div);
             });
@@ -419,6 +421,7 @@
 </script>
 </body>
 </html>
+
 
 
 
