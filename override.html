@@ -271,7 +271,7 @@
     function selectReport(doc) {
         selectedReportId = doc.id;
         renderSideList();
-        const details = document.getElementById('report-details');
+        const details = document.getElementById('report-text');
         details.innerHTML = `
             <div style="border-bottom: 1px solid var(--gold-dim); padding-bottom:10px; margin-bottom:20px;">
                 <h3 style="color:var(--gold); margin:0;">${doc.title || 'БЕЗ НАЗВАНИЯ'}</h3>
@@ -419,6 +419,7 @@
 </script>
 </body>
 </html>
+
 
 
 
