@@ -177,7 +177,7 @@
     const RENDER_API = "https://prism-bot.onrender.com";
     let currentTab = 'protocols';
     let staffDB = [];
-    let archiveDB = []; 
+    let reportsDB = []; 
     let selectedUserId = null;
     let selectedReportId = null;
 
@@ -202,7 +202,7 @@
             // Синхронная загрузка обеих баз
             const [resStaff, resArchive] = await Promise.all([
                 fetch(`${RENDER_API}/get-admin-staff`),
-                fetch(`${RENDER_API}/get-archive`)
+                fetch(`${RENDER_API}/get-reports`)
             ]);
             
             staffDB = await resStaff.json();
@@ -248,10 +248,11 @@
             });
         } 
         else if (currentTab === 'reports') {
-            archiveDB.forEach(doc => {
+            reportsDB.forEach(doc => {
                 const div = document.createElement('div');
                 div.className = `item-card ${selectedReportId === doc.id ? 'active' : ''}`;
-                div.innerHTML = `<span style="color:var(--gold)">[${doc.date || '??'}]</span><br>${doc.title || 'UNTITLED'}`;
+                // Если в базе колонка называется не title, а например report_name, замени ниже
+                div.innerHTML = `<span style="color:var(--gold)">[${doc.created_at || '??'}]</span><br>${doc.staff_name || 'REPORT_' + doc.id}`;
                 div.onclick = () => selectReport(doc);
                 list.appendChild(div);
             });
@@ -420,6 +421,7 @@
 </script>
 </body>
 </html>
+
 
 
 
