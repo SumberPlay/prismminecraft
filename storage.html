@@ -242,15 +242,21 @@
     }
 
     async function loadFiles() {
-        const syncLabel = document.getElementById('sync-status');
-        syncLabel.innerText = "SYNCING...";
-        try {
-            const res = await fetch(`${API_URL}/get-archive`);
-            archiveData = await res.json();
-            renderFiles();
-            syncLabel.innerText = "OK " + new Date().toLocaleTimeString();
-        } catch (e) { syncLabel.innerText = "SYNC_ERROR"; }
-    }
+    const syncLabel = document.getElementById('sync-status');
+    const myLvl = sessionStorage.getItem('p_lvl') || 1; // Берем уровень из сессии
+    
+    syncLabel.innerText = "SYNCING...";
+    try {
+        const res = await fetch(`${API_URL}/get-archive`, {
+            headers: {
+                'x-access-level': myLvl // Передаем уровень в заголовке
+            }
+        });
+        archiveData = await res.json();
+        renderFiles();
+        syncLabel.innerText = "OK " + new Date().toLocaleTimeString();
+    } catch (e) { syncLabel.innerText = "SYNC_ERROR"; }
+}
 
     function renderFiles() {
         const list = document.getElementById('file-list');
