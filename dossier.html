@@ -252,7 +252,7 @@
                     <img class="mini-avatar" src="https://minotar.net/avatar/${skinName}/40.png">
                     <div>
                         <div style="font-weight:bold; color:${isLocked ? '#622' : '#00ffcc'}">
-                            ${p.display_name ||p.id}
+                            ${p.display_name || "Данные отсутствуют"}
                         </div>
                         <div style="font-size:0.7em; color:#555;">CLEARANCE: L${pLevel}</div>
                     </div>
@@ -344,6 +344,7 @@
 </script>
 </body>
 </html>
+
 
 
 
