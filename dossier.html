@@ -292,7 +292,7 @@
             document.getElementById('v-level').innerText = `CRITICAL: LEVEL ${p.level} REQUIRED`;
             startDecryptionEffect(bioEl, "Ошибка доступа. Уровня допуска вашего ключа недостаточно для чтения этого файла. Обратитесь к администратору терминала.");
         } else {
-            document.getElementById('v-name').innerText = p.name || p.id;
+            document.getElementById('v-name').innerText = p.display_name || p.id;
             document.getElementById('v-photo').src = `https://minotar.net/armor/bust/${p.mc_name || 'Steve'}/200.png`;
             document.getElementById('v-dept').innerText = p.dept || "NON_AFFILIATED";
             document.getElementById('v-level').innerText = `STATUS: AUTHORIZED (L${p.level})`;
@@ -344,5 +344,6 @@
 </script>
 </body>
 </html>
+
 
 
