@@ -414,17 +414,23 @@ async function loadArchive() {
     list.innerHTML = "<div style='padding:20px; color:#444'>СИНХРОНИЗАЦИЯ С АРХИВОМ...</div>";
     
     try {
-        const res = await fetch(`${RENDER_API}/get-archive`);
+        const res = await fetch(`${RENDER_API}/get-archive`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                // ПЕРЕДАЕМ УРОВЕНЬ ДОПУСКА СЕРВЕРУ
+                'x-access-level': USER.level 
+            }
+        });
+        
         if (!res.ok) throw new Error("API_ERROR");
         
         archiveData = await res.json();
         
-        // Привязываем функции к элементам управления
         document.getElementById('archive-search').oninput = renderArchive;
         document.getElementById('archive-sort').onchange = renderArchive;
 
-        renderArchive(); // Первичный запуск
-
+        renderArchive();
     } catch (e) {
         console.error("Archive Error:", e);
         list.innerHTML = `<div style='padding:20px; color:var(--neon-red)'>ОШИБКА СВЯЗИ С ЯДРОМ</div>`;
@@ -529,5 +535,6 @@ function renderArchive() {
 </script>
 </body>
 </html>
+
 
 
