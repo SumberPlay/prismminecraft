@@ -274,39 +274,29 @@
        ----------------------------------------------------------- */
     async function loadAnomalies() {
         const list = document.getElementById('anomaly-list');
-        list.innerHTML = "<div style='padding:20px; color:#444'>ПОИСК ОБЪЕКТОВ В БД...</div>";
-        
+        list.innerHTML = "<div style='padding:20px; color:#444'>ПОИСК ОБЪЕКТОВ В БД...</div>";                
         try {
-            const res = await fetch(`${RENDER_API}/get-anomalies`);
+            const res = await fetch(`${RENDER_API}/get-anomalies`, {
+                headers: { 'x-access-level': USER.level } // Передаем допуск
+            });
             const db = await res.json();
-            
             list.innerHTML = "";
-            if (!db || db.length === 0) {
-                 list.innerHTML = "<div style='padding:20px; color:#666'>РЕЕСТР ПУСТ</div>";
-                 return;
-            }
-
+            
             db.forEach(a => {
-                const isLocked = USER.level < a.lvl;
+                const isLocked = a.is_restricted; // Теперь сервер сам скажет, заблокировано ли
                 const item = document.createElement('div');
                 item.className = `list-item ${isLocked ? 'locked' : ''}`;
                 item.onclick = () => openAnomaly(a, item, isLocked);
-                
-                // Обработка данных, если в БД поля называются иначе - поправь тут
-                const idVal = a.id || "???";
-                const codeVal = a.code || "UNKNOWN";
-                const classVal = a.class || "neutral";
 
                 item.innerHTML = `
-                    <div class="anomaly-marker m-${isLocked ? 'critical' : classVal}"></div>
+                    <div class="anomaly-marker m-${isLocked ? 'critical' : (a.class || 'safe')}"></div>
                     <div>
-                        <div style="color:#fff">#${idVal} ${isLocked ? 'CLASSIFIED' : codeVal}</div>
-                        <div style="font-size:0.7em">CLASS: ${isLocked ? '???' : classVal.toUpperCase()}</div>
+                        <div style="color:#fff">#${a.id} ${a.code}</div>
+                        <div style="font-size:0.7em">CLASS: ${a.class.toUpperCase()}</div>
                     </div>`;
                 list.appendChild(item);
             });
         } catch (e) {
-            console.error(e);
             list.innerHTML = `<div style='padding:20px; color:var(--neon-red)'>ОШИБКА СВЯЗИ С БД</div>`;
         }
     }
@@ -346,37 +336,32 @@
     async function loadStaff() {
         const list = document.getElementById('staff-list');
         list.innerHTML = "<div style='padding:20px; color:#444'>ЗАГРУЗКА БАЗЫ СУБЪЕКТОВ...</div>";
-
         try {
-            // МЕНЯЕМ ЭНДПОИНТ: теперь тянем данные игроков
-            const res = await fetch(`${RENDER_API}/get-staff`); 
+            const res = await fetch(`${RENDER_API}/get-staff`, {
+                headers: { 'x-access-level': USER.level }
+            }); 
             const db = await res.json();
             list.innerHTML = "";
 
-            if (Array.isArray(db)) {
-                db.forEach(p => {
-                    // Для обычных игроков (субъектов) скрытие обычно не нужно, 
-                    // но оставим проверку, если ты хочешь прятать высокоуровневых игроков
-                    const isHidden = USER.level < (p.level || 0) && p.level > 3; 
-                    const item = document.createElement('div');
-                    item.className = "list-item";
-                    item.onclick = () => openStaff(p, item, isHidden);
-                    
-                    // Используем mc_name или id для скина
-                    const skin = p.mc_name || p.id || 'MHF_Question';
+            db.forEach(p => {
+                const isLocked = p.is_restricted;
+                const item = document.createElement('div');
+                item.className = `list-item ${isLocked ? 'locked' : ''}`;
+                item.onclick = () => openStaff(p, item, isLocked);
+                
+                // Используем mc_name, который сервер прислал (для заблокированных там будет Steve/MHF_Question)
+                const skin = p.mc_name || 'MHF_Question';
 
-                    item.innerHTML = `
-                        <img src="https://minotar.net/helm/${isHidden ? 'MHF_Question' : skin}/32.png" style="width:32px;filter:grayscale(1)">
-                        <div>
-                            <div style="color:#fff">${isHidden ? 'ЗАСЕКРЕЧЕНО' : (p.display_name || p.id)}</div>
-                            <div style="font-size:0.7em">RANK: ${p.rank || 'CITIZEN'} // L${p.level || 1}</div>
-                        </div>`;
-                    list.appendChild(item);
-                });
-            }
+                item.innerHTML = `
+                    <img src="https://minotar.net/helm/${skin}/32.png" style="width:32px;filter:grayscale(1)">
+                    <div>
+                        <div style="color:#fff">${p.display_name || p.name || p.id}</div>
+                        <div style="font-size:0.7em">RANK: ${p.rank || 'CITIZEN'} // L${p.level}</div>
+                    </div>`;
+                list.appendChild(item);
+            });
         } catch(e) {
-            console.error("Staff load error:", e);
-            list.innerHTML = "<div style='padding:20px; color:var(--neon-red)'>ОШИБКА ДОСТУПА К РЕЕСТРУ</div>";
+            list.innerHTML = "<div style='padding:20px; color:var(--neon-red)'>ОШИБКА ДОСТУПА</div>";
         }
     }
 
@@ -535,6 +520,7 @@ function renderArchive() {
 </script>
 </body>
 </html>
+
 
 
 
