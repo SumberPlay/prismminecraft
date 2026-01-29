@@ -203,17 +203,26 @@
 
     // --- ЗАГРУЗКА ДАННЫХ ИЗ PLAYERS ---
     async function loadArchive() {
-        const myLevel = parseInt(sessionStorage.getItem('prism_level'));
+        // 1. Извлекаем уровень допуска текущего пользователя из сессии
+        const myLevel = parseInt(sessionStorage.getItem('prism_level')) || 1;
         if (isNaN(myLevel)) return;
 
-        // Показываем интерфейс после входа
+        // 2. Инициализация интерфейса (скрываем окно входа)
         document.getElementById('auth-overlay').style.display = 'none';
         document.body.classList.add('authorized');
         document.getElementById('user-display').innerText = `OP: ${sessionStorage.getItem('prism_user')} (L${myLevel})`;
 
         try {
-            // Запрашиваем данные (сервер теперь отдает таблицу players по этому адресу)
-            const res = await fetch(`${RENDER_URL}/get-staff`);
+            // 3. ЗАПРОС К СЕРВЕРУ С ПЕРЕДАЧЕЙ УРОВНЯ В HEADERS
+            // Это критически важно, чтобы сервер знал, какие данные "затереть"
+            const res = await fetch(`${RENDER_URL}/get-staff`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-level': myLevel // Сервер прочитает этот заголовок
+                }
+            });
+
             if (!res.ok) throw new Error("Load Error");
             
             STAFF_DATA = await res.json();
@@ -225,30 +234,44 @@
                 return;
             }
 
+            // 4. ОТРИСОВКА СПИСКА
             STAFF_DATA.forEach(p => {
                 const pLevel = parseInt(p.level) || 1;
+                
+                // Проверяем, заблокирован ли объект для текущего пользователя
                 const isLocked = myLevel < pLevel;
+                
                 const item = document.createElement('div');
                 item.className = `list-item ${isLocked ? 'locked' : ''}`;
                 
-                // Скин берем из mc_name, если пусто — Steve
-                const skinName = p.mc_name || "Steve";
+                // Если данные заблокированы, используем дефолтный скин Стива
+                // Если разблокированы — берем mc_name из присланных данных
+                const skinName = isLocked ? "Steve" : (p.mc_name || "Steve");
 
                 item.innerHTML = `
-                    <img class="mini-avatar" src="https://minotar.net/avatar/${isLocked ? 'Steve' : skinName}/40.png">
+                    <img class="mini-avatar" src="https://minotar.net/avatar/${skinName}/40.png">
                     <div>
-                        <div style="font-weight:bold; color:${isLocked ? (isLocked ? '#622' : '#ccc') : '#00ffcc'}">
-                            ${isLocked ? 'CLASSIFIED' : (p.name || p.id)}
+                        <div style="font-weight:bold; color:${isLocked ? '#622' : '#00ffcc'}">
+                            ${p.name || 'UNKNOWN'}
                         </div>
                         <div style="font-size:0.7em; color:#555;">CLEARANCE: L${pLevel}</div>
                     </div>
                 `;
+                
+                // При клике передаем объект и статус блокировки в функцию просмотра
                 item.onclick = (event) => selectStaff(p, isLocked, event);
                 listContainer.appendChild(item);
             });
+
+            console.log(`[SYSTEM] База синхронизирована. Объектов: ${STAFF_DATA.length}`);
+
         } catch (e) { 
              console.error("Dossier Error:", e); 
-             document.getElementById('staff-list').innerText = "ERROR: DATABASE_SYNC_FAILED";
+             document.getElementById('staff-list').innerHTML = `
+                <div style="padding:20px; color:var(--alert);">
+                    ERROR: DATABASE_SYNC_FAILED<br>
+                    <span style="font-size:0.8em; color:#444;">${e.message}</span>
+                </div>`;
         }
     }
 
@@ -321,4 +344,5 @@
 </script>
 </body>
 </html>
+
 
