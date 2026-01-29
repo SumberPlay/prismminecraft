@@ -163,175 +163,183 @@
 
 <script>
     const RENDER_URL = "https://prism-bot.onrender.com";
-    let STAFF_DATA = [];
-    let typeTimer = null;
+let STAFF_DATA = [];
+let typeTimer = null;
 
-    // --- АВТОРИЗАЦИЯ ---
-    async function tryLogin(type) {
-        if (type === 'guest') {
-            sessionStorage.setItem('prism_level', 1);
-            sessionStorage.setItem('prism_user', 'VISITOR_01');
-            location.reload(); 
+// --- АВТОРИЗАЦИЯ ---
+async function tryLogin(type) {
+    if (type === 'guest') {
+        sessionStorage.setItem('prism_level', 1);
+        sessionStorage.setItem('prism_user', 'VISITOR_01');
+        location.reload(); 
+        return;
+    }
+    
+    const id = document.getElementById('uid').value.toUpperCase().trim();
+    const pass = document.getElementById('ups').value;
+
+    if (!id || !pass) return alert("FIELDS_REQUIRED");
+
+    try {
+        const res = await fetch(`${RENDER_URL}/login`, {
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, pass })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            sessionStorage.setItem('prism_level', data.level);
+            sessionStorage.setItem('prism_user', data.name);
+            location.reload();
+        } else { 
+            alert("ACCESS_DENIED: INVALID_ID_OR_KEY"); 
+        }
+    } catch (e) { 
+        console.error(e);
+        alert("SERVER_OFFLINE"); 
+    }
+}
+
+// --- ЗАГРУЗКА ДАННЫХ ---
+async function loadArchive() {
+    const myLevel = parseInt(sessionStorage.getItem('prism_level')) || 1;
+    
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.body.classList.add('authorized');
+    document.getElementById('user-display').innerText = `OP: ${sessionStorage.getItem('prism_user')} (L${myLevel})`;
+
+    try {
+        const res = await fetch(`${RENDER_URL}/get-staff`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-access-level': myLevel
+            }
+        });
+
+        if (!res.ok) throw new Error("Load Error");
+        
+        STAFF_DATA = await res.json();
+        const listContainer = document.getElementById('staff-list');
+        listContainer.innerHTML = ""; 
+
+        if (!STAFF_DATA || STAFF_DATA.length === 0) {
+            listContainer.innerHTML = "<div style='padding:20px; color:#444;'>DATABASE_EMPTY</div>";
             return;
         }
-        
-        const id = document.getElementById('uid').value.toUpperCase().trim();
-        const pass = document.getElementById('ups').value;
 
-        if (!id || !pass) return alert("FIELDS_REQUIRED");
-
-        try {
-            const res = await fetch(`${RENDER_URL}/login`, {
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, pass })
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                sessionStorage.setItem('prism_level', data.level);
-                sessionStorage.setItem('prism_user', data.name);
-                location.reload();
-            } else { 
-                alert("ACCESS_DENIED: INVALID_ID_OR_KEY"); 
-            }
-        } catch (e) { 
-            console.error(e);
-            alert("SERVER_OFFLINE"); 
-        }
-    }
-
-    // --- ЗАГРУЗКА ДАННЫХ ИЗ PLAYERS ---
-    async function loadArchive() {
-        // 1. Извлекаем уровень допуска текущего пользователя из сессии
-        const myLevel = parseInt(sessionStorage.getItem('prism_level')) || 1;
-        if (isNaN(myLevel)) return;
-
-        // 2. Инициализация интерфейса (скрываем окно входа)
-        document.getElementById('auth-overlay').style.display = 'none';
-        document.body.classList.add('authorized');
-        document.getElementById('user-display').innerText = `OP: ${sessionStorage.getItem('prism_user')} (L${myLevel})`;
-
-        try {
-            // 3. ЗАПРОС К СЕРВЕРУ С ПЕРЕДАЧЕЙ УРОВНЯ В HEADERS
-            // Это критически важно, чтобы сервер знал, какие данные "затереть"
-            const res = await fetch(`${RENDER_URL}/get-staff`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-access-level': myLevel // Сервер прочитает этот заголовок
-                }
-            });
-
-            if (!res.ok) throw new Error("Load Error");
+        STAFF_DATA.forEach(p => {
+            const pLevel = parseInt(p.level) || 1;
+            const isLocked = myLevel < pLevel;
             
-            STAFF_DATA = await res.json();
-            const listContainer = document.getElementById('staff-list');
-            listContainer.innerHTML = ""; 
+            const item = document.createElement('div');
+            item.className = `list-item ${isLocked ? 'locked' : ''}`;
+            
+            const nameToShow = isLocked ? "ДАННЫЕ ЗАБЛОКИРОВАНЫ" : (p.display_name || p.name || "UNKNOWN");
+            const skinName = isLocked ? "Steve" : (p.mc_name || "Steve");
 
-            if (!STAFF_DATA || STAFF_DATA.length === 0) {
-                listContainer.innerHTML = "<div style='padding:20px; color:#444;'>DATABASE_EMPTY</div>";
-                return;
-            }
+            item.innerHTML = `
+                <img class="mini-avatar" src="https://minotar.net/avatar/${skinName}/40.png" 
+                     style="${isLocked ? 'filter: grayscale(1) brightness(0.3) sepia(1) hue-rotate(-50deg);' : ''}">
+                <div>
+                    <div style="font-weight:bold; color:${isLocked ? 'var(--alert)' : 'var(--neon)'}">
+                        ${nameToShow}
+                    </div>
+                    <div style="font-size:0.7em; color:#555;">
+                        ${isLocked ? 'ТРЕБУЕТСЯ ДОПУСК: L' + pLevel : 'CLEARANCE: L' + pLevel}
+                    </div>
+                </div>
+            `;
+            
+            item.onclick = (event) => selectStaff(p, isLocked, event);
+            listContainer.appendChild(item);
+        });
 
-            // 4. ОТРИСОВКА СПИСКА
-            STAFF_DATA.forEach(p => {
-    const pLevel = parseInt(p.level) || 1;
-    const isLocked = myLevel < pLevel;
+    } catch (e) { 
+        console.error("Dossier Error:", e);
+        document.getElementById('staff-list').innerHTML = `<div style="padding:20px; color:var(--alert);">SYNC_ERROR</div>`;
+    }
+}
+
+// --- ОТОБРАЖЕНИЕ АНКЕТЫ ---
+function selectStaff(p, isLocked, event) {
+    if (typeTimer) clearInterval(typeTimer);
     
-    const item = document.createElement('div');
-    item.className = `list-item ${isLocked ? 'locked' : ''}`;
+    document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('content-box').style.display = 'block';
     
-    // ОПРЕДЕЛЯЕМ ТЕКСТ ИМЕНИ: если закрыто — пишем заглушку
-    const nameToShow = isLocked ? "ДАННЫЕ ЗАБЛОКИРОВАНЫ" : (p.display_name || p.name || "UNKNOWN");
-    const skinName = isLocked ? "Steve" : (p.mc_name || "Steve");
+    const bioEl = document.getElementById('v-bio');
+    const nameEl = document.getElementById('v-name');
+    const photoEl = document.getElementById('v-photo');
+    const deptEl = document.getElementById('v-dept');
+    const lvlEl = document.getElementById('v-level');
 
-    item.innerHTML = `
-        <img class="mini-avatar" src="https://minotar.net/avatar/${skinName}/40.png" 
-             style="${isLocked ? 'filter: brightness(0.2) sepia(1) hue-rotate(-50deg);' : ''}">
-        <div>
-            <div style="font-weight:bold; color:${isLocked ? 'var(--alert)' : 'var(--neon)'}">
-                ${nameToShow}
-            </div>
-            <div style="font-size:0.7em; color:#555;">
-                ${isLocked ? 'ТРЕБУЕТСЯ ДОПУСК: L' + pLevel : 'CLEARANCE: L' + pLevel}
-            </div>
-        </div>
-    `;
-    
-    item.onclick = (event) => selectStaff(p, isLocked, event);
-    listContainer.appendChild(item);
-});
+    if (isLocked) {
+        nameEl.innerText = "RESTRICTED_DATA";
+        nameEl.style.color = "var(--alert)";
+        photoEl.src = "https://minotar.net/armor/bust/Steve/200.png";
+        photoEl.style.filter = "brightness(0.1) grayscale(1)";
+        deptEl.innerText = "REDACTED";
+        lvlEl.innerText = `CRITICAL: LEVEL ${p.level} REQUIRED`;
+        startDecryptionEffect(bioEl, "Ошибка доступа. Уровня допуска вашего ключа недостаточно для чтения этого файла. Попытка несанкционированного доступа зафиксирована.");
+    } else {
+        nameEl.innerText = p.display_name || p.name || p.id;
+        nameEl.style.color = "var(--neon)";
+        photoEl.src = `https://minotar.net/armor/bust/${p.mc_name || 'Steve'}/200.png`;
+        photoEl.style.filter = "grayscale(0)";
+        deptEl.innerText = p.dept || "NON_AFFILIATED";
+        lvlEl.innerText = `STATUS: AUTHORIZED (L${p.level})`;
+        const biography = p.bio || p.description || "Личные данные отсутствуют.";
+        startDecryptionEffect(bioEl, biography);
+    }
+}
 
-    // --- ОТОБРАЖЕНИЕ АНКЕТЫ ---
-    function selectStaff(p, isLocked, event) {
-        if (typeTimer) clearInterval(typeTimer);
-        document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-
-        document.getElementById('placeholder').style.display = 'none';
-        document.getElementById('content-box').style.display = 'block';
-        const bioEl = document.getElementById('v-bio');
-
-        if (isLocked) {
-            document.getElementById('v-name').innerText = "RESTRICTED_DATA";
-            document.getElementById('v-photo').src = "https://minotar.net/armor/bust/Steve/200.png";
-            document.getElementById('v-dept').innerText = "REDACTED";
-            document.getElementById('v-level').innerText = `CRITICAL: LEVEL ${p.level} REQUIRED`;
-            startDecryptionEffect(bioEl, "Ошибка доступа. Уровня допуска вашего ключа недостаточно для чтения этого файла. Обратитесь к администратору терминала.");
+// --- ЭФФЕКТЫ ---
+function startDecryptionEffect(el, finalText) {
+    el.innerHTML = `<span style="color:var(--neon)">[ DECRYPTING: 0% ]</span>`;
+    let percent = 0;
+    typeTimer = setInterval(() => {
+        percent += Math.floor(Math.random() * 20) + 5;
+        if (percent >= 100) {
+            clearInterval(typeTimer);
+            el.innerText = "";
+            typeEffect(el, finalText);
         } else {
-            document.getElementById('v-name').innerText = p.display_name || p.id;
-            document.getElementById('v-photo').src = `https://minotar.net/armor/bust/${p.mc_name || 'Steve'}/200.png`;
-            document.getElementById('v-dept').innerText = p.dept || "NON_AFFILIATED";
-            document.getElementById('v-level').innerText = `STATUS: AUTHORIZED (L${p.level})`;
-            // Проверяем наличие поля bio или description
-            const biography = p.bio || p.description || "Личные данные отсутствуют или не были занесены в реестр.";
-            startDecryptionEffect(bioEl, biography);
+            el.innerHTML = `<span style="color:var(--neon)">[ DECRYPTING: ${percent}% ]</span>`;
         }
-    }
+    }, 30);
+}
 
-    // --- ЭФФЕКТ ПЕЧАТИ ---
-    function startDecryptionEffect(el, finalText) {
-        el.innerHTML = `<span style="color:var(--neon)">[ DECRYPTING: 0% ]</span>`;
-        let percent = 0;
-        typeTimer = setInterval(() => {
-            percent += Math.floor(Math.random() * 20) + 5;
-            if (percent >= 100) {
-                clearInterval(typeTimer);
-                el.innerText = "";
-                typeEffect(el, finalText);
-            } else {
-                el.innerHTML = `<span style="color:var(--neon)">[ DECRYPTING: ${percent}% ]</span>`;
-            }
-        }, 30);
-    }
-
-    function typeEffect(el, text) {
-        let i = 0;
-        typeTimer = setInterval(() => {
-            el.innerText += text.charAt(i);
-            i++;
-            if (i >= text.length) {
-                clearInterval(typeTimer);
-                typeTimer = null;
-            }
-        }, 15);
-    }
-
-    function logout() { 
-        sessionStorage.clear(); 
-        location.reload(); 
-    }
-
-    // Запуск при загрузке
-    document.addEventListener("DOMContentLoaded", () => {
-        if (sessionStorage.getItem('prism_level')) {
-            loadArchive();
+function typeEffect(el, text) {
+    let i = 0;
+    typeTimer = setInterval(() => {
+        el.innerText += text.charAt(i);
+        i++;
+        if (i >= text.length) {
+            clearInterval(typeTimer);
+            typeTimer = null;
         }
-    });
+    }, 15);
+}
+
+function logout() { 
+    sessionStorage.clear(); 
+    location.reload(); 
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (sessionStorage.getItem('prism_level')) {
+        loadArchive();
+    }
+});
 </script>
 </body>
 </html>
+
 
 
 
