@@ -236,44 +236,32 @@
 
             // 4. ОТРИСОВКА СПИСКА
             STAFF_DATA.forEach(p => {
-                const pLevel = parseInt(p.level) || 1;
-                
-                // Проверяем, заблокирован ли объект для текущего пользователя
-                const isLocked = myLevel < pLevel;
-                
-                const item = document.createElement('div');
-                item.className = `list-item ${isLocked ? 'locked' : ''}`;
-                
-                // Если данные заблокированы, используем дефолтный скин Стива
-                // Если разблокированы — берем mc_name из присланных данных
-                const skinName = isLocked ? "Steve" : (p.mc_name || "Steve");
+    const pLevel = parseInt(p.level) || 1;
+    const isLocked = myLevel < pLevel;
+    
+    const item = document.createElement('div');
+    item.className = `list-item ${isLocked ? 'locked' : ''}`;
+    
+    // ОПРЕДЕЛЯЕМ ТЕКСТ ИМЕНИ: если закрыто — пишем заглушку
+    const nameToShow = isLocked ? "ДАННЫЕ ЗАБЛОКИРОВАНЫ" : (p.display_name || p.name || "UNKNOWN");
+    const skinName = isLocked ? "Steve" : (p.mc_name || "Steve");
 
-                item.innerHTML = `
-                    <img class="mini-avatar" src="https://minotar.net/avatar/${skinName}/40.png">
-                    <div>
-                        <div style="font-weight:bold; color:${isLocked ? '#622' : '#00ffcc'}">
-                            ${p.display_name || "Данные отсутствуют"}
-                        </div>
-                        <div style="font-size:0.7em; color:#555;">CLEARANCE: L${pLevel}</div>
-                    </div>
-                `;
-                
-                // При клике передаем объект и статус блокировки в функцию просмотра
-                item.onclick = (event) => selectStaff(p, isLocked, event);
-                listContainer.appendChild(item);
-            });
-
-            console.log(`[SYSTEM] База синхронизирована. Объектов: ${STAFF_DATA.length}`);
-
-        } catch (e) { 
-             console.error("Dossier Error:", e); 
-             document.getElementById('staff-list').innerHTML = `
-                <div style="padding:20px; color:var(--alert);">
-                    ERROR: DATABASE_SYNC_FAILED<br>
-                    <span style="font-size:0.8em; color:#444;">${e.message}</span>
-                </div>`;
-        }
-    }
+    item.innerHTML = `
+        <img class="mini-avatar" src="https://minotar.net/avatar/${skinName}/40.png" 
+             style="${isLocked ? 'filter: brightness(0.2) sepia(1) hue-rotate(-50deg);' : ''}">
+        <div>
+            <div style="font-weight:bold; color:${isLocked ? 'var(--alert)' : 'var(--neon)'}">
+                ${nameToShow}
+            </div>
+            <div style="font-size:0.7em; color:#555;">
+                ${isLocked ? 'ТРЕБУЕТСЯ ДОПУСК: L' + pLevel : 'CLEARANCE: L' + pLevel}
+            </div>
+        </div>
+    `;
+    
+    item.onclick = (event) => selectStaff(p, isLocked, event);
+    listContainer.appendChild(item);
+});
 
     // --- ОТОБРАЖЕНИЕ АНКЕТЫ ---
     function selectStaff(p, isLocked, event) {
@@ -344,6 +332,7 @@
 </script>
 </body>
 </html>
+
 
 
 
