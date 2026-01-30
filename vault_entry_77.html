@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>P.R.I.S.M. | CLASSIFIED_DOCUMENT</title>
+    <style>
+        body { background: #000; color: #ccc; font-family: 'Courier New', monospace; padding: 50px; line-height: 1.6; }
+        .doc { max-width: 800px; margin: 0 auto; border: 1px solid #222; padding: 40px; position: relative; }
+        .redacted { background: #ccc; color: #ccc; }
+        h1 { color: #00ffcc; border-bottom: 1px solid #00ffcc; padding-bottom: 10px; }
+        .stamp { 
+            position: absolute; top: 40px; right: 40px; 
+            border: 3px solid #ff4444; color: #ff4444; 
+            padding: 10px; transform: rotate(15deg); 
+            font-weight: bold; opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="doc">
+        <div class="stamp">CLASSIFIED</div>
+        <h1>ОТЧЕТ ОБ ИНЦИДЕНТЕ #B-01</h1>
+        <p><strong>ДАТА:</strong> [ДАННЫЕ УДАЛЕНЫ]</p>
+        <p><strong>ОБЪЕКТ:</strong> Межпространственный разлом в секторе <span class="redacted">XXXXX</span>.</p>
+        <hr>
+        <p>В ходе первичного анализа было установлено, что появление PRISM на сервере Blink не было случайным. Наши приборы зафиксировали резонанс, идентичный <span class="redacted">сигналу из Бездны</span>.</p>
+        
+        <p>Высший Совет подтверждает: сожжение Бледного Леса было необходимо для <span class="redacted">стабилизации ядра реальности</span>. Любые слухи о том, что это была ошибка — считать дезинформацией.</p>
+
+        <p style="margin-top: 50px; font-style: italic;">"Они думают, что они свободны, но они просто часть нашего архива."</p>
+        
+        <p style="color: #444; font-size: 0.8em;">-- Конец документа --</p>
+    </div>
+
+    <script>
+        // Защита от прямого захода
+        if (document.referrer === "" || !document.referrer.includes("X7_DATA.html")) {
+            document.body.innerHTML = "<h1 style='color:red; text-align:center;'>ACCESS_DENIED: RE-AUTHENTICATE VIA TERMINAL_X7</h1>";
+            setTimeout(() => { window.location.href = "index.html"; }, 3000);
+        }
+    </script>
+</body>
+</html>
