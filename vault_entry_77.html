@@ -173,14 +173,24 @@
 
         // 3. Ловушка для скачивания
         function downloadEncrypted() {
-            const code = prompt("ВВЕДИТЕ КЛЮЧ ШИФРОВАНИЯ (см. Инцидент #B-01):");
-            if(code === "1402") {
-                alert("Доступ разрешен. Ищите файл 'leak.txt' в корневом каталоге сервера.");
-                // Здесь можно сделать реальное скачивание: window.location.href = 'secret.zip';
-            } else {
-                alert("ОШИБКА: Неверный ключ. Попытка зафиксирована.");
-            }
-        }
+    const code = prompt("ВВЕДИТЕ КЛЮЧ ШИФРОВАНИЯ (Частота из отчета):");
+    if(code === "1402") {
+        // Ставим отметку в памяти браузера
+        localStorage.setItem('prism_access_level', 'C19_AUTHORIZED');
+        
+        alert("ДОСТУП РАЗРЕШЕН. Файл 'SIGNAL_RECOVERY.EXE' загружен.\n\nСистема: Обнаружен протокол настройки частоты в секторе /C19_FILES.html");
+        
+        // Можно реально начать скачивание пустого текстового файла для вида
+        const blob = new Blob(["Ключ к дешифратору: 14.02 Hz"], { type: "text/plain" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "DECRYPT_HINT.txt";
+        link.click();
+    } else {
+        alert("ОШИБКА: Неверный ключ. Попытка взлома заблокирована.");
+    }
+}
     </script>
 </body>
 </html>
+
