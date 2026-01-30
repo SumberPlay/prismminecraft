@@ -162,22 +162,30 @@
 
     function downloadEncrypted() {
         const k = prompt("ВВЕДИТЕ КЛЮЧ ШИФРОВАНИЯ:");
-        // Сверка с зашифрованным значением
         if (k === _0xdata[0]) {
+            // Сохраняем метку доступа
             localStorage.setItem(_0xdata[4], _0xdata[3]);
-            alert("ДОСТУП РАЗРЕШЕН. " + _0xdata[5] + " готов.\nПерейдите в /C19_FILES.html");
+            
+            // Создаем и скачиваем файл-подсказку
             const blob = new Blob(["Ключ: " + _0xdata[2]], { type: "text/plain" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
             a.download = _0xdata[6];
             a.click();
+
+            alert("ДОСТУП РАЗРЕШЕН. Файл " + _0xdata[5] + " загружен. Переход в сектор C-19...");
+            
+            // ВОТ ЭТА СТРОКА ГАРАНТИРУЕТ ПЕРЕХОД:
+            window.location.href = "C19_FILES.html"; 
+            
         } else {
-            alert("ОШИБКА КЛЮЧА.");
+            alert("ОШИБКА: Неверный ключ. Попытка взлома заблокирована.");
         }
     }
 </script>
 </body>
 </html>
+
 
 
 
