@@ -1,43 +1,70 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>P.R.I.S.M. | CLASSIFIED_DOCUMENT</title>
-    <style>
-        body { background: #000; color: #ccc; font-family: 'Courier New', monospace; padding: 50px; line-height: 1.6; }
-        .doc { max-width: 800px; margin: 0 auto; border: 1px solid #222; padding: 40px; position: relative; }
-        .redacted { background: #ccc; color: #ccc; }
-        h1 { color: #00ffcc; border-bottom: 1px solid #00ffcc; padding-bottom: 10px; }
-        .stamp { 
-            position: absolute; top: 40px; right: 40px; 
-            border: 3px solid #ff4444; color: #ff4444; 
-            padding: 10px; transform: rotate(15deg); 
-            font-weight: bold; opacity: 0.5;
-        }
-    </style>
-</head>
-<body>
-    <div class="doc">
-        <div class="stamp">CLASSIFIED</div>
-        <h1>ОТЧЕТ ОБ ИНЦИДЕНТЕ #B-01</h1>
-        <p><strong>ДАТА:</strong> [ДАННЫЕ УДАЛЕНЫ]</p>
-        <p><strong>ОБЪЕКТ:</strong> Межпространственный разлом в секторе <span class="redacted">XXXXX</span>.</p>
-        <hr>
-        <p>В ходе первичного анализа было установлено, что появление PRISM на сервере Blink не было случайным. Наши приборы зафиксировали резонанс, идентичный <span class="redacted">сигналу из Бездны</span>.</p>
-        
-        <p>Высший Совет подтверждает: сожжение Бледного Леса было необходимо для <span class="redacted">стабилизации ядра реальности</span>. Любые слухи о том, что это была ошибка — считать дезинформацией.</p>
+<div class="doc">
+    <div class="stamp">CLASSIFIED</div>
+    <h1>ОТЧЕТ ОБ ИНЦИДЕНТЕ #B-01</h1>
+    <p><strong>ДАТА:</strong> [ДАННЫЕ УДАЛЕНЫ]</p>
+    <p><strong>ОБЪЕКТ:</strong> Межпространственный разлом в секторе <span class="redacted" title="ACCESS_DENIED">██████</span>.</p>
+    
+    <hr style="border: 0; border-top: 1px solid #222; margin: 20px 0;">
+    
+    <p>В ходе первичного анализа было установлено, что появление P.R.I.S.M. на сервере Blink не было случайным. Наши приборы зафиксировали резонанс, идентичный <span class="redacted" title="LEVEL_4_REQUIRED">████████ ██████</span>.</p>
+    
+    <p>Высший Совет подтверждает: сожжение Бледного Леса было необходимо для <span class="redacted" title="DATA_CORRUPTED">█████████████ ████</span>. Любые слухи о том, что это была ошибка — считать дезинформацией.</p>
 
-        <p style="margin-top: 50px; font-style: italic;">"Они думают, что они свободны, но они просто часть нашего архива."</p>
-        
-        <p style="color: #444; font-size: 0.8em;">-- Конец документа --</p>
+    <p style="margin-top: 40px; border-left: 2px solid #00ffcc; padding-left: 15px; color: #888;">
+        Сотрудник-09, не забудь переместить <a href="#" onclick="showError()" style="color: #444; text-decoration: none;">архив частот</a> в хранилище <span style="color: #00ffcc; font-weight: bold;">C-19</span>. Ключ доступа совпадает с частотой колебания (14.02 Гц).
+    </p>
+
+    <div style="margin-top: 30px; background: #0a0a0a; border: 1px solid #1a1a1a; padding: 20px;">
+        <div style="font-size: 0.7em; color: #444; margin-bottom: 10px;">ATTACHED_FILE: SENSOR_LOG_ALPHA.WAV</div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="play-btn" onclick="playStatic()" style="width: 40px; height: 40px; border: 1px solid #00ffcc; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #00ffcc;">▶</div>
+            <div style="flex-grow: 1; height: 2px; background: #1a1a1a; position: relative;">
+                <div id="progress" style="position: absolute; width: 0%; height: 100%; background: #00ffcc;"></div>
+            </div>
+        </div>
     </div>
 
-    <script>
-        // Защита от прямого захода
-        if (document.referrer === "" || !document.referrer.includes("X7_DATA.html")) {
-            document.body.innerHTML = "<h1 style='color:red; text-align:center;'>ACCESS_DENIED: RE-AUTHENTICATE VIA TERMINAL_X7</h1>";
-            setTimeout(() => { window.location.href = "index.html"; }, 3000);
-        }
-    </script>
-</body>
-</html>
+    <p style="margin-top: 50px; font-style: italic; opacity: 0.6;">"Они думают, что они свободны, но они просто часть нашего архива."</p>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
+        <span style="color: #444; font-size: 0.8em;">-- Конец документа --</span>
+        <button onclick="downloadLeak()" style="background: transparent; border: 1px solid #444; color: #444; cursor: pointer; font-family: inherit; font-size: 0.7em;">DOWNLOAD_RECOVERY_TOOL</button>
+    </div>
+</div>
+
+<script>
+    // Защита от прямого захода
+    if (document.referrer === "" || !document.referrer.includes("X7_DATA.html")) {
+        document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:20vh;'>ACCESS_DENIED: RE-AUTHENTICATE VIA TERMINAL_X7</h1>";
+        setTimeout(() => { window.location.href = "index.html"; }, 3000);
+    }
+
+    function showError() {
+        alert("ОШИБКА: Файл перемещен в защищенную директорию /C19_FILES. Требуется локальная авторизация.");
+    }
+
+    function playStatic() {
+        const btn = document.getElementById('play-btn');
+        const prg = document.getElementById('progress');
+        btn.innerText = "■";
+        
+        let width = 0;
+        const interval = setInterval(() => {
+            width += 1;
+            prg.style.width = width + "%";
+            if (width >= 100) {
+                clearInterval(interval);
+                btn.innerText = "▶";
+                prg.style.width = "0%";
+                // Здесь можно пустить звук через Audio API
+                alert("СИГНАЛ ПРЕРВАН: Обнаружены помехи типа 'Морзе'. Проверьте консоль (F12).");
+                console.log("ПОДСКАЗКА: В следующем видео ищите человека в белом халате.");
+            }
+        }, 50);
+    }
+
+    function downloadLeak() {
+        alert("Инициация загрузки... Внимание: файл зашифрован ключом '1402'.");
+        // Здесь можно сделать реальное скачивание: window.location.href = 'leak.zip';
+    }
+</script>
