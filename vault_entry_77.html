@@ -132,67 +132,45 @@
     </div>
 
     <script>
-        // 1. Проверка реферера (чтобы не зашли по прямой ссылке)
-        if (document.referrer === "" || !document.referrer.includes("X7_DATA.html")) {
-            // Если ты тестируешь локально, можешь временно закомментировать строку ниже
-            document.body.innerHTML = "<div style='color:red; text-align:center; margin-top:30vh; font-family:monospace;'><h1>ACCESS_DENIED</h1><p>RE-AUTHENTICATE VIA TERMINAL_X7</p></div>";
-            setTimeout(() => { window.location.href = "index.html"; }, 3000);
-        }
-
-        // 2. Логика аудио-плеера
-        function startPlayback() {
-            const btn = document.getElementById('play-btn');
-            const fill = document.getElementById('progress-fill');
-            const timer = document.getElementById('timer');
-            
-            if(btn.innerText === "■") return; // Уже играет
-            
-            btn.innerText = "■";
-            let progress = 0;
-            
-            const interval = setInterval(() => {
-                progress += 0.5;
-                fill.style.width = progress + "%";
-                
-                // Обновление таймера (имитация)
-                let sec = Math.floor(progress / 10);
-                timer.innerText = "00:" + (sec < 10 ? "0" + sec : sec);
-
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    btn.innerText = "▶";
-                    fill.style.width = "0%";
-                    timer.innerText = "00:00";
-                    
-                    // ФИНАЛЬНАЯ ПОДСКАЗКА ЭТАПА
-                    alert("СИГНАЛ ПРЕРВАН.\nОбнаружены частотные аномалии.\nЧастота стабилизации: [Данные удалены]");
-                    console.log("LOG: Установите Recovery Tool . Код доступа 2347.");
-                }
-            }, 50);
-        }
-
-        // 3. Ловушка для скачивания
-        function downloadEncrypted() {
-    const code = prompt("ВВЕДИТЕ КЛЮЧ ШИФРОВАНИЯ:");
-    if(code === "2347") {
-        // Ставим отметку в памяти браузера
-        localStorage.setItem('prism_access_level', 'C19_AUTHORIZED');
-        
-        alert("ДОСТУП РАЗРЕШЕН. Файл 'SIGNAL_RECOVERY.EXE' загружен.\n\nСистема: Обнаружен протокол настройки частоты в секторе /C19_FILES.html");
-        
-        // Можно реально начать скачивание пустого текстового файла для вида
-        const blob = new Blob(["Ключ к дешифратору: 14.02 Hz"], { type: "text/plain" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "DECRYPT_HINT.txt";
-        link.click();
-    } else {
-        alert("ОШИБКА: Неверный ключ. Попытка взлома заблокирована.");
+    (function(_0x1b2c,_0x4a21){const _0x3e1d=function(_0x2d3a){while(--_0x2d3a){_0x1b2c['push'](_0x1b2c['shift']());}};_0x3e1d(++_0x4a21);}(_0x1177,0x1a4));const _0x524b=function(_0x1b2c,_0x4a21){_0x1b2c=_0x1b2c-0x0;let _0x3e1d=_0x1177[_0x1b2c];return _0x3e1d;};function _0x1177(){const _0x4d3a22=['href','DECRYPT_HINT.txt','click','innerText','innerHTML','X7_DATA.html','C19_AUTHORIZED','SIGNAL_RECOVERY.EXE\x20загружен.\x0a\x0aСистема:\x20Обнаружен\x20протокол\x20настройки\x20частоты\x20в\x20секторе\x20/C19_FILES.html','2347','getElementById','progress-fill','timer','■','00:','createElement','text/plain','prism_access_level','includes','index.html','play-btn','startPlayback','log','LOG:\x20Установите\x20Recovery\x20Tool\x20.\x20Код\x20доступа\x202347.','ВВЕДИТЕ\x20КЛЮЧ\x20ШИФРОВАНИЯ:','setItem'];_0x1177=function(){return _0x4d3a22;};return _0x1177();}
+    
+    // Проверка доступа
+    if(document['referrer']===''||!document['referrer'][_0x524b('0x11')](_0x524b('0x5'))){
+        document['body'][_0x524b('0x4')]='<div\x20style=\x22color:red;text-align:center;margin-top:30vh;font-family:monospace;\x22><h1>ACCESS_DENIED</h1><p>RE-AUTHENTICATE\x20VIA\x20TERMINAL_X7</p></div>';
+        setTimeout(()=>{window['location'][_0x524b('0x0')]=_0x524b('0x12');},0xbb8);
     }
-}
-    </script>
+
+    function startPlayback(){
+        const _0x21a224=document[_0x524b('0x9')](_0x524b('0x13')),_0x442c12=document[_0x524b('0x9')](_0x524b('0xa')),_0x12d334=document[_0x524b('0x9')](_0x524b('0xb'));
+        if(_0x21a224[_0x524b('0x3')]===_0x524b('0xc'))return;
+        _0x21a224[_0x524b('0x3')]=_0x524b('0xc');let _0x553d22=0x0;
+        const _0x31a221=setInterval(()=>{
+            _0x553d22+=0.5;_0x442c12['style']['width']=_0x553d22+'%';
+            let _0x4d1121=Math['floor'](_0x553d22/0xa);
+            _0x12d334[_0x524b('0x3')]=_0x524b('0xd')+(_0x4d1121<0xa?'0'+_0x4d1121:_0x4d1121);
+            if(_0x553d22>=0x64){
+                clearInterval(_0x31a221);_0x21a224[_0x524b('0x3')]='▶';_0x442c12['style']['width']='0%';_0x12d334[_0x524b('0x3')]='00:00';
+                alert('СИГНАЛ\x20ПРЕРВАН.\x0aОбнаружены\x20частотные\x20аномалии.\x0aЧастота\x20стабилизации:\x20[Данные\x20удалены]');
+                console[_0x524b('0x15')](_0x524b('0x16'));
+            }
+        },0x32);
+    }
+
+    function downloadEncrypted(){
+        const _0x5d2112=prompt(_0x524b('0x17'));
+        if(_0x5d2112===_0x524b('0x8')){
+            localStorage[_0x524b('0x18')](_0x524b('0x10'),_0x524b('0x6'));
+            alert('ДОСТУП\x20РАЗРЕШЕН.\x20Файл\x20'+_0x524b('0x7'));
+            const _0x41a223=new Blob(['Ключ\x20к\x20дешифратору:\x2014.02\x20Hz'],{'type':_0x524b('0xf')}),_0x2d1a21=document[_0x524b('0xe')]('a');
+            _0x2d1a21[_0x524b('0x0')]=URL['createObjectURL'](_0x41a223);_0x2d1a21['download']=_0x524b('0x1');_0x2d1a21[_0x524b('0x2')]();
+        }else{
+            alert('ОШИБКА:\x20Неверный\x20ключ.\x20Попытка\x20взлома\x20заблокирована.');
+        }
+    }
+</script>
 </body>
 </html>
+
 
 
 
