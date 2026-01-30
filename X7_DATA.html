@@ -111,71 +111,51 @@
 
     <script>
         (function(){
+  
+    const _D = "VEhFX0NPVU5DSUxfTElFUw=="; 
+    
+    const inputField = document.getElementById('ui');
+    const statusLabel = document.getElementById('st');
 
-            const _T = "60e9177b077a16f6b5b4873c39379895c643b2f28b746a51d4e135117498305d";
+    inputField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+         
+            const val = inputField.value.trim().toUpperCase();
             
-            async function _GET_HASH(str) {
-                const msgUint8 = new TextEncoder().encode(str.toUpperCase().trim());
+            if (!val) return;
+
+            statusLabel.innerText = "VERIFYING_IDENTITY...";
+            statusLabel.style.color = "#3a5a5a";
+
+ 
+            if (btoa(val) === _D) {
+                statusLabel.innerHTML = "<span class='blink' style='color:white'>DECRYPTION_SUCCESS. ACCESS_GRANTED.</span>";
+                inputField.disabled = true;
                 
-
-                if (!crypto.subtle) {
-                    alert("Критическая ошибка: Браузер блокирует шифрование. Используйте HTTPS или Localhost.");
-                    return null;
-                }
-
-                const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            }
-
-            const inputField = document.getElementById('ui');
-            const statusLabel = document.getElementById('st');
-
-            inputField.addEventListener('keypress', async (e) => {
-                if (e.key === 'Enter') {
-                    const rawValue = inputField.value;
-                    
-                    if (!rawValue.trim()) return;
-
-                    statusLabel.innerText = "COMPUTING_HASH...";
-                    statusLabel.style.color = "#3a5a5a";
-
-                    const hashedValue = await _GET_HASH(rawValue);
-
-                    if (hashedValue === _T) {
-                        statusLabel.innerHTML = "<span class='blink' style='color:white'>DECRYPTION_SUCCESS. ACCESS_GRANTED.</span>";
-                        inputField.disabled = true;
-                        
-               
-                        setTimeout(() => { 
-                            window.location.href = atob("dmF1bHRfZW50cnlfNzcuaHRtbA=="); 
-                        }, 2000);
-                    } else {
-                        statusLabel.innerText = "INVALID_CREDENTIALS. ATTEMPT_LOGGED.";
-                        statusLabel.style.color = "var(--alert)";
-                        inputField.value = "";
-                        
-                        
-                        inputField.style.borderColor = "var(--alert)";
-                        setTimeout(() => { inputField.style.borderColor = "#1a3a3a"; }, 500);
-                    }
-                }
-            });
-
         
-            document.onkeydown = function(e) {
-                if(e.keyCode == 123 || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 73 || e.keyCode == 74))) {
-                    statusLabel.innerText = "SECURITY_BREACH_DETECTED.";
-                    return false;
-                }
-            };
+                setTimeout(() => { 
+                    window.location.href = atob("dmF1bHRfZW50cnlfNzcuaHRtbA=="); 
+                }, 1500);
+            } else {
+                statusLabel.innerText = "INVALID_CREDENTIALS. ATTEMPT_LOGGED.";
+                statusLabel.style.color = "var(--alert)";
+                inputField.value = "";
+                
+     
+                inputField.style.borderBottomColor = "var(--alert)";
+                setTimeout(() => { inputField.style.borderBottomColor = "#1a3a3a"; }, 500);
+            }
+        }
+    });
 
-            // Защита: мешаем работе отладчика
-            setInterval(function() {
-                (function() { return false; })['constructor']('debugger')['call']();
-            }, 50);
 
-        })();
+    document.onkeydown = function(e) {
+        if(e.keyCode == 123 || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 73 || e.keyCode == 74))) {
+            return false;
+        }
+    };
+})();
     </script>
 </body>
 </html>
+
