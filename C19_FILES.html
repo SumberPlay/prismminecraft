@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>P.R.I.S.M. | FREQUENCY_TUNER</title>
+    <style>
+        body {
+            background: #050505;
+            color: #00ffcc;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #display {
+            font-size: 2.5em;
+            margin: 40px;
+            height: 1.5em;
+            text-shadow: 0 0 10px #00ffcc;
+            transition: 0.1s;
+        }
+
+        .controls {
+            background: #0a0a0a;
+            padding: 30px;
+            border: 1px solid #1a1a1a;
+            text-align: center;
+        }
+
+        input[type=range] {
+            width: 400px;
+            cursor: crosshair;
+            accent-color: #00ffcc;
+        }
+
+        #freq-val {
+            font-size: 1.5em;
+            margin-top: 15px;
+            color: #444;
+        }
+
+        .hint { font-size: 0.7em; color: #222; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div style="font-size: 0.8em; letter-spacing: 3px; color: #1a1a1a;">SIGNAL_DECRYPTION_MODULE</div>
+    
+    <div id="display">SEARCHING_SIGNAL...</div>
+    
+    <div class="controls">
+        <input type="range" id="tuner" min="13.00" max="15.00" step="0.01" value="13.00">
+        <div id="freq-val">13.00 Hz</div>
+    </div>
+
+    <div class="hint">ВНИМАНИЕ: ТОЧНОСТЬ НАСТРОЙКИ +/- 0.01 Hz</div>
+
+    <script>
+        // ПРОВЕРКА: Если игрок не скачал файл, ему тут делать нечего
+        if (localStorage.getItem('prism_access_level') !== 'C19_AUTHORIZED') {
+            document.body.innerHTML = "<h1 style='color:red'>ACCESS_ERROR: SIGNAL_RECOVERY.EXE NOT FOUND</h1>";
+            setTimeout(() => { window.location.href = "vault_entry_77.html"; }, 3000);
+        }
+
+        const tuner = document.getElementById('tuner');
+        const display = document.getElementById('display');
+        const freqVal = document.getElementById('freq-val');
+
+        tuner.oninput = function() {
+            const val = parseFloat(this.value);
+            freqVal.innerText = val.toFixed(2) + " Hz";
+            
+            // Проверяем близость к 14.02
+            const diff = Math.abs(val - 14.02);
+            
+            if (diff < 0.015) { // Идеальное попадание
+                display.innerText = "COORD: -1402 / 64 / 3392";
+                display.style.color = "#fff";
+                display.style.filter = "blur(0px)";
+                freqVal.style.color = "#00ffcc";
+            } else if (diff < 0.3) { // Близко (начинает проявляться)
+                display.innerText = (Math.random() + 1).toString(36).substring(7).toUpperCase();
+                display.style.filter = `blur(${diff * 10}px)`;
+                display.style.color = "#00ffcc";
+                freqVal.style.color = "#3a5a5a";
+            } else { // Далеко (белый шум)
+                display.innerText = "--- SYSTEM_STATIC ---";
+                display.style.filter = "blur(15px)";
+                display.style.color = "#111";
+            }
+        };
+    </script>
+</body>
+</html>
