@@ -161,30 +161,28 @@
     }
 
     function downloadEncrypted() {
-        const k = prompt("ВВЕДИТЕ КЛЮЧ ШИФРОВАНИЯ:");
-        if (k === _0xdata[0]) {
-            // Сохраняем метку доступа
-            localStorage.setItem(_0xdata[4], _0xdata[3]);
-            
-            // Создаем и скачиваем файл-подсказку
-            const blob = new Blob(["Ключ: " + _0xdata[2]], { type: "text/plain" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = _0xdata[6];
-            a.click();
+    const k = prompt("ВВЕДИТЕ КЛЮЧ ШИФРОВАНИЯ:");
+    if (k === _0xdata[0]) {
+        // Устанавливаем четкие значения, которые поймет следующая страница
+        localStorage.setItem('prism_access_level', 'C19_AUTHORIZED');
+        
+        alert("ДОСТУП РАЗРЕШЕН. Перенаправление...");
+        
+        const blob = new Blob(["Ключ к дешифратору: 14.02 Hz"], {type: 'text/plain'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'DECRYPT_HINT.txt';
+        a.click();
 
-            alert("ДОСТУП РАЗРЕШЕН. Файл " + _0xdata[5] + " загружен. Переход в сектор C-19...");
-            
-            // ВОТ ЭТА СТРОКА ГАРАНТИРУЕТ ПЕРЕХОД:
-            window.location.href = "C19_FILES.html"; 
-            
-        } else {
-            alert("ОШИБКА: Неверный ключ. Попытка взлома заблокирована.");
-        }
+        window.location.href = "C19_FILES.html";
+    } else {
+        alert("ОШИБКА: Неверный ключ.");
     }
+}
 </script>
 </body>
 </html>
+
 
 
 
