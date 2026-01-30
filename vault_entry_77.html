@@ -132,44 +132,53 @@
     </div>
 
     <script>
-    (function(_0x1b2c,_0x4a21){const _0x3e1d=function(_0x2d3a){while(--_0x2d3a){_0x1b2c['push'](_0x1b2c['shift']());}};_0x3e1d(++_0x4a21);}(_0x1177,0x1a4));const _0x524b=function(_0x1b2c,_0x4a21){_0x1b2c=_0x1b2c-0x0;let _0x3e1d=_0x1177[_0x1b2c];return _0x3e1d;};function _0x1177(){const _0x4d3a22=['href','DECRYPT_HINT.txt','click','innerText','innerHTML','X7_DATA.html','C19_AUTHORIZED','SIGNAL_RECOVERY.EXE\x20загружен.\x0a\x0aСистема:\x20Обнаружен\x20протокол\x20настройки\x20частоты\x20в\x20секторе\x20/C19_FILES.html','2347','getElementById','progress-fill','timer','■','00:','createElement','text/plain','prism_access_level','includes','index.html','play-btn','startPlayback','log','LOG:\x20Установите\x20Recovery\x20Tool\x20.\x20Код\x20доступа\x202347.','ВВЕДИТЕ\x20КЛЮЧ\x20ШИФРОВАНИЯ:','setItem'];_0x1177=function(){return _0x4d3a22;};return _0x1177();}
-    
-    // Проверка доступа
-    if(document['referrer']===''||!document['referrer'][_0x524b('0x11')](_0x524b('0x5'))){
-        document['body'][_0x524b('0x4')]='<div\x20style=\x22color:red;text-align:center;margin-top:30vh;font-family:monospace;\x22><h1>ACCESS_DENIED</h1><p>RE-AUTHENTICATE\x20VIA\x20TERMINAL_X7</p></div>';
-        setTimeout(()=>{window['location'][_0x524b('0x0')]=_0x524b('0x12');},0xbb8);
-    }
+    /* PRISM_ENCRYPTED_CORE_V3 */
+    const _0x07f = "MjM0Nyw0NjU0LDE0LjAyIEh6LENTOV9BVVRIT1JJWkVELHByaXNtX2FjY2Vzc19sZXZlbCxTSUdOQUxfUkVDT1ZFUlkuRVhFLERFQ1JZUFRfSElOVC50eHQ=;X7_DATA.html;index.html";
+    const _0xpr = _0x07f.split(';');
+    const _0xdata = atob(_0xpr[0]).split(',');
 
-    function startPlayback(){
-        const _0x21a224=document[_0x524b('0x9')](_0x524b('0x13')),_0x442c12=document[_0x524b('0x9')](_0x524b('0xa')),_0x12d334=document[_0x524b('0x9')](_0x524b('0xb'));
-        if(_0x21a224[_0x524b('0x3')]===_0x524b('0xc'))return;
-        _0x21a224[_0x524b('0x3')]=_0x524b('0xc');let _0x553d22=0x0;
-        const _0x31a221=setInterval(()=>{
-            _0x553d22+=0.5;_0x442c12['style']['width']=_0x553d22+'%';
-            let _0x4d1121=Math['floor'](_0x553d22/0xa);
-            _0x12d334[_0x524b('0x3')]=_0x524b('0xd')+(_0x4d1121<0xa?'0'+_0x4d1121:_0x4d1121);
-            if(_0x553d22>=0x64){
-                clearInterval(_0x31a221);_0x21a224[_0x524b('0x3')]='▶';_0x442c12['style']['width']='0%';_0x12d334[_0x524b('0x3')]='00:00';
-                alert('СИГНАЛ\x20ПРЕРВАН.\x0aОбнаружены\x20частотные\x20аномалии.\x0aЧастота\x20стабилизации:\x20[Данные\x20удалены]');
-                console[_0x524b('0x15')](_0x524b('0x16'));
+    (function() {
+        if (!document.referrer.includes(_0xpr[1]) && document.referrer !== "") {
+            document.body.innerHTML = "<div style='color:red;text-align:center;margin-top:30vh;font-family:monospace;'><h1>ACCESS_DENIED</h1></div>";
+            setTimeout(() => { window.location.href = _0xpr[2]; }, 2000);
+        }
+    })();
+
+    function startPlayback() {
+        const b = document.getElementById('play-btn'), f = document.getElementById('progress-fill'), t = document.getElementById('timer');
+        if (b.innerText === "■") return;
+        b.innerText = "■"; let p = 0;
+        const iv = setInterval(() => {
+            p += 0.5; f.style.width = p + "%";
+            let s = Math.floor(p / 10);
+            t.innerText = "00:" + (s < 10 ? "0" + s : s);
+            if (p >= 100) {
+                clearInterval(iv); b.innerText = "▶"; f.style.width = "0%"; t.innerText = "00:00";
+                alert("СИГНАЛ ПРЕРВАН.\nЧастота стабилизации: [ДАННЫЕ УДАЛЕНЫ]");
+                console.log("%cLOG: Установите Recovery Tool. Код доступа: " + _0xdata[0], "color:#00ffcc;font-weight:bold;");
             }
-        },0x32);
+        }, 50);
     }
 
-    function downloadEncrypted(){
-        const _0x5d2112=prompt(_0x524b('0x17'));
-        if(_0x5d2112===_0x524b('0x8')){
-            localStorage[_0x524b('0x18')](_0x524b('0x10'),_0x524b('0x6'));
-            alert('ДОСТУП\x20РАЗРЕШЕН.\x20Файл\x20'+_0x524b('0x7'));
-            const _0x41a223=new Blob(['Ключ\x20к\x20дешифратору:\x2014.02\x20Hz'],{'type':_0x524b('0xf')}),_0x2d1a21=document[_0x524b('0xe')]('a');
-            _0x2d1a21[_0x524b('0x0')]=URL['createObjectURL'](_0x41a223);_0x2d1a21['download']=_0x524b('0x1');_0x2d1a21[_0x524b('0x2')]();
-        }else{
-            alert('ОШИБКА:\x20Неверный\x20ключ.\x20Попытка\x20взлома\x20заблокирована.');
+    function downloadEncrypted() {
+        const k = prompt("ВВЕДИТЕ КЛЮЧ ШИФРОВАНИЯ:");
+        // Сверка с зашифрованным значением
+        if (k === _0xdata[0]) {
+            localStorage.setItem(_0xdata[4], _0xdata[3]);
+            alert("ДОСТУП РАЗРЕШЕН. " + _0xdata[5] + " готов.\nПерейдите в /C19_FILES.html");
+            const blob = new Blob(["Ключ: " + _0xdata[2]], { type: "text/plain" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = _0xdata[6];
+            a.click();
+        } else {
+            alert("ОШИБКА КЛЮЧА.");
         }
     }
 </script>
 </body>
 </html>
+
 
 
 
