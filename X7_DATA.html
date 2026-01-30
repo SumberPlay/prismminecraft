@@ -22,15 +22,17 @@
             margin: 0;
             overflow: hidden;
             user-select: none;
+            -webkit-user-select: none;
         }
 
-        /* Эффект шума на фоне */
+        /* Эффект шума */
         body::before {
             content: "";
             position: absolute; inset: 0;
             background: url('https://grainy-gradients.vercel.app/noise.svg');
             opacity: 0.05;
             pointer-events: none;
+            z-index: 1;
         }
 
         .logo-container {
@@ -46,11 +48,6 @@
             transition: 0.5s ease;
         }
 
-        .logo-container:hover img {
-            filter: drop-shadow(0 0 20px var(--neon)) contrast(1.2);
-            transform: scale(1.02);
-        }
-
         .terminal-box {
             width: 450px;
             background: rgba(0, 15, 15, 0.95);
@@ -58,6 +55,7 @@
             padding: 30px;
             position: relative;
             box-shadow: 0 0 50px rgba(0,0,0,1);
+            z-index: 10;
         }
 
         .terminal-box::before {
@@ -82,7 +80,10 @@
             transition: 0.3s;
         }
 
-        input:focus { border-color: var(--neon); background: rgba(0, 255, 204, 0.07); }
+        input:focus { 
+            border-color: var(--neon); 
+            background: rgba(0, 255, 204, 0.07); 
+        }
 
         .status-msg {
             margin-top: 20px;
@@ -90,6 +91,7 @@
             text-align: center;
             height: 1.2em;
             color: #3a5a5a;
+            letter-spacing: 1px;
         }
 
         .blink { animation: blinker 1s linear infinite; }
@@ -99,60 +101,81 @@
 <body oncontextmenu="return false;">
 
     <div class="logo-container">
-        <img src="prism_logo.png" alt="PRISM_ENCRYPTED_DATA">
+        <img src="prism_logo.png" alt="PRISM_DATA_ASSET">
     </div>
 
     <div class="terminal-box">
-        <input type="password" id="ui" placeholder="********" autocomplete="off">
+        <input type="password" id="ui" placeholder="********" autocomplete="off" autofocus>
         <div class="status-msg" id="st">READY_FOR_HANDSHAKE_</div>
     </div>
 
     <script>
-        (function(_0xP){
-            // Хеш фразы THE_COUNCIL_LIES
-            const _target = "60e9177b077a16f6b5b4873c39379895c643b2f28b746a51d4e135117498305d";
+        (function(){
+
+            const _T = "60e9177b077a16f6b5b4873c39379895c643b2f28b746a51d4e135117498305d";
             
-            async function _h(s) {
-                const enc = new TextEncoder();
-                const d = enc.encode(s.toUpperCase().trim());
-                const b = await crypto.subtle.digest('SHA-256', d);
-                return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
+            async function _GET_HASH(str) {
+                const msgUint8 = new TextEncoder().encode(str.toUpperCase().trim());
+                
+
+                if (!crypto.subtle) {
+                    alert("Критическая ошибка: Браузер блокирует шифрование. Используйте HTTPS или Localhost.");
+                    return null;
+                }
+
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
             }
 
-            document.getElementById('ui').addEventListener('keypress', async (e) => {
+            const inputField = document.getElementById('ui');
+            const statusLabel = document.getElementById('st');
+
+            inputField.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter') {
-                    const val = e.target.value;
-                    const res = await _h(val);
-                    const st = document.getElementById('st');
+                    const rawValue = inputField.value;
+                    
+                    if (!rawValue.trim()) return;
 
-                    // "Ложный" ключ для проверки на читерство
-                    if(val.toUpperCase() === "ADMIN_123") {
-                        st.innerText = "CHETER_DETECTED. DISCONNECTING...";
-                        st.style.color = "var(--alert)";
-                        return;
-                    }
+                    statusLabel.innerText = "COMPUTING_HASH...";
+                    statusLabel.style.color = "#3a5a5a";
 
-                    if (res === _target) {
-                        st.innerHTML = "<span class='blink' style='color:white'>DECRYPTION_SUCCESS. WELCOME, MEMBER.</span>";
-                        // vault_entry_77.html в кодировке Base64
+                    const hashedValue = await _GET_HASH(rawValue);
+
+                    if (hashedValue === _T) {
+                        statusLabel.innerHTML = "<span class='blink' style='color:white'>DECRYPTION_SUCCESS. ACCESS_GRANTED.</span>";
+                        inputField.disabled = true;
+                        
+               
                         setTimeout(() => { 
                             window.location.href = atob("dmF1bHRfZW50cnlfNzcuaHRtbA=="); 
                         }, 2000);
                     } else {
-                        st.innerText = "INVALID_CREDENTIALS. ATTEMPT_LOGGED.";
-                        st.style.color = "var(--alert)";
-                        e.target.value = "";
+                        statusLabel.innerText = "INVALID_CREDENTIALS. ATTEMPT_LOGGED.";
+                        statusLabel.style.color = "var(--alert)";
+                        inputField.value = "";
+                        
+                        
+                        inputField.style.borderColor = "var(--alert)";
+                        setTimeout(() => { inputField.style.borderColor = "#1a3a3a"; }, 500);
                     }
                 }
             });
 
-            // Защита от F12 и отладчика
-            setInterval(function() { (function() { return false; })['constructor']('debugger')['call'](); }, 50);
-            
+        
             document.onkeydown = function(e) {
-                if(e.keyCode == 123 || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 73 || e.keyCode == 74))) return false;
+                if(e.keyCode == 123 || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 73 || e.keyCode == 74))) {
+                    statusLabel.innerText = "SECURITY_BREACH_DETECTED.";
+                    return false;
+                }
             };
-        })(window);
+
+            // Защита: мешаем работе отладчика
+            setInterval(function() {
+                (function() { return false; })['constructor']('debugger')['call']();
+            }, 50);
+
+        })();
     </script>
 </body>
 </html>
