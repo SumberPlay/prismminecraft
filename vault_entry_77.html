@@ -1,70 +1,186 @@
-<div class="doc">
-    <div class="stamp">CLASSIFIED</div>
-    <h1>ОТЧЕТ ОБ ИНЦИДЕНТЕ #B-01</h1>
-    <p><strong>ДАТА:</strong> [ДАННЫЕ УДАЛЕНЫ]</p>
-    <p><strong>ОБЪЕКТ:</strong> Межпространственный разлом в секторе <span class="redacted" title="ACCESS_DENIED">██████</span>.</p>
-    
-    <hr style="border: 0; border-top: 1px solid #222; margin: 20px 0;">
-    
-    <p>В ходе первичного анализа было установлено, что появление P.R.I.S.M. на сервере Blink не было случайным. Наши приборы зафиксировали резонанс, идентичный <span class="redacted" title="LEVEL_4_REQUIRED">████████ ██████</span>.</p>
-    
-    <p>Высший Совет подтверждает: сожжение Бледного Леса было необходимо для <span class="redacted" title="DATA_CORRUPTED">█████████████ ████</span>. Любые слухи о том, что это была ошибка — считать дезинформацией.</p>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>P.R.I.S.M. | CLASSIFIED_DOCUMENT</title>
+    <style>
+        :root {
+            --neon: #00ffcc;
+            --alert: #ff4444;
+            --bg: #000;
+        }
 
-    <p style="margin-top: 40px; border-left: 2px solid #00ffcc; padding-left: 15px; color: #888;">
-        Сотрудник-09, не забудь переместить <a href="#" onclick="showError()" style="color: #444; text-decoration: none;">архив частот</a> в хранилище <span style="color: #00ffcc; font-weight: bold;">C-19</span>. Ключ доступа совпадает с частотой колебания (14.02 Гц).
-    </p>
+        body { 
+            background: var(--bg); 
+            color: #ccc; 
+            font-family: 'Courier New', monospace; 
+            padding: 50px; 
+            line-height: 1.6; 
+            user-select: none;
+        }
 
-    <div style="margin-top: 30px; background: #0a0a0a; border: 1px solid #1a1a1a; padding: 20px;">
-        <div style="font-size: 0.7em; color: #444; margin-bottom: 10px;">ATTACHED_FILE: SENSOR_LOG_ALPHA.WAV</div>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <div id="play-btn" onclick="playStatic()" style="width: 40px; height: 40px; border: 1px solid #00ffcc; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #00ffcc;">▶</div>
-            <div style="flex-grow: 1; height: 2px; background: #1a1a1a; position: relative;">
-                <div id="progress" style="position: absolute; width: 0%; height: 100%; background: #00ffcc;"></div>
+        .doc { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            border: 1px solid #222; 
+            padding: 40px; 
+            position: relative; 
+            background: linear-gradient(180deg, #050505 0%, #000 100%);
+            box-shadow: 0 0 40px rgba(0,0,0,1);
+        }
+
+        .redacted { 
+            background: #333; 
+            color: #333; 
+            cursor: help;
+            transition: 0.3s;
+            padding: 0 5px;
+        }
+
+        .redacted:hover { background: #444; }
+
+        h1 { 
+            color: var(--neon); 
+            border-bottom: 1px solid var(--neon); 
+            padding-bottom: 10px; 
+            font-size: 1.5em;
+        }
+
+        .stamp { 
+            position: absolute; top: 40px; right: 40px; 
+            border: 3px solid var(--alert); color: var(--alert); 
+            padding: 10px; transform: rotate(15deg); 
+            font-weight: bold; opacity: 0.5;
+            letter-spacing: 2px;
+        }
+
+        .audio-module {
+            margin-top: 30px;
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            padding: 20px;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 2px;
+            background: #1a1a1a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            position: absolute;
+            width: 0%;
+            height: 100%;
+            background: var(--neon);
+            box-shadow: 0 0 10px var(--neon);
+        }
+
+        .btn-small {
+            background: transparent;
+            border: 1px solid #444;
+            color: #444;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.7em;
+            padding: 5px 10px;
+            transition: 0.3s;
+        }
+
+        .btn-small:hover { border-color: var(--neon); color: var(--neon); }
+
+        hr { border: 0; border-top: 1px solid #222; margin: 25px 0; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div class="doc">
+        <div class="stamp">CLASSIFIED</div>
+        <h1>ОТЧЕТ ОБ ИНЦИДЕНТЕ #B-01 [PROJECT_BREACH]</h1>
+        
+        <p><strong>ДАТА:</strong> [ДАННЫЕ ИЗЪЯТЫ ПО ПРИКАЗУ СОВЕТА]</p>
+        <p><strong>ОБЪЕКТ:</strong> Межпространственный разлом в секторе <span class="redacted" title="ACCESS_DENIED">██████</span>.</p>
+        
+        <hr>
+        
+        <p>В ходе первичного анализа было установлено, что появление <strong>P.R.I.S.M.</strong> на сервере Blink не было случайным. Наши приборы зафиксировали резонанс, идентичный <span class="redacted" title="LEVEL_4_REQUIRED">████████ ██████</span>. Это подтверждает теорию о циклическом пробуждении Разлома.</p>
+        
+        <p>Высший Совет подтверждает: сожжение Бледного Леса было необходимо для <span class="redacted" title="CRITICAL_FAILURE">█████████████ ████</span>. Любые слухи о том, что это была ошибка — считать дезинфикацией. Свидетели должны быть перенаправлены в зону <span style="color: var(--neon); font-weight: bold;">C-19</span>.</p>
+
+        <div class="audio-module">
+            <div style="font-size: 0.7em; color: #444; margin-bottom: 10px; display: flex; justify-content: space-between;">
+                <span>ATTACHED_FILE: SENSOR_LOG_ALPHA.WAV</span>
+                <span id="timer">00:00</span>
             </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div id="play-btn" onclick="startPlayback()" style="width: 40px; height: 40px; border: 1px solid var(--neon); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--neon); font-size: 0.8em;">▶</div>
+                <div class="progress-bar">
+                    <div id="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <p style="margin-top: 40px; font-style: italic; opacity: 0.6; font-size: 0.9em;">
+            "Они думают, что они свободны, но они просто часть нашего архива."
+        </p>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 1px solid #111; padding-top: 20px;">
+            <span style="color: #333; font-size: 0.7em;">ID_ORIGIN: PRISM_MAIN_FRAME</span>
+            <button onclick="downloadEncrypted()" class="btn-small">DOWNLOAD_RECOVERY_TOOL</button>
         </div>
     </div>
 
-    <p style="margin-top: 50px; font-style: italic; opacity: 0.6;">"Они думают, что они свободны, но они просто часть нашего архива."</p>
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
-        <span style="color: #444; font-size: 0.8em;">-- Конец документа --</span>
-        <button onclick="downloadLeak()" style="background: transparent; border: 1px solid #444; color: #444; cursor: pointer; font-family: inherit; font-size: 0.7em;">DOWNLOAD_RECOVERY_TOOL</button>
-    </div>
-</div>
+    <script>
+        // 1. Проверка реферера (чтобы не зашли по прямой ссылке)
+        if (document.referrer === "" || !document.referrer.includes("X7_DATA.html")) {
+            // Если ты тестируешь локально, можешь временно закомментировать строку ниже
+            document.body.innerHTML = "<div style='color:red; text-align:center; margin-top:30vh; font-family:monospace;'><h1>ACCESS_DENIED</h1><p>RE-AUTHENTICATE VIA TERMINAL_X7</p></div>";
+            setTimeout(() => { window.location.href = "index.html"; }, 3000);
+        }
 
-<script>
-    // Защита от прямого захода
-    if (document.referrer === "" || !document.referrer.includes("X7_DATA.html")) {
-        document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:20vh;'>ACCESS_DENIED: RE-AUTHENTICATE VIA TERMINAL_X7</h1>";
-        setTimeout(() => { window.location.href = "index.html"; }, 3000);
-    }
+        // 2. Логика аудио-плеера
+        function startPlayback() {
+            const btn = document.getElementById('play-btn');
+            const fill = document.getElementById('progress-fill');
+            const timer = document.getElementById('timer');
+            
+            if(btn.innerText === "■") return; // Уже играет
+            
+            btn.innerText = "■";
+            let progress = 0;
+            
+            const interval = setInterval(() => {
+                progress += 0.5;
+                fill.style.width = progress + "%";
+                
+                // Обновление таймера (имитация)
+                let sec = Math.floor(progress / 10);
+                timer.innerText = "00:" + (sec < 10 ? "0" + sec : sec);
 
-    function showError() {
-        alert("ОШИБКА: Файл перемещен в защищенную директорию /C19_FILES. Требуется локальная авторизация.");
-    }
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    btn.innerText = "▶";
+                    fill.style.width = "0%";
+                    timer.innerText = "00:00";
+                    
+                    // ФИНАЛЬНАЯ ПОДСКАЗКА ЭТАПА
+                    alert("СИГНАЛ ПРЕРВАН.\nОбнаружены частотные аномалии.\nЧастота стабилизации: 14.02 Hz\nПроверьте директорию /C19_FILES.html");
+                    console.log("LOG: Направьте дешифратор на сектор C-19. Код доступа спрятан в логах сервера.");
+                }
+            }, 50);
+        }
 
-    function playStatic() {
-        const btn = document.getElementById('play-btn');
-        const prg = document.getElementById('progress');
-        btn.innerText = "■";
-        
-        let width = 0;
-        const interval = setInterval(() => {
-            width += 1;
-            prg.style.width = width + "%";
-            if (width >= 100) {
-                clearInterval(interval);
-                btn.innerText = "▶";
-                prg.style.width = "0%";
-                // Здесь можно пустить звук через Audio API
-                alert("СИГНАЛ ПРЕРВАН: Обнаружены помехи типа 'Морзе'. Проверьте консоль (F12).");
-                console.log("ПОДСКАЗКА: В следующем видео ищите человека в белом халате.");
+        // 3. Ловушка для скачивания
+        function downloadEncrypted() {
+            const code = prompt("ВВЕДИТЕ КЛЮЧ ШИФРОВАНИЯ (см. Инцидент #B-01):");
+            if(code === "1402") {
+                alert("Доступ разрешен. Ищите файл 'leak.txt' в корневом каталоге сервера.");
+                // Здесь можно сделать реальное скачивание: window.location.href = 'secret.zip';
+            } else {
+                alert("ОШИБКА: Неверный ключ. Попытка зафиксирована.");
             }
-        }, 50);
-    }
-
-    function downloadLeak() {
-        alert("Инициация загрузки... Внимание: файл зашифрован ключом '1402'.");
-        // Здесь можно сделать реальное скачивание: window.location.href = 'leak.zip';
-    }
-</script>
+        }
+    </script>
+</body>
+</html>
