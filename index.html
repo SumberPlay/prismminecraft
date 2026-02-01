@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>P.R.I.S.M. | Public Portal</title>
+    <title>P.R.I.S.M. | Terminal</title>
     <style>
     :root { 
         --neon-green: #00ffcc; 
@@ -16,212 +16,132 @@
         background: var(--bg-dark); 
         color: #d1d1d1; 
         font-family: 'Courier New', monospace; 
-        margin: 0; 
-        overflow-x: hidden; 
-        padding-bottom: 60px; 
+        margin: 0; padding-bottom: 40px;
+        font-size: 14px;
     }
 
+    /* Сетка фона */
     body::before {
-        content: "";
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-image: 
-            linear-gradient(var(--border-color) 1px, transparent 1px),
-            linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
-        background-size: 50px 50px;
-        opacity: 0.05;
-        pointer-events: none;
-        z-index: -1;
+        content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-image: linear-gradient(var(--border-color) 1px, transparent 1px), linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+        background-size: 40px 40px; opacity: 0.05; z-index: -1;
     }
 
-    .overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, transparent 1px);
-        pointer-events: none; z-index: 1000;
-    }
+    .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
 
-    nav { 
-        background: rgba(0,0,0,0.9); 
-        padding: 20px; 
-        border-bottom: 1px solid var(--border-color); 
-        text-align: center;
-        backdrop-filter: blur(5px);
-    }
-    nav a { 
-        color: #555; text-decoration: none; text-transform: uppercase; 
-        padding: 0 25px; transition: 0.3s; font-weight: bold; font-size: 0.9em;
-        letter-spacing: 2px;
-    }
-    nav a:hover { color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green); }
-
-    .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
-
+    /* Компактный заголовок */
     .main-header {
-        text-align: center; margin-bottom: 60px;
-        border: 1px solid var(--border-color);
-        padding: 40px;
-        background: linear-gradient(180deg, rgba(0, 255, 204, 0.05) 0%, transparent 100%);
-        position: relative;
+        text-align: center; padding: 20px; border: 1px solid var(--border-color);
+        background: linear-gradient(180deg, rgba(0, 255, 204, 0.03) 0%, transparent 100%);
+        margin-bottom: 20px;
     }
 
     .card { 
-        background: var(--panel-bg); 
-        border: 1px solid var(--border-color); 
-        padding: 30px; 
-        margin-bottom: 25px; 
-        position: relative;
-        box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        background: var(--panel-bg); border: 1px solid var(--border-color); 
+        padding: 20px; margin-bottom: 20px; position: relative;
     }
-    .card::before {
-        content: ""; position: absolute; top: -1px; left: -1px; width: 15px; height: 15px;
-        border-top: 2px solid var(--neon-green); border-left: 2px solid var(--neon-green);
-    }
-    .card::after {
-        content: ""; position: absolute; bottom: -1px; right: -1px; width: 15px; height: 15px;
-        border-bottom: 2px solid var(--neon-green); border-right: 2px solid var(--neon-green);
-    }
+    
+    .card::before { content: ""; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px; border-top: 2px solid var(--neon-green); border-left: 2px solid var(--neon-green); }
+    .card::after { content: ""; position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px; border-bottom: 2px solid var(--neon-green); border-right: 2px solid var(--neon-green); }
 
     .status-bar {
-        border: 1px solid var(--border-color); padding: 25px; 
+        border: 1px solid var(--border-color); padding: 15px 20px; 
         display: flex; justify-content: space-between; align-items: center;
-        background: rgba(0, 255, 204, 0.02);
-        margin-bottom: 35px;
+        background: rgba(0, 255, 204, 0.02); margin-bottom: 20px;
     }
 
-    .dot {
-        width: 14px; height: 14px; border-radius: 2px;
-        background: var(--neon-green);
-        box-shadow: 0 0 15px var(--neon-green);
-        animation: pulse 1.5s infinite;
-    }
+    .dot { width: 10px; height: 10px; background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); animation: pulse 1.5s infinite; }
 
     .btn {
         background: rgba(0, 255, 204, 0.05); border: 1px solid var(--neon-green);
-        color: var(--neon-green); padding: 15px 40px; cursor: pointer;
-        text-transform: uppercase; font-weight: bold; transition: 0.4s;
-        letter-spacing: 3px;
+        color: var(--neon-green); padding: 10px 25px; cursor: pointer;
+        text-transform: uppercase; font-size: 0.8em; transition: 0.3s;
     }
-    .btn:hover { 
-        background: var(--neon-green); color: #000; 
-        box-shadow: 0 0 25px var(--neon-green); 
-    }
+    .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 15px var(--neon-green); }
 
-    #emergency-alert {
-        display: none; position: fixed; bottom: 0; left: 0; width: 100%;
-        background: var(--alert-red); color: #000; padding: 15px 0;
-        font-weight: 900; z-index: 2000; text-transform: uppercase;
-        border-top: 2px solid #000; border-bottom: 2px solid #000;
-        box-shadow: 0 0 30px var(--alert-red);
-    }
+    #system-log { height: 120px; overflow-y: auto; font-size: 0.85em; color: #008877; scrollbar-width: none; }
+    #mini-console-output { height: 50px; overflow: hidden; font-size: 0.8em; display: flex; flex-direction: column-reverse; color: #666; }
 
-    .scanline {
-        position: fixed; top: 0; left: 0; width: 100%; height: 4px;
-        background: rgba(0, 255, 204, 0.05);
-        z-index: 1001; pointer-events: none;
-        animation: scan 10s linear infinite;
-    }
-
-    @keyframes scan { from { top: -5%; } to { top: 105%; } }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    
+    input { background: transparent; border: none; color: #fff; outline: none; font-family: inherit; width: 100%; }
+    
+    .counter-num { font-size: 2.2em; color: var(--neon-green); font-weight: bold; }
+    
+    nav { background: #000; padding: 15px; border-bottom: 1px solid var(--border-color); text-align: center; }
+    nav a { color: #444; text-decoration: none; padding: 0 15px; font-size: 0.8em; letter-spacing: 1px; }
+    nav a:hover { color: var(--neon-green); }
 
-    .counter-num { display: block; font-size: 3em; color: var(--neon-green); text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); }
-
-    .alert-marquee {
-        white-space: nowrap; display: inline-block;
-        animation: marquee 30s linear infinite;
-        font-size: 1.2em; letter-spacing: 5px;
-    }
-
-    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    #emergency-alert { display: none; position: fixed; bottom: 0; width: 100%; background: var(--alert-red); color: #000; padding: 10px; z-index: 9999; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
 
-<div class="overlay"></div><div class="scanline"></div>
-<audio id="alarm-sound" loop><source src="alarm.mp3" type="audio/mpeg"></audio>
-<div id="emergency-alert"></div>
-
 <nav>
-    <a href="index.html" style="color: var(--neon-green);">[ ГЛАВНАЯ ]</a>
-    <a href="storage.html">БИБЛИОТЕКА</a>
-    <a href="dossier.html">ЛИЧНЫЕ ДЕЛА</a>
-    <a href="staff.html">ТЕРМИНАЛ</a>
+    <a href="#" style="color: var(--neon-green);">[ MAIN ]</a>
+    <a href="#">ARCHIVE</a>
+    <a href="#">DOSSIER</a>
+    <a href="#">TERMINAL</a>
 </nav>
+
+<div id="emergency-alert">SYSTEM CRITICAL ERROR - DATA BREACH DETECTED</div>
 
 <div class="container">
     <div class="main-header">
-        <h1 style="letter-spacing: 20px; color: var(--neon-green); margin: 0; font-size: 3em;">P.R.I.S.M.</h1>
-        <p style="color: #555; margin-top: 15px; letter-spacing: 2px;">Proactive Reaction, Immediate Solution & Minimization of Anomalies.</p>
+        <h2 style="letter-spacing: 10px; color: var(--neon-green); margin: 0;">P.R.I.S.M.</h2>
     </div>
 
     <div class="status-bar">
-        <div style="display: flex; align-items: center; gap: 20px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
             <div class="dot" id="status-dot"></div>
             <div>
-                <div style="font-size: 0.7em; color: #666; letter-spacing: 1px;">SYSTEM_INTEGRITY</div>
-                <div id="status-text" style="font-weight: bold; letter-spacing: 2px;">CONNECTING...</div>
+                <div style="font-size: 0.6em; color: #555;">SYSTEM_INTEGRITY</div>
+                <div id="status-text" style="font-weight: bold; color: var(--neon-green);">CONNECTING...</div>
             </div>
         </div>
         <div style="text-align: right;">
-            <div style="font-size: 0.7em; color: #666;">SERVER_TIME</div>
-            <div id="clock" style="color: var(--neon-green); font-weight: bold;">00:00:00</div>
+            <div style="font-size: 0.6em; color: #555;">SERVER_TIME</div>
+            <div id="clock" style="color: var(--neon-green);">00:00:00</div>
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
-        <div class="card" style="margin-bottom: 0;">
-            <div style="font-size: 0.7em; color: #444; margin-bottom: 10px; border-bottom: 1px solid #1a3a3a; padding-bottom: 5px;">CONNECTION_METRICS</div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div id="user-info" style="font-size: 0.9em; line-height: 1.8;">
-                    <div>NODE_IP: <span id="user-ip" style="color: var(--neon-green);">LOADING...</span></div>
-                    <div>LOCATION: <span id="user-loc" style="color: var(--neon-green);">DETECTING...</span></div>
-                    <div>STATUS: <span style="color: var(--neon-green);">AUTHORIZED</span></div>
-                </div>
-                <div style="text-align: right; border-left: 1px solid #1a3a3a; padding-left: 20px;">
-                    <div style="font-size: 0.7em; color: #666;">TECH_STACK</div>
-                    <div style="color: var(--neon-green); font-size: 0.8em; margin-top: 5px;">
-                        NODE.JS v22<br>EXPRESS JS<br>SUPABASE_DB
-                    </div>
-                </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+        <div class="card">
+            <div style="font-size: 0.6em; color: #444; margin-bottom: 10px;">CONNECTION_METRICS</div>
+            <div id="user-info" style="font-size: 0.85em; line-height: 1.6;">
+                <div>IP: <span id="user-ip" style="color: var(--neon-green);">127.0.0.1</span></div>
+                <div>LOC: <span id="user-loc" style="color: var(--neon-green);">SCANNING...</span></div>
+                <div>SEC: <span style="color: var(--neon-green);">ENCRYPTED</span></div>
             </div>
         </div>
 
-        <div class="card" style="margin-bottom: 0; background: rgba(0,0,0,0.4);">
-            <div style="font-size: 0.7em; color: #444; margin-bottom: 10px; border-bottom: 1px solid #1a3a3a; padding-bottom: 5px;">USER_COMMAND_INTERFACE</div>
-            <div id="mini-console-output" style="height: 60px; font-size: 0.8em; color: #888; overflow: hidden; margin-bottom: 10px; display: flex; flex-direction: column-reverse;">
-                <div style="color: #444;">Ожидание команды...</div>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center; border-top: 1px solid #1a1a1a; padding-top: 10px;">
-                <span style="color: var(--neon-green); font-size: 0.9em;">USR@PRISM:~$</span>
-                <input type="text" id="user-input" 
-                       style="background: transparent; border: none; color: #fff; outline: none; font-family: 'Courier New', monospace; flex: 1; font-size: 0.9em;" 
-                       placeholder="..." autofocus>
+        <div class="card" style="background: rgba(0,0,0,0.5);">
+            <div style="font-size: 0.6em; color: #444; margin-bottom: 10px;">USER_CONSOLE</div>
+            <div id="mini-console-output"><div>Waiting for input...</div></div>
+            <div style="display: flex; border-top: 1px solid #1a1a1a; padding-top: 8px; margin-top: 5px;">
+                <span style="color: var(--neon-green); margin-right: 5px;">></span>
+                <input type="text" id="user-input" placeholder="Type command..." autofocus>
             </div>
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
-        <div class="card" style="text-align: center; margin-bottom: 0;">
-            <span style="font-size: 0.7em; color: #666;">PROBABILITY_OF_COLLAPSE</span>
-            <span class="counter-num" id="risk-percent">0.0031%</span>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 0.6em; color: #444;">COLLAPSE_RISK</div>
+            <div class="counter-num" id="risk-percent">0.0000%</div>
         </div>
-        <div class="card" style="text-align: center; margin-bottom: 0;">
-            <span style="font-size: 0.7em; color: #666;">RIFT_RESONANCE_INDEX</span>
-            <span class="counter-num" id="resonance-index">1.0000</span>
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 0.6em; color: #444;">RESONANCE_ID</div>
+            <div class="counter-num" id="resonance-index">1.0000</div>
         </div>
     </div>
 
-    <div class="card" style="background: #000; border-color: #1a1a1a;">
-        <div style="font-size: 0.7em; color: #444; margin-bottom: 15px; border-bottom: 1px solid #1a1a1a; padding-bottom: 5px;">LIVE_CONSOLE_FEED v2.0.26</div>
-        <div id="system-log" style="height: 150px; overflow: hidden; font-size: 0.85em; color: #008877; line-height: 1.4;"></div>
+    <div class="card" style="background: #000;">
+        <div style="font-size: 0.6em; color: #444; border-bottom: 1px solid #111; padding-bottom: 5px; margin-bottom: 10px;">LIVE_SYSTEM_FEED</div>
+        <div id="system-log"></div>
     </div>
-
-    <div class="card">
-        <h3 style="color: var(--neon-green); margin-top: 0;">OBJECTIVE_DATA</h3>
-        <p style="line-height: 1.6;">Мы — внегосударственная структура, созданная для мониторинга аномалий. Наша задача: предотвращение полной дестабилизации реальности.</p>
-        <p style="color: #777; font-size: 1em; border-left: 2px solid var(--neon-green); padding-left: 15px;">"В темноте мы — свет. В хаосе мы — порядок. В опасности мы - щит."</p>
-    </div>
-
-    <div class="card">
+</div>
+<div class="card">
         <h3 style="color: var(--neon-green); margin-top: 0;">OBJECTIVE_DATA</h3>
         <p style="line-height: 1.6;">Давайте разберем несколько важных моментов, касающихся нашей работы.</p>
         <p style="line-height: 1.6;">Статус независимости: Мы являемся независимой структурой. Отсутствие какой-либо зависимости позволяет нам принимать решения с максимальной скоростью и эффективностью, невзирая на границы.</p>
@@ -233,125 +153,113 @@
     <div style="text-align: center; margin-top: 40px;">
         <button class="btn" onclick="location.href='staff.html'">IDENTIFY_PERSONNEL</button>
     </div>
-</div>
-
 <script>
-    const RENDER_API = "https://prism-bot.onrender.com"; 
-    let isAlarmPlaying = false;
-    let audioUnlocked = false;
+    const RENDER_API = "https://prism-bot.onrender.com";
     let lastState = "NORMAL";
-    let lastMoveLog = 0;
+    
+    // 1. Часы
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    }, 1000);
 
-    document.body.addEventListener('click', () => { audioUnlocked = true; }, { once: true });
-
-    function updateClock() {
-        const clockElement = document.getElementById('clock');
-        if(clockElement) clockElement.innerText = new Date().toLocaleTimeString();
-    }
-
-    async function fetchVisitorData() {
-        const ipElem = document.getElementById('user-ip');
-        const locElem = document.getElementById('user-loc');
-        try {
-            const response = await fetch('https://ipapi.co/json/');
-            const data = await response.json();
-            ipElem.innerText = data.ip || "127.0.0.1";
-            locElem.innerText = data.city ? `${data.city.toUpperCase()}, ${data.country_code}` : "UNKNOWN_SECTOR";
-            sysLog(`Входящее соединение: [${data.ip}]`, 'CORE');
-        } catch (e) {
-            ipElem.innerText = "127.0.0.1";
-            locElem.innerText = "LOCAL_HOST";
-        }
-    }
-
+    // 2. Логирование
     function sysLog(msg, type = 'INFO') {
-        const logContainer = document.getElementById('system-log');
-        if (!logContainer) return;
-        const time = new Date().toLocaleTimeString();
-        const typeColors = { 'INFO': '#00ffcc', 'WARN': '#ffd700', 'ERROR': '#ff4444', 'SYNC': '#00ff41', 'CORE': '#ff00ff' };
+        const log = document.getElementById('system-log');
+        const colors = { 'INFO': '#00ffcc', 'WARN': '#ffd700', 'ERROR': '#ff4444', 'CORE': '#ff00ff' };
         const line = document.createElement('div');
-        line.style.marginBottom = "4px";
-        line.innerHTML = `<span style="color: #444;">[${time}]</span> <span style="color: ${typeColors[type] || '#888'}">${type}</span> > ${msg}`;
-        logContainer.prepend(line);
-        if (logContainer.children.length > 15) logContainer.removeChild(logContainer.lastChild);
+        line.innerHTML = `<span style="color: #333;">[${new Date().toLocaleTimeString()}]</span> <span style="color: ${colors[type]}">${type}</span> > ${msg}`;
+        log.prepend(line);
+        if (log.children.length > 12) log.removeChild(log.lastChild);
     }
 
-    // ЛОГИКА КОМАНДНОЙ СТРОКИ
-    const inputField = document.getElementById('user-input');
-    const miniConsole = document.getElementById('mini-console-output');
-
-    inputField.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const cmd = inputField.value.trim().toLowerCase();
-            if (cmd) {
-                const line = document.createElement('div');
-                line.innerHTML = `<span style="color:var(--neon-green)">></span> ${cmd.toUpperCase()}`;
-                miniConsole.prepend(line);
-                sysLog(`USER_EXEC: ${cmd.toUpperCase()}`, 'CORE');
-                processCommand(cmd);
-            }
-            inputField.value = '';
-        }
-    });
-
-    function processCommand(cmd) {
-        const responses = {
-            'help': "STATUS, CLEAR, REBOOT, ACCESS",
-            'status': "SYSTEM_OK | INTEGRITY: 98%",
-            'access': "ERR: LEVEL_4 REQUIRED",
-            'reboot': "RESTARTING..."
-        };
-        if (cmd === 'clear') {
-            document.getElementById('system-log').innerHTML = '';
-            miniConsole.innerHTML = '';
-        } else if (cmd === 'reboot') {
-            setTimeout(() => location.reload(), 1000);
-        } else if (responses[cmd]) {
-            const resLine = document.createElement('div');
-            resLine.style.color = "var(--neon-green)";
-            resLine.innerText = responses[cmd];
-            miniConsole.prepend(resLine);
-        }
-    }
-
-    async function syncPrism() {
+    // 3. Данные пользователя (исправлено)
+    async function fetchVisitorData() {
         try {
-            const response = await fetch(`${RENDER_API}/status`);
+            const res = await fetch('https://ipapi.co/json/');
+            const data = await res.json();
+            document.getElementById('user-ip').innerText = data.ip;
+            document.getElementById('user-loc').innerText = `${data.city}, ${data.country_code}`;
+            sysLog("User biometrics synchronized.", "CORE");
+        } catch (e) {
+            document.getElementById('user-ip').innerText = "LOCAL_HOST";
+            document.getElementById('user-loc').innerText = "PROXY_HIDDEN";
+        }
+    }
+
+    // 4. Синхронизация с API (с фиксом зависания)
+    async function syncPrism() {
+        const statusTxt = document.getElementById('status-text');
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 5000); // Таймаут 5 сек
+
+        try {
+            const response = await fetch(`${RENDER_API}/status`, { signal: controller.signal });
             const data = await response.json();
+            clearTimeout(id);
             updateUI(data.state, data.label, data.color);
         } catch (e) {
-            document.getElementById('status-text').innerText = "OFFLINE";
+            if (statusTxt.innerText === "CONNECTING...") {
+                updateUI("NORMAL", "LOCAL_ACTIVE", "#00ffcc"); // Фоллбэк
+                sysLog("Central node unreachable. Running on local buffer.", "WARN");
+            }
         }
     }
 
     function updateUI(state, label, color) {
         const statusTxt = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
-        const alertBanner = document.getElementById('emergency-alert');
         statusTxt.innerText = label.toUpperCase();
         statusTxt.style.color = color;
         statusDot.style.backgroundColor = color;
-        statusDot.style.boxShadow = `0 0 15px ${color}`;
+        statusDot.style.boxShadow = `0 0 10px ${color}`;
+        
         if (state === "RED") {
-            alertBanner.style.display = "block";
-            alertBanner.innerHTML = `<div class="alert-marquee">${" ВНИМАНИЕ: RED CODE — ".repeat(20)}</div>`;
+            document.getElementById('emergency-alert').style.display = "block";
+            document.body.style.backgroundColor = "#100";
         } else {
-            alertBanner.style.display = "none";
+            document.getElementById('emergency-alert').style.display = "none";
+            document.body.style.backgroundColor = "#050505";
         }
     }
 
-    function updateSensors() {
-        const risk = (0.001 + Math.random() * 0.0002).toFixed(4);
-        const resonance = (1.0000 + (Math.sin(Date.now() / 3000) * 0.0008)).toFixed(4);
-        document.getElementById('risk-percent').innerText = `${risk}%`;
-        document.getElementById('resonance-index').innerText = resonance;
+    // 5. Консоль
+    const input = document.getElementById('user-input');
+    const miniOut = document.getElementById('mini-console-output');
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const val = input.value.trim().toLowerCase();
+            if (val) {
+                const l = document.createElement('div');
+                l.innerHTML = `<span style="color: var(--neon-green)">></span> ${val.toUpperCase()}`;
+                miniOut.prepend(l);
+                executeCmd(val);
+            }
+            input.value = '';
+        }
+    });
+
+    function executeCmd(cmd) {
+        sysLog(`Exec: ${cmd.toUpperCase()}`, "CORE");
+        if (cmd === 'help') sysLog("Commands: status, clear, reboot", "INFO");
+        else if (cmd === 'clear') { document.getElementById('system-log').innerHTML = ''; miniOut.innerHTML = ''; }
+        else if (cmd === 'reboot') { sysLog("Rebooting terminal...", "ERROR"); setTimeout(() => location.reload(), 1000); }
+        else if (cmd === 'status') sysLog("All systems nominal. Encryption: AES-256.", "INFO");
     }
 
-    setInterval(updateClock, 1000);
-    setInterval(updateSensors, 150);
-    setInterval(syncPrism, 4000);
+    // 6. Сенсоры
+    setInterval(() => {
+        const risk = (0.001 + Math.random() * 0.005).toFixed(4);
+        const res = (1.0000 + Math.sin(Date.now()/2000)*0.001).toFixed(4);
+        document.getElementById('risk-percent').innerText = risk + "%";
+        document.getElementById('resonance-index').innerText = res;
+    }, 200);
+
+    // Запуск
     fetchVisitorData();
-    updateClock();
+    setInterval(syncPrism, 5000);
+    sysLog("P.R.I.S.M. Terminal v2.0 initialized.", "INFO");
+    setTimeout(syncPrism, 1000);
 </script>
 </body>
 </html>
