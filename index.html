@@ -20,7 +20,6 @@
         font-size: 14px;
     }
 
-    /* Сетка фона */
     body::before {
         content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background-image: linear-gradient(var(--border-color) 1px, transparent 1px), linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
@@ -29,7 +28,6 @@
 
     .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
 
-    /* Компактный заголовок */
     .main-header {
         text-align: center; padding: 20px; border: 1px solid var(--border-color);
         background: linear-gradient(180deg, rgba(0, 255, 204, 0.03) 0%, transparent 100%);
@@ -140,8 +138,8 @@
         <div style="font-size: 0.6em; color: #444; border-bottom: 1px solid #111; padding-bottom: 5px; margin-bottom: 10px;">LIVE_SYSTEM_FEED</div>
         <div id="system-log"></div>
     </div>
-</div>
-<div class="card">
+
+    <div class="card">
         <h3 style="color: var(--neon-green); margin-top: 0;">OBJECTIVE_DATA</h3>
         <p style="line-height: 1.6;">Давайте разберем несколько важных моментов, касающихся нашей работы.</p>
         <p style="line-height: 1.6;">Статус независимости: Мы являемся независимой структурой. Отсутствие какой-либо зависимости позволяет нам принимать решения с максимальной скоростью и эффективностью, невзирая на границы.</p>
@@ -150,21 +148,23 @@
         <p style="line-height: 1.6;">Определение Аномалий: К аномальным объектам относятся негуманоидные субъекты, обладающие дестабилизирующими способностями, а также события, нарушающие базовые законы физики.</p>
         <p style="line-height: 1.6;">Примечание: Пост-миграционные модификаторы расы (включая мир Блинк) классифицируются как адаптивные изменения и не являются признаком аномалии.</p>
         <p style="line-height: 1.6;">Знание — это щит. Мы держим его для вас.</p>
-    <div style="text-align: center; margin-top: 40px;">
-        <button class="btn" onclick="location.href='staff.html'">IDENTIFY_PERSONNEL</button>
-    </div>
-<script>
+        <div style="text-align: center; margin-top: 40px;">
+            <button class="btn" onclick="location.href='staff.html'">IDENTIFY_PERSONNEL</button>
+        </div>
+    </div> </div> <script>
     const RENDER_API = "https://prism-bot.onrender.com";
     let lastState = "NORMAL";
     
     // 1. Часы
     setInterval(() => {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        const clockElem = document.getElementById('clock');
+        if(clockElem) clockElem.innerText = new Date().toLocaleTimeString();
     }, 1000);
 
     // 2. Логирование
     function sysLog(msg, type = 'INFO') {
         const log = document.getElementById('system-log');
+        if(!log) return;
         const colors = { 'INFO': '#00ffcc', 'WARN': '#ffd700', 'ERROR': '#ff4444', 'CORE': '#ff00ff' };
         const line = document.createElement('div');
         line.innerHTML = `<span style="color: #333;">[${new Date().toLocaleTimeString()}]</span> <span style="color: ${colors[type]}">${type}</span> > ${msg}`;
@@ -172,13 +172,13 @@
         if (log.children.length > 12) log.removeChild(log.lastChild);
     }
 
-    // 3. Данные пользователя (исправлено)
+    // 3. Данные пользователя
     async function fetchVisitorData() {
         try {
             const res = await fetch('https://ipapi.co/json/');
             const data = await res.json();
-            document.getElementById('user-ip').innerText = data.ip;
-            document.getElementById('user-loc').innerText = `${data.city}, ${data.country_code}`;
+            document.getElementById('user-ip').innerText = data.ip || "127.0.0.1";
+            document.getElementById('user-loc').innerText = `${data.city || 'Unknown'}, ${data.country_code || '??'}`;
             sysLog("User biometrics synchronized.", "CORE");
         } catch (e) {
             document.getElementById('user-ip').innerText = "LOCAL_HOST";
@@ -186,11 +186,11 @@
         }
     }
 
-    // 4. Синхронизация с API (с фиксом зависания)
+    // 4. Синхронизация с API
     async function syncPrism() {
         const statusTxt = document.getElementById('status-text');
         const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), 5000); // Таймаут 5 сек
+        const id = setTimeout(() => controller.abort(), 5000);
 
         try {
             const response = await fetch(`${RENDER_API}/status`, { signal: controller.signal });
@@ -198,8 +198,8 @@
             clearTimeout(id);
             updateUI(data.state, data.label, data.color);
         } catch (e) {
-            if (statusTxt.innerText === "CONNECTING...") {
-                updateUI("NORMAL", "LOCAL_ACTIVE", "#00ffcc"); // Фоллбэк
+            if (statusTxt && statusTxt.innerText === "CONNECTING...") {
+                updateUI("NORMAL", "LOCAL_ACTIVE", "#00ffcc");
                 sysLog("Central node unreachable. Running on local buffer.", "WARN");
             }
         }
@@ -208,102 +208,108 @@
     function updateUI(state, label, color) {
         const statusTxt = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
-        statusTxt.innerText = label.toUpperCase();
-        statusTxt.style.color = color;
-        statusDot.style.backgroundColor = color;
-        statusDot.style.boxShadow = `0 0 10px ${color}`;
+        if(statusTxt) {
+            statusTxt.innerText = label.toUpperCase();
+            statusTxt.style.color = color;
+        }
+        if(statusDot) {
+            statusDot.style.backgroundColor = color;
+            statusDot.style.boxShadow = `0 0 10px ${color}`;
+        }
         
+        const alertBanner = document.getElementById('emergency-alert');
         if (state === "RED") {
-            document.getElementById('emergency-alert').style.display = "block";
+            if(alertBanner) alertBanner.style.display = "block";
             document.body.style.backgroundColor = "#100";
         } else {
-            document.getElementById('emergency-alert').style.display = "none";
+            if(alertBanner) alertBanner.style.display = "none";
             document.body.style.backgroundColor = "#050505";
         }
     }
-    // Расширенный список фраз для имитации активности
-function generateBackgroundLog() {
-    const templates = [
-        () => `Поток данных Alpha-${Math.floor(Math.random()*10)}: СТАБИЛЕН.`,
-        () => `Резонанс Разлома: ${document.getElementById('resonance-index').innerText}`,
-        () => `Целостность оболочки: ${(99 + Math.random()).toFixed(3)}%`,
-        () => `Температура ядра: ${(35 + Math.random()*20).toFixed(1)}°C`,
-        () => `Сканирование сектора ${(Math.random()*100).toFixed(0)}: УГРОЗ НЕ ОБНАРУЖЕНО.`,
-        () => `Анализ входящих пакетов... OK.`,
-        () => `Связь с узлом Delta установлена. Пинг: ${(Math.random()*50).toFixed(0)}ms`,
-        () => `Мониторинг аномалий: Уровень активности МИНИМАЛЬНЫЙ.`,
-        () => `Uptime терминала: ${(performance.now() / 1000).toFixed(0)} сек.`,
-        () => {
-            const hour = new Date().getHours();
-            const mode = (hour > 20 || hour < 6) ? "NIGHT_VISION" : "DAY_LIGHT";
-            return `Режим фильтрации: ${mode} (По системному времени).`;
-        },
-        () => `Использование памяти ядра: ${(Math.random() * 40 + 10).toFixed(2)} MB / 256 MB`,
-        () => `Активная зона захвата: ${window.innerWidth}x${window.innerHeight} (Viewport)`,
-        () => `Протокол синхронизации P.R.I.S.M. v2.0.26 активен.`,
-        () => `Обнаружен физический контакт с интерфейсом: Координаты подтверждены.`,
-        () => `Калибровка датчиков завершена: Ошибка 0.000${Math.floor(Math.random()*9)}%`
-    ];
 
-    // Выбираем случайную фразу
-    const randomMsg = templates[Math.floor(Math.random() * templates.length)]();
-    sysLog(randomMsg, 'INFO');
-
-    // Запускаем следующий цикл через случайное время (от 4 до 8 секунд)
-    setTimeout(generateBackgroundLog, Math.random() * 4000 + 4000);
-}
-
-// Дополнительная реакция на движение мыши (раз в 15 секунд)
-let lastMoveLog = 0;
-window.addEventListener('mousemove', (e) => {
-    let now = Date.now();
-    if (now - lastMoveLog > 15000) { 
-        sysLog(`Сканирование биометрии [X:${e.clientX} Y:${e.clientY}]... OK`, 'CORE');
-        lastMoveLog = now;
-    }
-});
-
-// Инициализация при загрузке
-generateBackgroundLog();
     // 5. Консоль
     const input = document.getElementById('user-input');
     const miniOut = document.getElementById('mini-console-output');
 
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const val = input.value.trim().toLowerCase();
-            if (val) {
-                const l = document.createElement('div');
-                l.innerHTML = `<span style="color: var(--neon-green)">></span> ${val.toUpperCase()}`;
-                miniOut.prepend(l);
-                executeCmd(val);
+    if(input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const val = input.value.trim().toLowerCase();
+                if (val) {
+                    const l = document.createElement('div');
+                    l.innerHTML = `<span style="color: var(--neon-green)">></span> ${val.toUpperCase()}`;
+                    if(miniOut) miniOut.prepend(l);
+                    executeCmd(val);
+                }
+                input.value = '';
             }
-            input.value = '';
-        }
-    });
+        });
+    }
 
     function executeCmd(cmd) {
         sysLog(`Exec: ${cmd.toUpperCase()}`, "CORE");
         if (cmd === 'help') sysLog("Commands: status, clear, reboot", "INFO");
-        else if (cmd === 'clear') { document.getElementById('system-log').innerHTML = ''; miniOut.innerHTML = ''; }
+        else if (cmd === 'clear') { 
+            const log = document.getElementById('system-log');
+            if(log) log.innerHTML = ''; 
+            if(miniOut) miniOut.innerHTML = ''; 
+        }
         else if (cmd === 'reboot') { sysLog("Rebooting terminal...", "ERROR"); setTimeout(() => location.reload(), 1000); }
         else if (cmd === 'status') sysLog("All systems nominal. Encryption: AES-256.", "INFO");
     }
 
-    // 6. Сенсоры
+    // 6. Сенсоры и фоновые фразы
+    function generateBackgroundLog() {
+        const templates = [
+            () => `Поток данных Alpha-${Math.floor(Math.random()*10)}: СТАБИЛЕН.`,
+            () => `Резонанс Разлома: ${document.getElementById('resonance-index').innerText}`,
+            () => `Целостность оболочки: ${(99 + Math.random()).toFixed(3)}%`,
+            () => `Температура ядра: ${(35 + Math.random()*20).toFixed(1)}°C`,
+            () => `Сканирование сектора ${(Math.random()*100).toFixed(0)}: УГРОЗ НЕ ОБНАРУЖЕНО.`,
+            () => `Анализ входящих пакетов... OK.`,
+            () => `Связь с узлом Delta установлена. Пинг: ${(Math.random()*50).toFixed(0)}ms`,
+            () => `Мониторинг аномалий: Уровень активности МИНИМАЛЬНЫЙ.`,
+            () => `Uptime терминала: ${(performance.now() / 1000).toFixed(0)} сек.`,
+            () => {
+                const hour = new Date().getHours();
+                const mode = (hour > 20 || hour < 6) ? "NIGHT_VISION" : "DAY_LIGHT";
+                return `Режим фильтрации: ${mode}.`;
+            },
+            () => `Использование памяти ядра: ${(Math.random() * 40 + 10).toFixed(2)} MB / 256 MB`,
+            () => `Активная зона захвата: ${window.innerWidth}x${window.innerHeight}`,
+            () => `Протокол синхронизации P.R.I.S.M. v2.0.26 активен.`,
+            () => `Обнаружен физический контакт с интерфейсом.`,
+            () => `Калибровка датчиков: Ошибка 0.000${Math.floor(Math.random()*9)}%`
+        ];
+
+        const randomMsg = templates[Math.floor(Math.random() * templates.length)]();
+        sysLog(randomMsg, 'INFO');
+        setTimeout(generateBackgroundLog, Math.random() * 4000 + 4000);
+    }
+
+    // Движение мыши
+    let lastMoveLog = 0;
+    window.addEventListener('mousemove', (e) => {
+        let now = Date.now();
+        if (now - lastMoveLog > 15000) { 
+            sysLog(`Сканирование биометрии [X:${e.clientX} Y:${e.clientY}]... OK`, 'CORE');
+            lastMoveLog = now;
+        }
+    });
+
+    // Запуск всех систем
+    fetchVisitorData();
+    generateBackgroundLog();
+    setInterval(syncPrism, 5000);
     setInterval(() => {
-        const risk = (0.001 + Math.random() * 0.005).toFixed(4);
-        const res = (1.0000 + Math.sin(Date.now()/2000)*0.001).toFixed(4);
-        document.getElementById('risk-percent').innerText = risk + "%";
-        document.getElementById('resonance-index').innerText = res;
+        const riskElem = document.getElementById('risk-percent');
+        const resElem = document.getElementById('resonance-index');
+        if(riskElem) riskElem.innerText = (0.001 + Math.random() * 0.005).toFixed(4) + "%";
+        if(resElem) resElem.innerText = (1.0000 + Math.sin(Date.now()/2000)*0.001).toFixed(4);
     }, 200);
 
-    // Запуск
-    fetchVisitorData();
-    setInterval(syncPrism, 5000);
     sysLog("P.R.I.S.M. Terminal v2.0 initialized.", "INFO");
     setTimeout(syncPrism, 1000);
 </script>
 </body>
 </html>
-
