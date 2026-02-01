@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>P.R.I.S.M. | Rift Radar</title>
+    <style>
+        :root { 
+            --neon-green: #00ffcc; 
+            --bg-dark: #050505; 
+            --border-color: #1a3a3a;
+        }
+        body { 
+            background: var(--bg-dark); color: #d1d1d1; 
+            font-family: 'Courier New', monospace; margin: 0; overflow: hidden;
+        }
+        .radar-container {
+            display: flex; height: 100vh; align-items: center; justify-content: center;
+            gap: 50px; padding: 0 50px;
+        }
+        .radar-screen {
+            position: relative; width: 500px; height: 500px;
+            border: 2px solid var(--border-color); border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,255,204,0.05) 0%, transparent 70%);
+        }
+        canvas { position: absolute; top: 0; left: 0; }
+        
+        .sidebar {
+            width: 350px; height: 500px; border: 1px solid var(--border-color);
+            background: rgba(10, 15, 15, 0.9); padding: 20px; display: flex; flex-direction: column;
+        }
+        .header { color: var(--neon-green); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px; letter-spacing: 2px; }
+        #player-log { flex-grow: 1; overflow-y: auto; font-size: 0.8em; }
+        .player-entry { margin-bottom: 10px; padding: 5px; border-left: 2px solid var(--neon-green); background: rgba(0,255,204,0.02); }
+        .back-link { position: fixed; top: 20px; left: 20px; color: var(--neon-green); text-decoration: none; border: 1px solid var(--neon-green); padding: 5px 15px; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">< RETURN</a>
+
+<div class="radar-container">
+    <div class="radar-screen">
+        <canvas id="radarCanvas"></canvas>
+    </div>
+
+    <div class="sidebar">
+        <div class="header">ACTIVE_SIGNATURES</div>
+        <div id="player-log">Ожидание данных сканирования...</div>
+        <div style="margin-top: 20px; font-size: 0.7em; color: #444;">SCAN_RATE: 2.4GHz | RANGE: GLOBAL</div>
+    </div>
+</div>
+
+<script>
+    const RENDER_API = "https://prism-bot.onrender.com";
+    const canvas = document.getElementById('radarCanvas');
+    const ctx = canvas.getContext('2d');
+    const log = document.getElementById('player-log');
+
+    let angle = 0;
+    let players = []; // Сюда будут падать данные с сервера
+
+    // Настройка размера холста
+    canvas.width = 500;
+    canvas.height = 500;
+
+    async function fetchPlayers() {
+        try {
+            const res = await fetch(`${RENDER_API}/mc-status`);
+            const data = await res.json();
+            if (data.online && data.players.list) {
+                // Генерируем случайные координаты для радара (чтобы точки не кучковались)
+                players = data.players.list.map(name => ({
+                    name: name,
+                    dist: Math.random() * 200 + 30,
+                    deg: Math.random() * 360,
+                    detected: false
+                }));
+                updateLog();
+            } else {
+                players = [];
+                log.innerHTML = "Сигнатуры не обнаружены.";
+            }
+        } catch (e) {
+            log.innerHTML = "<span style='color:red'>ОШИБКА СВЯЗИ С РАДАРОМ</span>";
+        }
+    }
+
+    function updateLog() {
+        log.innerHTML = players.map(p => `
+            <div class="player-entry">
+                <div style="color:var(--neon-green)">OBJ: ${p.name}</div>
+                <div style="font-size:0.8em; color:#666">DIST: ${p.dist.toFixed(1)}ly | STATUS: DETECTED</div>
+            </div>
+        `).join('');
+    }
+
+    function drawRadar() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+
+        // Рисуем сетку
+        ctx.strokeStyle = "rgba(0, 255, 204, 0.2)";
+        ctx.lineWidth = 1;
+        for(let r = 50; r <= 250; r += 50) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Рисуем сканирующий луч
+        let gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, 250);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, 250, angle, angle + 0.2);
+        ctx.lineTo(cx, cy);
+        ctx.fillStyle = "rgba(0, 255, 204, 0.3)";
+        ctx.fill();
+
+        // Рисуем точки игроков
+        players.forEach(p => {
+            const px = cx + Math.cos(p.deg * Math.PI / 180) * p.dist;
+            const py = cy + Math.sin(p.deg * Math.PI / 180) * p.dist;
+            
+            // Проверяем, прошел ли луч через точку (упрощенно)
+            const playerAngle = p.deg * Math.PI / 180;
+            const diff = Math.abs((angle % (Math.PI * 2)) - (playerAngle % (Math.PI * 2)));
+            
+            if (diff < 0.1) p.detected = true;
+
+            if (p.detected) {
+                ctx.beginPath();
+                ctx.arc(px, py, 4, 0, Math.PI * 2);
+                ctx.fillStyle = "var(--neon-green)";
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = "var(--neon-green)";
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                ctx.font = "10px Courier New";
+                ctx.fillText(p.name, px + 10, py);
+            }
+        });
+
+        angle += 0.03;
+        requestAnimationFrame(drawRadar);
+    }
+
+    fetchPlayers();
+    setInterval(fetchPlayers, 15000); // Опрос сервера раз в 15 сек
+    drawRadar();
+</script>
+</body>
+</html>
