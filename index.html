@@ -109,8 +109,7 @@
         display: none; position: fixed; bottom: 0; left: 0; width: 100%;
         background: var(--alert-red); color: #000; padding: 15px 0;
         font-weight: 900; z-index: 2000; text-transform: uppercase;
-        border-top: 2px solid #000;
-        border-bottom: 2px solid #000;
+        border-top: 2px solid #000; border-bottom: 2px solid #000;
         box-shadow: 0 0 30px var(--alert-red);
     }
 
@@ -127,17 +126,12 @@
     .counter-num { display: block; font-size: 3em; color: var(--neon-green); text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); }
 
     .alert-marquee {
-        white-space: nowrap;
-        display: inline-block;
+        white-space: nowrap; display: inline-block;
         animation: marquee 30s linear infinite;
-        font-size: 1.2em;
-        letter-spacing: 5px;
+        font-size: 1.2em; letter-spacing: 5px;
     }
 
-    @keyframes marquee {
-        from { transform: translateX(0); }
-        to { transform: translateX(-50%); }
-    }
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
     </style>
 </head>
 <body>
@@ -174,57 +168,43 @@
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
-    <div class="card" style="margin-bottom: 0;">
-        <div style="font-size: 0.7em; color: #444; margin-bottom: 10px; border-bottom: 1px solid #1a3a3a; padding-bottom: 5px;">CONNECTION_METRICS</div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div id="user-info" style="font-size: 0.9em; line-height: 1.8;">
-                <div>NODE_IP: <span id="user-ip" style="color: var(--neon-green);">LOADING...</span></div>
-                <div>LOCATION: <span id="user-loc" style="color: var(--neon-green);">DETECTING...</span></div>
-                <div>STATUS: <span style="color: var(--neon-green);">AUTHORIZED</span></div>
-            </div>
-            <div style="text-align: right; border-left: 1px solid #1a3a3a; padding-left: 20px;">
-                <div style="font-size: 0.7em; color: #666;">TECH_STACK</div>
-                <div style="color: var(--neon-green); font-size: 0.8em; margin-top: 5px;">
-                    NODE.JS v22<br>EXPRESS JS<br>SUPABASE_DB
+        <div class="card" style="margin-bottom: 0;">
+            <div style="font-size: 0.7em; color: #444; margin-bottom: 10px; border-bottom: 1px solid #1a3a3a; padding-bottom: 5px;">CONNECTION_METRICS</div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div id="user-info" style="font-size: 0.9em; line-height: 1.8;">
+                    <div>NODE_IP: <span id="user-ip" style="color: var(--neon-green);">LOADING...</span></div>
+                    <div>LOCATION: <span id="user-loc" style="color: var(--neon-green);">DETECTING...</span></div>
+                    <div>STATUS: <span style="color: var(--neon-green);">AUTHORIZED</span></div>
+                </div>
+                <div style="text-align: right; border-left: 1px solid #1a3a3a; padding-left: 20px;">
+                    <div style="font-size: 0.7em; color: #666;">TECH_STACK</div>
+                    <div style="color: var(--neon-green); font-size: 0.8em; margin-top: 5px;">
+                        NODE.JS v22<br>EXPRESS JS<br>SUPABASE_DB
+                    </div>
                 </div>
             </div>
         </div>
+
+        <div class="card" style="margin-bottom: 0; background: rgba(0,0,0,0.4);">
+            <div style="font-size: 0.7em; color: #444; margin-bottom: 10px; border-bottom: 1px solid #1a3a3a; padding-bottom: 5px;">USER_COMMAND_INTERFACE</div>
+            <div id="mini-console-output" style="height: 60px; font-size: 0.8em; color: #888; overflow: hidden; margin-bottom: 10px; display: flex; flex-direction: column-reverse;">
+                <div style="color: #444;">Ожидание команды...</div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; border-top: 1px solid #1a1a1a; padding-top: 10px;">
+                <span style="color: var(--neon-green); font-size: 0.9em;">USR@PRISM:~$</span>
+                <input type="text" id="user-input" 
+                       style="background: transparent; border: none; color: #fff; outline: none; font-family: 'Courier New', monospace; flex: 1; font-size: 0.9em;" 
+                       placeholder="..." autofocus>
+            </div>
+        </div>
     </div>
 
-    <div class="card" style="margin-bottom: 0; background: rgba(0,0,0,0.4);">
-        <div style="font-size: 0.7em; color: #444; margin-bottom: 10px; border-bottom: 1px solid #1a3a3a; padding-bottom: 5px;">USER_COMMAND_INTERFACE</div>
-        <div id="mini-console-output" style="height: 60px; font-size: 0.8em; color: #888; overflow: hidden; margin-bottom: 10px; display: flex; flex-direction: column-reverse;">
-            <div style="color: #444;">Ожидание команды...</div>
-        </div>
-        <div style="display: flex; gap: 5px; align-items: center; border-top: 1px solid #1a1a1a; padding-top: 10px;">
-            <span style="color: var(--neon-green); font-size: 0.9em;">USR@PRISM:~$</span>
-            <input type="text" id="user-input" 
-                   style="background: transparent; border: none; color: #fff; outline: none; font-family: 'Courier New', monospace; flex: 1; font-size: 0.9em;" 
-                   placeholder="..." autofocus>
-        </div>
-    </div>
-</div>
-
-    <div class="card" style="margin-bottom: 0; background: rgba(0,0,0,0.4);">
-        <div style="font-size: 0.7em; color: #444; margin-bottom: 10px; border-bottom: 1px solid #1a3a3a; padding-bottom: 5px;">USER_COMMAND_INTERFACE</div>
-        <div id="console-output" style="height: 60px; font-size: 0.8em; color: #888; overflow: hidden; margin-bottom: 10px; display: flex; flex-direction: column-reverse;">
-            <div style="color: #444;">Ожидание ввода...</div>
-        </div>
-        <div style="display: flex; gap: 5px; align-items: center; border-top: 1px solid #1a1a1a; padding-top: 10px;">
-            <span style="color: var(--neon-green); font-size: 0.9em;">></span>
-            <input type="text" id="user-input" 
-                   style="background: transparent; border: none; color: #fff; outline: none; font-family: 'Courier New', monospace; flex: 1; font-size: 0.9em;" 
-                   placeholder="Команда..." autofocus>
-        </div>
-    </div>
-</div>
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
-        <div class="card" style="text-align: center;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+        <div class="card" style="text-align: center; margin-bottom: 0;">
             <span style="font-size: 0.7em; color: #666;">PROBABILITY_OF_COLLAPSE</span>
             <span class="counter-num" id="risk-percent">0.0031%</span>
         </div>
-        <div class="card" style="text-align: center;">
+        <div class="card" style="text-align: center; margin-bottom: 0;">
             <span style="font-size: 0.7em; color: #666;">RIFT_RESONANCE_INDEX</span>
             <span class="counter-num" id="resonance-index">1.0000</span>
         </div>
@@ -237,8 +217,7 @@
 
     <div class="card">
         <h3 style="color: var(--neon-green); margin-top: 0;">OBJECTIVE_DATA</h3>
-        <p style="line-height: 1.6;">Мы — внегосударственная структура, созданная для мониторинга аномалий. Наша задача: предотвращение полной дестабилизации реальности. Мы - гарант безопасности вселенной и всех людей в ней.</p>
-        <p style="line-height: 1.6;">На этом ресурсе мы будем делиться всей возможной информацией, которая поможет вас обезопасить. Знание - сила. Однако, не каждое знание мы можем вам раскрыть. Примите это.</p>
+        <p style="line-height: 1.6;">Мы — внегосударственная структура, созданная для мониторинга аномалий. Наша задача: предотвращение полной дестабилизации реальности.</p>
         <p style="color: #777; font-size: 1em; border-left: 2px solid var(--neon-green); padding-left: 15px;">"В темноте мы — свет. В хаосе мы — порядок. В опасности мы - щит."</p>
     </div>
 
@@ -251,9 +230,8 @@
         <p style="line-height: 1.6;">Определение Аномалий: К аномальным объектам относятся негуманоидные субъекты, обладающие дестабилизирующими способностями, а также события, нарушающие базовые законы физики.</p>
         <p style="line-height: 1.6;">Примечание: Пост-миграционные модификаторы расы (включая мир Блинк) классифицируются как адаптивные изменения и не являются признаком аномалии.</p>
         <p style="line-height: 1.6;">Знание — это щит. Мы держим его для вас.</p>
-        <div style="text-align: center; margin-top: 40px;">
-            <button class="btn" onclick="location.href='staff.html'">IDENTIFY_PERSONNEL</button>
-        </div>
+    <div style="text-align: center; margin-top: 40px;">
+        <button class="btn" onclick="location.href='staff.html'">IDENTIFY_PERSONNEL</button>
     </div>
 </div>
 
@@ -262,6 +240,7 @@
     let isAlarmPlaying = false;
     let audioUnlocked = false;
     let lastState = "NORMAL";
+    let lastMoveLog = 0;
 
     document.body.addEventListener('click', () => { audioUnlocked = true; }, { once: true });
 
@@ -269,107 +248,69 @@
         const clockElement = document.getElementById('clock');
         if(clockElement) clockElement.innerText = new Date().toLocaleTimeString();
     }
-    setInterval(updateClock, 1000);
 
-    // ПОЛУЧЕНИЕ ДАННЫХ ПОЛЬЗОВАТЕЛЯ
-    // Функция получения IP и Локации с резервным каналом
-async function fetchVisitorData() {
-    const ipElem = document.getElementById('user-ip');
-    const locElem = document.getElementById('user-loc');
-
-    try {
-        // Попытка 1: ip-api.com (работает без ключа)
-        const response = await fetch('http://ip-api.com/json/?fields=status,country,city,query');
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-            ipElem.innerText = data.query;
-            locElem.innerText = `${data.city.toUpperCase()}, ${data.country.toUpperCase()}`;
-            sysLog(`Входящее соединение: [${data.query}] локация подтверждена.`, 'CORE');
-        } else {
-            throw new Error('API_LIMIT');
-        }
-    } catch (e) {
-        // Попытка 2: ipapi.co
+    async function fetchVisitorData() {
+        const ipElem = document.getElementById('user-ip');
+        const locElem = document.getElementById('user-loc');
         try {
             const response = await fetch('https://ipapi.co/json/');
             const data = await response.json();
             ipElem.innerText = data.ip || "127.0.0.1";
-            locElem.innerText = data.city ? `${data.city.toUpperCase()}, ${data.country}` : "UNKNOWN_SECTOR";
-        } catch (e2) {
+            locElem.innerText = data.city ? `${data.city.toUpperCase()}, ${data.country_code}` : "UNKNOWN_SECTOR";
+            sysLog(`Входящее соединение: [${data.ip}]`, 'CORE');
+        } catch (e) {
             ipElem.innerText = "127.0.0.1";
             locElem.innerText = "LOCAL_HOST";
-            sysLog("ВНИМАНИЕ: Геолокация заблокирована протоколом браузера.", "WARN");
         }
     }
-}
-
-// ЛОГИКА КОМАНДНОЙ СТРОКИ
-const inputField = document.getElementById('user-input');
-const miniConsole = document.getElementById('mini-console-output');
-
-inputField.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const cmd = inputField.value.trim().toLowerCase();
-        if (cmd) {
-            // Запись в мини-консоль
-            const line = document.createElement('div');
-            line.innerHTML = `<span style="color:var(--neon-green)">></span> ${cmd.toUpperCase()}`;
-            miniConsole.prepend(line);
-            
-            // Запись в общий системный лог
-            sysLog(`USER_EXEC: ${cmd.toUpperCase()}`, 'CORE');
-            
-            // Выполнение
-            if (cmd === 'help') {
-                miniLog("Команды: STATUS, CLEAR, REBOOT, ACCESS");
-            } else if (cmd === 'status') {
-                miniLog(`INTEGRITY: 98% | MODE: ${lastState}`);
-            } else if (cmd === 'clear') {
-                document.getElementById('system-log').innerHTML = '';
-                miniConsole.innerHTML = '';
-            } else if (cmd === 'reboot') {
-                sysLog("ПРИНУДИТЕЛЬНАЯ ПЕРЕЗАГРУЗКА...", "ERROR");
-                setTimeout(() => location.reload(), 1500);
-            } else if (cmd === 'access') {
-                miniLog("ОШИБКА: ТРЕБУЕТСЯ КЛЮЧ УРОВНЯ 4");
-            } else {
-                miniLog("ОШИБКА: НЕИЗВЕСТНАЯ КОМАНДА");
-            }
-        }
-        inputField.value = '';
-    }
-});
-
-function miniLog(text) {
-    const resLine = document.createElement('div');
-    resLine.style.color = "var(--neon-green)";
-    resLine.innerText = text;
-    miniConsole.prepend(resLine);
-}
-
-
 
     function sysLog(msg, type = 'INFO') {
         const logContainer = document.getElementById('system-log');
         if (!logContainer) return;
-
         const time = new Date().toLocaleTimeString();
-        const typeColors = {
-            'INFO': '#00ffcc', 'WARN': '#ffd700', 'ERROR': '#ff4444', 'SYNC': '#00ff41', 'CORE': '#ff00ff'
-        };
-
-        let formattedMsg = msg
-            .replace(/(ВНИМАНИЕ|ОШИБКА|КРИТИЧЕСКИЙ|🚨)/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>')
-            .replace(/(СТАТУС|ПРОТОКОЛ|СИСТЕМА|ЯДРО)/g, '<span style="color: #ffd700;">$1</span>')
-            .replace(/(УСПЕШНО|СТАБИЛЕН|ОК)/g, '<span style="color: #00ff41;">$1</span>');
-
+        const typeColors = { 'INFO': '#00ffcc', 'WARN': '#ffd700', 'ERROR': '#ff4444', 'SYNC': '#00ff41', 'CORE': '#ff00ff' };
         const line = document.createElement('div');
         line.style.marginBottom = "4px";
-        line.innerHTML = `<span style="color: #444;">[${time}]</span> <span style="color: ${typeColors[type] || '#888'}">${type}</span> > ${formattedMsg}`;
+        line.innerHTML = `<span style="color: #444;">[${time}]</span> <span style="color: ${typeColors[type] || '#888'}">${type}</span> > ${msg}`;
         logContainer.prepend(line);
-        if (logContainer.children.length > 15) {
-            logContainer.removeChild(logContainer.lastChild);
+        if (logContainer.children.length > 15) logContainer.removeChild(logContainer.lastChild);
+    }
+
+    // ЛОГИКА КОМАНДНОЙ СТРОКИ
+    const inputField = document.getElementById('user-input');
+    const miniConsole = document.getElementById('mini-console-output');
+
+    inputField.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const cmd = inputField.value.trim().toLowerCase();
+            if (cmd) {
+                const line = document.createElement('div');
+                line.innerHTML = `<span style="color:var(--neon-green)">></span> ${cmd.toUpperCase()}`;
+                miniConsole.prepend(line);
+                sysLog(`USER_EXEC: ${cmd.toUpperCase()}`, 'CORE');
+                processCommand(cmd);
+            }
+            inputField.value = '';
+        }
+    });
+
+    function processCommand(cmd) {
+        const responses = {
+            'help': "STATUS, CLEAR, REBOOT, ACCESS",
+            'status': "SYSTEM_OK | INTEGRITY: 98%",
+            'access': "ERR: LEVEL_4 REQUIRED",
+            'reboot': "RESTARTING..."
+        };
+        if (cmd === 'clear') {
+            document.getElementById('system-log').innerHTML = '';
+            miniConsole.innerHTML = '';
+        } else if (cmd === 'reboot') {
+            setTimeout(() => location.reload(), 1000);
+        } else if (responses[cmd]) {
+            const resLine = document.createElement('div');
+            resLine.style.color = "var(--neon-green)";
+            resLine.innerText = responses[cmd];
+            miniConsole.prepend(resLine);
         }
     }
 
@@ -377,159 +318,40 @@ function miniLog(text) {
         try {
             const response = await fetch(`${RENDER_API}/status`);
             const data = await response.json();
-            if (Math.random() > 0.8) sysLog(`Синхронизация с узлом: пинг ${(Math.random()*50).toFixed(0)}ms`, 'SYNC');
             updateUI(data.state, data.label, data.color);
         } catch (e) {
-            if (lastState !== "OFFLINE") {
-                sysLog("ПОТЕРЯ СВЯЗИ С ЦЕНТРАЛЬНЫМ ЯДРОМ!", "ERROR");
-                lastState = "OFFLINE";
-            }
-            const statusTxt = document.getElementById('status-text');
-            statusTxt.innerText = "OFFLINE";
-            statusTxt.style.color = "gray";
+            document.getElementById('status-text').innerText = "OFFLINE";
         }
-    }
-
-    function updateSensors() {
-        const riskElem = document.getElementById('risk-percent');
-        const resonanceElem = document.getElementById('resonance-index');
-        if (!riskElem || !resonanceElem) return;
-
-        let risk, resonance;
-        if (isAlarmPlaying) {
-            risk = (Math.random() * 80 + 15).toFixed(4);
-            resonance = (Math.random() * 4 + 0.1).toFixed(4);
-            riskElem.style.color = "var(--alert-red)";
-            resonanceElem.style.color = "var(--alert-red)";
-            riskElem.style.transform = `translateX(${Math.random()*2-1}px)`;
-        } else {
-            risk = (0.001 + (Math.sin(Date.now() / 5000) * 0.0005) + Math.random() * 0.0002).toFixed(4);
-            resonance = (1.0000 + (Math.sin(Date.now() / 3000) * 0.0008)).toFixed(4);
-            riskElem.style.color = "var(--neon-green)";
-            resonanceElem.style.color = "var(--neon-green)";
-            riskElem.style.transform = "none";
-        }
-        riskElem.innerText = `${risk}%`;
-        resonanceElem.innerText = resonance;
     }
 
     function updateUI(state, label, color) {
         const statusTxt = document.getElementById('status-text');
         const statusDot = document.getElementById('status-dot');
         const alertBanner = document.getElementById('emergency-alert');
-        const alarm = document.getElementById('alarm-sound');
-
-        if (state !== lastState) {
-            if (state === "RED") sysLog("🚨 ВНИМАНИЕ: Активирован протокол RED_CODE!", "ERROR");
-            else if (lastState !== "NORMAL") sysLog("Система стабилизирована. Режим NORMAL.", "SYNC");
-            lastState = state;
-        }
-
         statusTxt.innerText = label.toUpperCase();
         statusTxt.style.color = color;
         statusDot.style.backgroundColor = color;
         statusDot.style.boxShadow = `0 0 15px ${color}`;
-
         if (state === "RED") {
-            if (alertBanner.style.display !== "block") {
-                const alertMsg = " ВНИМАНИЕ: ЗАФИКСИРОВАНО НАРУШЕНИЕ ПРОТОКОЛОВ P.R.I.S.M. СОХРАНЯЙТЕ СПОКОЙСТВИЕ. — ";
-                alertBanner.innerHTML = `<div class="alert-marquee">${alertMsg.repeat(15)}</div>`;
-                alertBanner.style.display = "block";
-            }
-            document.body.style.backgroundColor = "#1a0000";
-            if (audioUnlocked && alarm && !isAlarmPlaying) {
-                isAlarmPlaying = true;
-                alarm.volume = 0.2;
-                alarm.play().catch(e => console.log("Audio play blocked"));
-            }
+            alertBanner.style.display = "block";
+            alertBanner.innerHTML = `<div class="alert-marquee">${" ВНИМАНИЕ: RED CODE — ".repeat(20)}</div>`;
         } else {
             alertBanner.style.display = "none";
-            document.body.style.backgroundColor = "#050505";
-            if (alarm) { alarm.pause(); alarm.currentTime = 0; }
-            isAlarmPlaying = false;
         }
     }
 
-    function generateBackgroundLog() {
-        const templates = [
-            () => `Поток данных Alpha-${Math.floor(Math.random()*10)}: стабилен.`,
-            () => `Резонанс Разлома: ${document.getElementById('resonance-index').innerText}`,
-            () => `Целостность оболочки: ${(99 + Math.random()).toFixed(3)}%`,
-            () => `Температура ядра: ${(35 + Math.random()*20).toFixed(1)}°C`,
-            () => `Сканирование сектора ${(Math.random()*10).toFixed(0)}: чисто.`,
-            () => `Анализ логов завершен: угроз не обнаружено.`,
-            () => `Связь с узлом Delta установлена. Пинг: ${(Math.random()*50).toFixed(0)}ms`,
-            () => `Мониторинг аномалий: уровень активности низкий.`,
-            () => `Uptime терминала: ${(performance.now() / 1000).toFixed(0)} сек.`,
-            () => {
-                const hour = new Date().getHours();
-                return `Режим фильтрации: ${(hour > 20 || hour < 6) ? "NIGHT_VISION" : "DAY_LIGHT"}`;
-            }
-        ];
-        sysLog(templates[Math.floor(Math.random() * templates.length)](), 'INFO');
-        setTimeout(generateBackgroundLog, Math.random() * 3000 + 4000);
+    function updateSensors() {
+        const risk = (0.001 + Math.random() * 0.0002).toFixed(4);
+        const resonance = (1.0000 + (Math.sin(Date.now() / 3000) * 0.0008)).toFixed(4);
+        document.getElementById('risk-percent').innerText = `${risk}%`;
+        document.getElementById('resonance-index').innerText = resonance;
     }
 
-    window.addEventListener('mousemove', (e) => {
-        if (Date.now() - lastMoveLog > 10000) { 
-            sysLog(`Сканирование биометрии в секторе [X:${e.clientX} Y:${e.clientY}]... OK`, 'CORE');
-            lastMoveLog = Date.now();
-        }
-    });
-
-    let lastMoveLog = 0;
+    setInterval(updateClock, 1000);
     setInterval(updateSensors, 150);
     setInterval(syncPrism, 4000);
-
-    document.querySelector('.btn').addEventListener('click', () => {
-        sysLog("Запрос доступа к базе данных персонала...", "WARN");
-    });
-const inputField = document.getElementById('user-input');
-const consoleOutput = document.getElementById('console-output');
-
-inputField.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const cmd = inputField.value.trim().toLowerCase();
-        if (cmd) {
-            // Дублируем в маленькое окошко
-            const line = document.createElement('div');
-            line.innerHTML = `<span style="color:var(--neon-green)">$</span> ${cmd.toUpperCase()}`;
-            consoleOutput.prepend(line);
-            
-            // Отправляем в основной лог системы
-            sysLog(`USER_EXEC: ${cmd.toUpperCase()}`, 'CORE');
-            
-            // Обработка
-            processCommand(cmd);
-        }
-        inputField.value = '';
-    }
-});
-
-function processCommand(cmd) {
-    const responses = {
-        'help': "Команды: STATUS, CLEAR, REBOOT, ACCESS",
-        'status': "СИСТЕМА СТАБИЛЬНА. УРОВЕНЬ УГРОЗЫ: MINIMAL",
-        'access': "ОШИБКА: НЕДОСТАТОЧНО ПРАВ (LEVEL_4 REQUIRED)",
-        'clear': "ОЧИСТКА..."
-    };
-
-    if (cmd === 'clear') {
-        document.getElementById('system-log').innerHTML = '';
-        consoleOutput.innerHTML = '';
-    } else if (responses[cmd]) {
-        setTimeout(() => {
-            const resLine = document.createElement('div');
-            resLine.style.color = "var(--neon-green)";
-            resLine.innerText = responses[cmd];
-            consoleOutput.prepend(resLine);
-        }, 300);
-    }
-}
-    updateClock();
     fetchVisitorData();
-    generateBackgroundLog();
+    updateClock();
 </script>
 </body>
-
 </html>
