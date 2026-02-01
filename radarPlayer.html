@@ -64,15 +64,21 @@
     canvas.height = 500;
 
     async function fetchPlayers() {
-        try {
-            const res = await fetch(`${RENDER_API}/mc-status`);
-            const data = await res.json();
-            if (data.online && data.players.list) {
-                // Генерируем случайные координаты для радара (чтобы точки не кучковались)
-                players = data.players.list.map(name => ({
+    try {
+        const res = await fetch(`${RENDER_API}/mc-status`);
+        const data = await res.json();
+        
+        // ВАЖНО: Твой бэкенд присылает onlinePlayers (объект), а не players.list (массив)
+        if (data.online && data.onlinePlayers) {
+            // Берем ключи (ники) из объекта и превращаем их в массив
+            const playerNames = Object.keys(data.onlinePlayers);
+            
+            // Если на сервере кто-то есть
+            if (playerNames.length > 0) {
+                players = playerNames.map(name => ({
                     name: name,
-                    dist: Math.random() * 200 + 30,
-                    deg: Math.random() * 360,
+                    dist: Math.random() * 200 + 30, // Случайная дистанция на радаре
+                    deg: Math.random() * 360,       // Случайный угол
                     detected: false
                 }));
                 updateLog();
@@ -80,10 +86,15 @@
                 players = [];
                 log.innerHTML = "Сигнатуры не обнаружены.";
             }
-        } catch (e) {
-            log.innerHTML = "<span style='color:red'>ОШИБКА СВЯЗИ С РАДАРОМ</span>";
+        } else {
+            players = [];
+            log.innerHTML = "Сервер OFFLINE или недоступен.";
         }
+    } catch (e) {
+        console.error("Radar Error:", e);
+        log.innerHTML = "<span style='color:red'>ОШИБКА СВЯЗИ С РАДАРОМ</span>";
     }
+}
 
     function updateLog() {
         log.innerHTML = players.map(p => `
