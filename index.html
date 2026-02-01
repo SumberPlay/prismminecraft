@@ -113,12 +113,14 @@
             </div>
         </div>
 
-        <div class="card" style="background: rgba(0,0,0,0.5);">
-            <div style="font-size: 0.6em; color: #444; margin-bottom: 10px;">USER_CONSOLE</div>
-            <div id="mini-console-output"><div>Waiting for input...</div></div>
-            <div style="display: flex; border-top: 1px solid #1a1a1a; padding-top: 8px; margin-top: 5px;">
-                <span style="color: var(--neon-green); margin-right: 5px;">></span>
-                <input type="text" id="user-input" placeholder="Type command..." autofocus>
+        <div class="card" style="background: rgba(0,0,0,0.5); min-height: 120px; display: flex; flex-direction: column;">
+            <div style="font-size: 0.6em; color: #444; margin-bottom: 5px;">USER_CONSOLE</div>
+            <div id="mini-console-output" style="flex-grow: 1; height: 60px; overflow-y: hidden; font-size: 0.8em; color: #666; display: flex; flex-direction: column-reverse; gap: 2px;">
+                <div>Waiting for input...</div>
+            </div>
+            <div style="display: flex; border-top: 1px solid #1a1a1a; padding-top: 8px; margin-top: auto;">
+                <span style="color: var(--neon-green); margin-right: 8px; font-weight: bold;">></span>
+                <input type="text" id="user-input" placeholder="Type command..." autocomplete="off" style="background: transparent; border: none; color: #fff; outline: none; font-family: inherit; width: 100%;">
             </div>
         </div>
     </div>
@@ -243,18 +245,25 @@
     }
 
     // 5. Консоль
+    // Восстановление работы консоли
     const input = document.getElementById('user-input');
     const miniOut = document.getElementById('mini-console-output');
 
-    if(input) {
+    if (input) {
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                const val = input.value.trim().toLowerCase();
+                const val = input.value.trim();
                 if (val) {
                     const l = document.createElement('div');
+                    l.style.borderLeft = "2px solid #222";
+                    l.style.paddingLeft = "5px";
                     l.innerHTML = `<span style="color: var(--neon-green)">></span> ${val.toUpperCase()}`;
-                    if(miniOut) miniOut.prepend(l);
-                    executeCmd(val);
+                    if (miniOut) {
+                        miniOut.prepend(l);
+                        // Удаляем старые записи из мини-консоли, чтобы не плыло
+                        if (miniOut.children.length > 3) miniOut.removeChild(miniOut.lastChild);
+                    }
+                    executeCmd(val.toLowerCase());
                 }
                 input.value = '';
             }
@@ -328,4 +337,5 @@
 </script>
 </body>
 </html>
+
 
