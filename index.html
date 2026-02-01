@@ -17,7 +17,7 @@
         color: #d1d1d1; 
         font-family: 'Courier New', monospace; 
         margin: 0; padding-bottom: 80px;
-        font-size: 16px; /* Увеличен базовый шрифт */
+        font-size: 16px; /* Крупный шрифт */
     }
 
     body::before {
@@ -178,7 +178,7 @@
         if(clockElem) clockElem.innerText = new Date().toLocaleTimeString();
     }, 1000);
 
-    // 2. Логирование
+    // 2. Логирование (Базовая функция)
     function sysLog(msg, type = 'INFO') {
         const log = document.getElementById('system-log');
         if(!log) return;
@@ -190,7 +190,46 @@
         if (log.children.length > 15) log.removeChild(log.lastChild);
     }
 
-    // 3. Консоль (Глобальная привязка для фикса)
+    // 3. Атмосферные логи (ВЕРНУЛ ВСЁ ОБРАТНО)
+    function generateBackgroundLog() {
+        const templates = [
+            () => `Поток данных Alpha-${Math.floor(Math.random()*10)}: СТАБИЛЕН.`,
+            () => `Резонанс Разлома: ${document.getElementById('resonance-index') ? document.getElementById('resonance-index').innerText : '0.000'}`,
+            () => `Целостность оболочки: ${(99 + Math.random()).toFixed(3)}%`,
+            () => `Температура ядра: ${(35 + Math.random()*20).toFixed(1)}°C`,
+            () => `Сканирование сектора ${(Math.random()*100).toFixed(0)}: УГРОЗ НЕ ОБНАРУЖЕНО.`,
+            () => `Анализ входящих пакетов... OK.`,
+            () => `Связь с узлом Delta установлена. Пинг: ${(Math.random()*50).toFixed(0)}ms`,
+            () => `Мониторинг аномалий: Уровень активности МИНИМАЛЬНЫЙ.`,
+            () => `Uptime терминала: ${(performance.now() / 1000).toFixed(0)} сек.`,
+            () => {
+                const hour = new Date().getHours();
+                const mode = (hour > 20 || hour < 6) ? "NIGHT_VISION" : "DAY_LIGHT";
+                return `Режим фильтрации: ${mode}.`;
+            },
+            () => `Использование памяти ядра: ${(Math.random() * 40 + 10).toFixed(2)} MB / 256 MB`,
+            () => `Активная зона захвата: ${window.innerWidth}x${window.innerHeight}`,
+            () => `Протокол синхронизации P.R.I.S.M. v2.0.26 активен.`,
+            () => `Обнаружен физический контакт с интерфейсом.`,
+            () => `Калибровка датчиков: Ошибка 0.000${Math.floor(Math.random()*9)}%`
+        ];
+
+        const randomMsg = templates[Math.floor(Math.random() * templates.length)]();
+        sysLog(randomMsg, 'INFO');
+        setTimeout(generateBackgroundLog, Math.random() * 3000 + 2000); // Чуть быстрее для динамики
+    }
+
+    // 4. Движение мыши (ВЕРНУЛ)
+    let lastMoveLog = 0;
+    window.addEventListener('mousemove', (e) => {
+        let now = Date.now();
+        if (now - lastMoveLog > 8000) { // Каждые 8 секунд, чтобы не спамить сильно
+            sysLog(`Сканирование биометрии [X:${e.clientX} Y:${e.clientY}]... OK`, 'CORE');
+            lastMoveLog = now;
+        }
+    });
+
+    // 5. Консоль
     function executeCmd(cmd) {
         const miniOut = document.getElementById('mini-console-output');
         sysLog(`Exec: ${cmd.toUpperCase()}`, "CORE");
@@ -206,7 +245,7 @@
         else sysLog(`Unknown command: ${cmd}`, "WARN");
     }
 
-    // 4. API и Данные
+    // 6. API и Данные
     async function fetchVisitorData() {
         try {
             const res = await fetch('https://ipapi.co/json/');
@@ -215,11 +254,38 @@
             document.getElementById('user-loc').innerText = `${data.city || 'Unknown'}, ${data.country_code || '??'}`;
             sysLog("User biometrics synchronized.", "CORE");
         } catch (e) {
-            sysLog("Proxy mode active.", "WARN");
+            sysLog("Proxy mode active. Location hidden.", "WARN");
         }
     }
 
-    // Запуск всего при загрузке
+    async function syncPrism() {
+        try {
+            const response = await fetch(`${RENDER_API}/status`);
+            const data = await response.json();
+            updateUI(data.state, data.label, data.color);
+        } catch (e) {
+            updateUI("NORMAL", "LOCAL_ACTIVE", "#00ffcc");
+        }
+    }
+
+    function updateUI(state, label, color) {
+        const statusTxt = document.getElementById('status-text');
+        const statusDot = document.getElementById('status-dot');
+        const alertBanner = document.getElementById('emergency-alert');
+        
+        if(statusTxt) { statusTxt.innerText = label.toUpperCase(); statusTxt.style.color = color; }
+        if(statusDot) { statusDot.style.backgroundColor = color; statusDot.style.boxShadow = `0 0 10px ${color}`; }
+        
+        if (state === "RED") {
+            if(alertBanner) alertBanner.style.display = "block";
+            document.body.style.backgroundColor = "#100";
+        } else {
+            if(alertBanner) alertBanner.style.display = "none";
+            document.body.style.backgroundColor = "#050505";
+        }
+    }
+
+    // ИНИЦИАЛИЗАЦИЯ
     window.onload = () => {
         const input = document.getElementById('user-input');
         const miniOut = document.getElementById('mini-console-output');
@@ -243,13 +309,13 @@
                     input.value = '';
                 }
             });
-            // Всегда держим фокус
             input.focus();
             document.addEventListener('click', () => input.focus());
         }
 
         fetchVisitorData();
-        sysLog("Terminal P.R.I.S.M. v2.0 - Online", "CORE");
+        generateBackgroundLog(); // <-- ВОТ ОНО, ЗАПУСКАЕМ ГЕНЕРАТОР БРЕДА
+        setInterval(syncPrism, 5000);
         
         // Рандомные показатели
         setInterval(() => {
@@ -258,6 +324,8 @@
             if(risk) risk.innerText = (0.001 + Math.random() * 0.005).toFixed(4) + "%";
             if(res) res.innerText = (1.0000 + Math.sin(Date.now()/2000)*0.001).toFixed(4);
         }, 300);
+
+        sysLog("Terminal P.R.I.S.M. v2.0 - Online", "CORE");
     };
 </script>
 </body>
