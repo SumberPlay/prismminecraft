@@ -193,6 +193,20 @@
 
     <div class="card" style="margin-bottom: 0; background: rgba(0,0,0,0.4);">
         <div style="font-size: 0.7em; color: #444; margin-bottom: 10px; border-bottom: 1px solid #1a3a3a; padding-bottom: 5px;">USER_COMMAND_INTERFACE</div>
+        <div id="mini-console-output" style="height: 60px; font-size: 0.8em; color: #888; overflow: hidden; margin-bottom: 10px; display: flex; flex-direction: column-reverse;">
+            <div style="color: #444;">Ожидание команды...</div>
+        </div>
+        <div style="display: flex; gap: 5px; align-items: center; border-top: 1px solid #1a1a1a; padding-top: 10px;">
+            <span style="color: var(--neon-green); font-size: 0.9em;">USR@PRISM:~$</span>
+            <input type="text" id="user-input" 
+                   style="background: transparent; border: none; color: #fff; outline: none; font-family: 'Courier New', monospace; flex: 1; font-size: 0.9em;" 
+                   placeholder="..." autofocus>
+        </div>
+    </div>
+</div>
+
+    <div class="card" style="margin-bottom: 0; background: rgba(0,0,0,0.4);">
+        <div style="font-size: 0.7em; color: #444; margin-bottom: 10px; border-bottom: 1px solid #1a3a3a; padding-bottom: 5px;">USER_COMMAND_INTERFACE</div>
         <div id="console-output" style="height: 60px; font-size: 0.8em; color: #888; overflow: hidden; margin-bottom: 10px; display: flex; flex-direction: column-reverse;">
             <div style="color: #444;">Ожидание ввода...</div>
         </div>
@@ -258,19 +272,83 @@
     setInterval(updateClock, 1000);
 
     // ПОЛУЧЕНИЕ ДАННЫХ ПОЛЬЗОВАТЕЛЯ
-    async function fetchVisitorData() {
+    // Функция получения IP и Локации с резервным каналом
+async function fetchVisitorData() {
+    const ipElem = document.getElementById('user-ip');
+    const locElem = document.getElementById('user-loc');
+
+    try {
+        // Попытка 1: ip-api.com (работает без ключа)
+        const response = await fetch('http://ip-api.com/json/?fields=status,country,city,query');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            ipElem.innerText = data.query;
+            locElem.innerText = `${data.city.toUpperCase()}, ${data.country.toUpperCase()}`;
+            sysLog(`Входящее соединение: [${data.query}] локация подтверждена.`, 'CORE');
+        } else {
+            throw new Error('API_LIMIT');
+        }
+    } catch (e) {
+        // Попытка 2: ipapi.co
         try {
             const response = await fetch('https://ipapi.co/json/');
             const data = await response.json();
-            document.getElementById('user-ip').innerText = data.ip || "127.0.0.1";
-            document.getElementById('user-loc').innerText = data.city ? `${data.city}, ${data.country}` : "UNKNOWN_SECTOR";
-            document.getElementById('user-browser').innerText = navigator.userAgent.split(' ')[0];
-            sysLog(`Входящее соединение: [${data.ip}] регион ${data.city || '??'}.`, 'CORE');
-        } catch (e) {
-            document.getElementById('user-ip').innerText = "127.0.0.1";
-            document.getElementById('user-loc').innerText = "DECRYPT_FAILED";
+            ipElem.innerText = data.ip || "127.0.0.1";
+            locElem.innerText = data.city ? `${data.city.toUpperCase()}, ${data.country}` : "UNKNOWN_SECTOR";
+        } catch (e2) {
+            ipElem.innerText = "127.0.0.1";
+            locElem.innerText = "LOCAL_HOST";
+            sysLog("ВНИМАНИЕ: Геолокация заблокирована протоколом браузера.", "WARN");
         }
     }
+}
+
+// ЛОГИКА КОМАНДНОЙ СТРОКИ
+const inputField = document.getElementById('user-input');
+const miniConsole = document.getElementById('mini-console-output');
+
+inputField.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const cmd = inputField.value.trim().toLowerCase();
+        if (cmd) {
+            // Запись в мини-консоль
+            const line = document.createElement('div');
+            line.innerHTML = `<span style="color:var(--neon-green)">></span> ${cmd.toUpperCase()}`;
+            miniConsole.prepend(line);
+            
+            // Запись в общий системный лог
+            sysLog(`USER_EXEC: ${cmd.toUpperCase()}`, 'CORE');
+            
+            // Выполнение
+            if (cmd === 'help') {
+                miniLog("Команды: STATUS, CLEAR, REBOOT, ACCESS");
+            } else if (cmd === 'status') {
+                miniLog(`INTEGRITY: 98% | MODE: ${lastState}`);
+            } else if (cmd === 'clear') {
+                document.getElementById('system-log').innerHTML = '';
+                miniConsole.innerHTML = '';
+            } else if (cmd === 'reboot') {
+                sysLog("ПРИНУДИТЕЛЬНАЯ ПЕРЕЗАГРУЗКА...", "ERROR");
+                setTimeout(() => location.reload(), 1500);
+            } else if (cmd === 'access') {
+                miniLog("ОШИБКА: ТРЕБУЕТСЯ КЛЮЧ УРОВНЯ 4");
+            } else {
+                miniLog("ОШИБКА: НЕИЗВЕСТНАЯ КОМАНДА");
+            }
+        }
+        inputField.value = '';
+    }
+});
+
+function miniLog(text) {
+    const resLine = document.createElement('div');
+    resLine.style.color = "var(--neon-green)";
+    resLine.innerText = text;
+    miniConsole.prepend(resLine);
+}
+
+
 
     function sysLog(msg, type = 'INFO') {
         const logContainer = document.getElementById('system-log');
@@ -402,9 +480,6 @@
     let lastMoveLog = 0;
     setInterval(updateSensors, 150);
     setInterval(syncPrism, 4000);
-    updateClock();
-    fetchVisitorData();
-    generateBackgroundLog();
 
     document.querySelector('.btn').addEventListener('click', () => {
         sysLog("Запрос доступа к базе данных персонала...", "WARN");
@@ -451,6 +526,10 @@ function processCommand(cmd) {
         }, 300);
     }
 }
+    updateClock();
+    fetchVisitorData();
+    generateBackgroundLog();
 </script>
 </body>
+
 </html>
