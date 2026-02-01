@@ -16,61 +16,61 @@
         background: var(--bg-dark); 
         color: #d1d1d1; 
         font-family: 'Courier New', monospace; 
-        margin: 0; padding-bottom: 60px;
-        font-size: 16px; /* Чуть больше шрифт */
+        margin: 0; padding-bottom: 80px;
+        font-size: 16px; /* Увеличен базовый шрифт */
     }
 
     body::before {
         content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background-image: linear-gradient(var(--border-color) 1px, transparent 1px), linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
-        background-size: 50px 50px; opacity: 0.05; z-index: -1;
+        background-size: 60px 60px; opacity: 0.05; z-index: -1;
     }
 
-    .container { max-width: 1200px; margin: 30px auto; padding: 0 30px; }
+    .container { max-width: 1200px; margin: 40px auto; padding: 0 40px; }
 
     .main-header {
-        text-align: center; padding: 30px; border: 1px solid var(--border-color);
-        background: linear-gradient(180deg, rgba(0, 255, 204, 0.03) 0%, transparent 100%);
-        margin-bottom: 30px;
+        text-align: center; padding: 40px; border: 1px solid var(--border-color);
+        background: linear-gradient(180deg, rgba(0, 255, 204, 0.05) 0%, transparent 100%);
+        margin-bottom: 40px;
     }
 
     .card { 
         background: var(--panel-bg); border: 1px solid var(--border-color); 
-        padding: 25px; margin-bottom: 25px; position: relative;
+        padding: 30px; margin-bottom: 30px; position: relative;
     }
     
-    .card::before { content: ""; position: absolute; top: -1px; left: -1px; width: 15px; height: 15px; border-top: 2px solid var(--neon-green); border-left: 2px solid var(--neon-green); }
-    .card::after { content: ""; position: absolute; bottom: -1px; right: -1px; width: 15px; height: 15px; border-bottom: 2px solid var(--neon-green); border-right: 2px solid var(--neon-green); }
+    .card::before { content: ""; position: absolute; top: -1px; left: -1px; width: 20px; height: 20px; border-top: 2px solid var(--neon-green); border-left: 2px solid var(--neon-green); }
+    .card::after { content: ""; position: absolute; bottom: -1px; right: -1px; width: 20px; height: 20px; border-bottom: 2px solid var(--neon-green); border-right: 2px solid var(--neon-green); }
 
     .status-bar {
-        border: 1px solid var(--border-color); padding: 20px 30px; 
+        border: 1px solid var(--border-color); padding: 25px 40px; 
         display: flex; justify-content: space-between; align-items: center;
-        background: rgba(0, 255, 204, 0.02); margin-bottom: 30px;
+        background: rgba(0, 255, 204, 0.02); margin-bottom: 40px;
     }
 
-    .dot { width: 12px; height: 12px; background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); animation: pulse 1.5s infinite; }
+    .dot { width: 14px; height: 14px; background: var(--neon-green); box-shadow: 0 0 12px var(--neon-green); animation: pulse 1.5s infinite; }
 
     .btn {
         background: rgba(0, 255, 204, 0.05); border: 1px solid var(--neon-green);
-        color: var(--neon-green); padding: 12px 30px; cursor: pointer;
-        text-transform: uppercase; font-size: 0.9em; transition: 0.3s;
+        color: var(--neon-green); padding: 15px 35px; cursor: pointer;
+        text-transform: uppercase; font-size: 1em; transition: 0.3s; letter-spacing: 2px;
     }
-    .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 15px var(--neon-green); }
+    .btn:hover { background: var(--neon-green); color: #000; box-shadow: 0 0 20px var(--neon-green); }
 
-    #system-log { height: 160px; overflow-y: auto; font-size: 0.9em; color: #008877; scrollbar-width: none; }
-    #mini-console-output { height: 70px; overflow: hidden; font-size: 0.85em; display: flex; flex-direction: column-reverse; color: #666; }
+    #system-log { height: 200px; overflow-y: auto; font-size: 0.95em; color: #008877; scrollbar-width: none; }
+    #mini-console-output { height: 80px; overflow: hidden; font-size: 0.9em; display: flex; flex-direction: column-reverse; color: #666; }
 
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     
-    input { background: transparent; border: none; color: #fff; outline: none; font-family: inherit; width: 100%; font-size: 1em; }
+    input { background: transparent; border: none; color: #fff; outline: none; font-family: inherit; width: 100%; font-size: 1.1em; }
     
-    .counter-num { font-size: 2.8em; color: var(--neon-green); font-weight: bold; }
+    .counter-num { font-size: 3.5em; color: var(--neon-green); font-weight: bold; text-shadow: 0 0 15px rgba(0,255,204,0.2); }
     
-    nav { background: #000; padding: 20px; border-bottom: 1px solid var(--border-color); text-align: center; }
-    nav a { color: #444; text-decoration: none; padding: 0 20px; font-size: 0.9em; letter-spacing: 2px; }
+    nav { background: #000; padding: 25px; border-bottom: 1px solid var(--border-color); text-align: center; }
+    nav a { color: #555; text-decoration: none; padding: 0 25px; font-size: 1em; letter-spacing: 3px; }
     nav a:hover { color: var(--neon-green); }
 
-    #emergency-alert { display: none; position: fixed; bottom: 0; width: 100%; background: var(--alert-red); color: #000; padding: 15px; z-index: 9999; font-weight: bold; text-align: center; }
+    #emergency-alert { display: none; position: fixed; bottom: 0; width: 100%; background: var(--alert-red); color: #000; padding: 20px; z-index: 9999; font-weight: bold; text-align: center; font-size: 1.2em; }
     </style>
 </head>
 <body>
@@ -86,9 +86,9 @@
 
 <div class="container">
     <div class="main-header">
-        <h2 style="letter-spacing: 12px; color: var(--neon-green); margin: 0; font-size: 2.5em;">P.R.I.S.M.</h2>
-        <div style="font-size: 0.7em; letter-spacing: 4px; color: #444; margin-top: 10px; text-transform: uppercase;">
-            Proactive Reaction, Immediate Solution & Minimization of Anomalies
+        <h2 style="letter-spacing: 15px; color: var(--neon-green); margin: 0; font-size: 3em;">P.R.I.S.M.</h2>
+        <div style="font-size: 0.8em; letter-spacing: 5px; color: #444; margin-top: 15px; text-transform: uppercase;">
+            Proactive Reaction, Immediate Solution, Minimization of Anomalies
         </div>
     </div>
 
@@ -96,80 +96,78 @@
         <div style="display: flex; align-items: center; gap: 20px;">
             <div class="dot" id="status-dot"></div>
             <div>
-                <div style="font-size: 0.65em; color: #555;">SYSTEM_INTEGRITY</div>
-                <div id="status-text" style="font-weight: bold; color: var(--neon-green);">CONNECTING...</div>
+                <div style="font-size: 0.7em; color: #555;">SYSTEM_INTEGRITY</div>
+                <div id="status-text" style="font-weight: bold; color: var(--neon-green); font-size: 1.2em;">CONNECTING...</div>
             </div>
         </div>
         <div style="text-align: right;">
-            <div style="font-size: 0.65em; color: #555;">SERVER_TIME</div>
-            <div id="clock" style="color: var(--neon-green); font-size: 1.1em;">00:00:00</div>
+            <div style="font-size: 0.7em; color: #555;">SERVER_TIME</div>
+            <div id="clock" style="color: var(--neon-green); font-size: 1.3em;">00:00:00</div>
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
         <div class="card">
-            <div style="font-size: 0.65em; color: #444; margin-bottom: 12px;">CONNECTION_METRICS</div>
-            <div id="user-info" style="font-size: 0.95em; line-height: 1.8;">
+            <div style="font-size: 0.7em; color: #444; margin-bottom: 15px;">CONNECTION_METRICS</div>
+            <div id="user-info" style="font-size: 1em; line-height: 1.8;">
                 <div>IP: <span id="user-ip" style="color: var(--neon-green);">127.0.0.1</span></div>
                 <div>LOC: <span id="user-loc" style="color: var(--neon-green);">SCANNING...</span></div>
                 <div>SEC: <span style="color: var(--neon-green);">ENCRYPTED</span></div>
             </div>
         </div>
 
-        <div class="card" style="background: rgba(0,0,0,0.5); min-height: 140px; display: flex; flex-direction: column;">
-            <div style="font-size: 0.65em; color: #444; margin-bottom: 8px;">USER_CONSOLE</div>
-            <div id="mini-console-output" style="flex-grow: 1; overflow-y: hidden; display: flex; flex-direction: column-reverse; gap: 4px;">
+        <div class="card" style="background: rgba(0,0,0,0.5); min-height: 160px; display: flex; flex-direction: column;">
+            <div style="font-size: 0.7em; color: #444; margin-bottom: 10px;">USER_CONSOLE</div>
+            <div id="mini-console-output" style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column-reverse; gap: 5px;">
                 <div>Waiting for input...</div>
             </div>
-            <div style="display: flex; border-top: 1px solid #1a1a1a; padding-top: 12px; margin-top: auto;">
-                <span style="color: var(--neon-green); margin-right: 10px; font-weight: bold;">></span>
-                <input type="text" id="user-input" placeholder="Type command..." autocomplete="off" spellcheck="false">
+            <div style="display: flex; border-top: 1px solid #1a1a1a; padding-top: 15px; margin-top: auto;">
+                <span style="color: var(--neon-green); margin-right: 12px; font-weight: bold;">></span>
+                <input type="text" id="user-input" placeholder="Enter command..." autocomplete="off" spellcheck="false" autofocus>
             </div>
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
         <div class="card" style="text-align: center;">
-            <div style="font-size: 0.65em; color: #444;">COLLAPSE_RISK</div>
+            <div style="font-size: 0.7em; color: #444;">COLLAPSE_RISK</div>
             <div class="counter-num" id="risk-percent">0.0000%</div>
         </div>
         <div class="card" style="text-align: center;">
-            <div style="font-size: 0.65em; color: #444;">RESONANCE_ID</div>
+            <div style="font-size: 0.7em; color: #444;">RESONANCE_ID</div>
             <div class="counter-num" id="resonance-index">1.0000</div>
         </div>
     </div>
 
     <div class="card" style="background: #000;">
-        <div style="font-size: 0.65em; color: #444; border-bottom: 1px solid #111; padding-bottom: 8px; margin-bottom: 12px;">LIVE_SYSTEM_FEED</div>
+        <div style="font-size: 0.7em; color: #444; border-bottom: 1px solid #111; padding-bottom: 10px; margin-bottom: 15px;">LIVE_SYSTEM_FEED</div>
         <div id="system-log"></div>
     </div>
 
     <div class="card">
-        <div style="font-size: 0.65em; color: #444; border-bottom: 1px solid #111; padding-bottom: 8px; margin-bottom: 20px;">ARCHIVE_ENTRY_#042</div>
-        <h3 style="color: var(--neon-green); margin-top: 0; letter-spacing: 3px;">OBJECTIVE_DATA</h3>
+        <div style="font-size: 0.7em; color: #444; border-bottom: 1px solid #111; padding-bottom: 10px; margin-bottom: 25px;">ARCHIVE_ENTRY_#042</div>
+        <h3 style="color: var(--neon-green); margin-top: 0; letter-spacing: 4px; font-size: 1.8em;">OBJECTIVE_DATA</h3>
         
         <div style="max-width: 900px; margin: 0 auto; color: #aaa;">
-            <p style="line-height: 1.7; border-left: 3px solid var(--neon-green); padding-left: 20px; margin-bottom: 25px;">
+            <p style="line-height: 1.8; border-left: 4px solid var(--neon-green); padding-left: 25px; margin-bottom: 30px;">
                 <strong style="color: #fff;">Статус независимости:</strong> Мы являемся независимой структурой. Отсутствие какой-либо зависимости позволяет нам принимать решения с максимальной скоростью и эффективностью.
             </p>
-            <p style="line-height: 1.7; border-left: 3px solid #333; padding-left: 20px; margin-bottom: 25px;">
-                <strong style="color: #fff;">Политика конфиденциальности:</strong> Информация засекречена и предоставляется в объеме, необходимом для поддержания доверия.
+            <p style="line-height: 1.8; border-left: 4px solid #333; padding-left: 25px; margin-bottom: 30px;">
+                <strong style="color: #fff;">Политика конфиденциальности:</strong> Информация засекречена и предоставляется только авторизованным лицам.
             </p>
-            <p style="line-height: 1.7; border-left: 3px solid #333; padding-left: 20px; margin-bottom: 25px;">
-                <strong style="color: #fff;">Структура управления:</strong> Личности Создателей анонимны для обеспечения непрерывности функционирования Системы.
+            <p style="line-height: 1.8; border-left: 4px solid #333; padding-left: 25px; margin-bottom: 30px;">
+                <strong style="color: #fff;">Структура управления:</strong> Личности Создателей анонимны для обеспечения безопасности всей системы.
             </p>
-            <p style="line-height: 1.7; border-left: 3px solid #333; padding-left: 20px; margin-bottom: 25px;">
-                <strong style="color: #fff;">Определение Аномалий:</strong> К аномалиям относятся объекты, нарушающие законы физики.
-            </p>
-            <p style="text-align: center; color: var(--neon-green); font-weight: bold; margin-top: 40px; letter-spacing: 5px; font-size: 1.1em;">
+            <p style="text-align: center; color: var(--neon-green); font-weight: bold; margin-top: 50px; letter-spacing: 6px; font-size: 1.2em;">
                 ЗНАНИЕ — ЭТО ЩИТ. МЫ ДЕРЖИМ ЕГО ДЛЯ ВАС.
             </p>
         </div>
 
-        <div style="text-align: center; margin-top: 40px; border-top: 1px dashed var(--border-color); padding-top: 30px;">
+        <div style="text-align: center; margin-top: 50px; border-top: 1px dashed var(--border-color); padding-top: 40px;">
             <button class="btn" onclick="location.href='staff.html'">IDENTIFY_PERSONNEL</button>
         </div>
-    </div> 
+    </div>
+</div>
 
 <script>
     const RENDER_API = "https://prism-bot.onrender.com";
@@ -186,49 +184,25 @@
         if(!log) return;
         const colors = { 'INFO': '#00ffcc', 'WARN': '#ffd700', 'ERROR': '#ff4444', 'CORE': '#ff00ff' };
         const line = document.createElement('div');
-        line.style.marginBottom = "4px";
+        line.style.marginBottom = "6px";
         line.innerHTML = `<span style="color: #444;">[${new Date().toLocaleTimeString()}]</span> <span style="color: ${colors[type]}">${type}</span> > ${msg}`;
         log.prepend(line);
         if (log.children.length > 15) log.removeChild(log.lastChild);
     }
 
-    // 3. Консоль (Улучшенная инициализация)
-    function initConsole() {
-        const input = document.getElementById('user-input');
-        const miniOut = document.getElementById('mini-console-output');
-
-        if (input) {
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    const val = input.value.trim();
-                    if (val) {
-                        const l = document.createElement('div');
-                        l.style.borderLeft = "2px solid #333";
-                        l.style.paddingLeft = "8px";
-                        l.innerHTML = `<span style="color: var(--neon-green)">></span> ${val.toUpperCase()}`;
-                        
-                        if (miniOut) {
-                            miniOut.prepend(l);
-                            if (miniOut.children.length > 4) miniOut.removeChild(miniOut.lastChild);
-                        }
-                        executeCmd(val.toLowerCase());
-                    }
-                    input.value = '';
-                }
-            });
-        }
-    }
-
+    // 3. Консоль (Глобальная привязка для фикса)
     function executeCmd(cmd) {
+        const miniOut = document.getElementById('mini-console-output');
         sysLog(`Exec: ${cmd.toUpperCase()}`, "CORE");
+        
         if (cmd === 'help') sysLog("Commands: status, clear, reboot, protocol", "INFO");
         else if (cmd === 'clear') { 
             document.getElementById('system-log').innerHTML = ''; 
-            document.getElementById('mini-console-output').innerHTML = '<div>Console cleared.</div>'; 
+            if(miniOut) miniOut.innerHTML = '<div>Console cleared.</div>'; 
         }
         else if (cmd === 'reboot') { sysLog("Rebooting terminal...", "ERROR"); setTimeout(() => location.reload(), 1000); }
         else if (cmd === 'status') sysLog("All systems nominal. Link: STABLE.", "INFO");
-        else if (cmd === 'protocol') sysLog("PRISM Protocol v2.0.26 active. Firewall: ON.", "CORE");
+        else if (cmd === 'protocol') sysLog("PRISM Protocol v2.0 active.", "CORE");
         else sysLog(`Unknown command: ${cmd}`, "WARN");
     }
 
@@ -241,50 +215,49 @@
             document.getElementById('user-loc').innerText = `${data.city || 'Unknown'}, ${data.country_code || '??'}`;
             sysLog("User biometrics synchronized.", "CORE");
         } catch (e) {
-            sysLog("Network error: Using proxy defaults.", "WARN");
+            sysLog("Proxy mode active.", "WARN");
         }
     }
 
-    async function syncPrism() {
-        try {
-            const response = await fetch(`${RENDER_API}/status`);
-            const data = await response.json();
-            updateUI(data.state, data.label, data.color);
-        } catch (e) {
-            updateUI("NORMAL", "LOCAL_ACTIVE", "#00ffcc");
-        }
-    }
-
-    function updateUI(state, label, color) {
-        const statusTxt = document.getElementById('status-text');
-        const statusDot = document.getElementById('status-dot');
-        if(statusTxt) { statusTxt.innerText = label.toUpperCase(); statusTxt.style.color = color; }
-        if(statusDot) { statusDot.style.backgroundColor = color; statusDot.style.boxShadow = `0 0 10px ${color}`; }
-    }
-
-    // 5. Фон и эффекты
-    function generateBackgroundLog() {
-        const templates = [
-            "Pulsing node Delta-9...", "Cache synchronized.", "Scanning for anomalies...",
-            "Resonance stable.", "Atmosphere pressure: 1.012 bar", "Sub-space link OK."
-        ];
-        sysLog(templates[Math.floor(Math.random()*templates.length)], "INFO");
-        setTimeout(generateBackgroundLog, Math.random() * 5000 + 5000);
-    }
-
-    // Запуск
+    // Запуск всего при загрузке
     window.onload = () => {
-        initConsole();
-        fetchVisitorData();
-        generateBackgroundLog();
-        setInterval(syncPrism, 10000);
-        
-        setInterval(() => {
-            document.getElementById('risk-percent').innerText = (0.001 + Math.random() * 0.005).toFixed(4) + "%";
-            document.getElementById('resonance-index').innerText = (1.0000 + Math.sin(Date.now()/2000)*0.001).toFixed(4);
-        }, 300);
+        const input = document.getElementById('user-input');
+        const miniOut = document.getElementById('mini-console-output');
 
-        sysLog("P.R.I.S.M. Terminal v2.0 initialized.", "INFO");
+        if (input) {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const val = input.value.trim();
+                    if (val) {
+                        const l = document.createElement('div');
+                        l.style.borderLeft = "2px solid #333";
+                        l.style.paddingLeft = "10px";
+                        l.innerHTML = `<span style="color: var(--neon-green)">></span> ${val.toUpperCase()}`;
+                        
+                        if (miniOut) {
+                            miniOut.prepend(l);
+                            if (miniOut.children.length > 5) miniOut.removeChild(miniOut.lastChild);
+                        }
+                        executeCmd(val.toLowerCase());
+                    }
+                    input.value = '';
+                }
+            });
+            // Всегда держим фокус
+            input.focus();
+            document.addEventListener('click', () => input.focus());
+        }
+
+        fetchVisitorData();
+        sysLog("Terminal P.R.I.S.M. v2.0 - Online", "CORE");
+        
+        // Рандомные показатели
+        setInterval(() => {
+            const risk = document.getElementById('risk-percent');
+            const res = document.getElementById('resonance-index');
+            if(risk) risk.innerText = (0.001 + Math.random() * 0.005).toFixed(4) + "%";
+            if(res) res.innerText = (1.0000 + Math.sin(Date.now()/2000)*0.001).toFixed(4);
+        }, 300);
     };
 </script>
 </body>
