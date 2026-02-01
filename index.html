@@ -221,7 +221,50 @@
             document.body.style.backgroundColor = "#050505";
         }
     }
+    // Расширенный список фраз для имитации активности
+function generateBackgroundLog() {
+    const templates = [
+        () => `Поток данных Alpha-${Math.floor(Math.random()*10)}: СТАБИЛЕН.`,
+        () => `Резонанс Разлома: ${document.getElementById('resonance-index').innerText}`,
+        () => `Целостность оболочки: ${(99 + Math.random()).toFixed(3)}%`,
+        () => `Температура ядра: ${(35 + Math.random()*20).toFixed(1)}°C`,
+        () => `Сканирование сектора ${(Math.random()*100).toFixed(0)}: УГРОЗ НЕ ОБНАРУЖЕНО.`,
+        () => `Анализ входящих пакетов... OK.`,
+        () => `Связь с узлом Delta установлена. Пинг: ${(Math.random()*50).toFixed(0)}ms`,
+        () => `Мониторинг аномалий: Уровень активности МИНИМАЛЬНЫЙ.`,
+        () => `Uptime терминала: ${(performance.now() / 1000).toFixed(0)} сек.`,
+        () => {
+            const hour = new Date().getHours();
+            const mode = (hour > 20 || hour < 6) ? "NIGHT_VISION" : "DAY_LIGHT";
+            return `Режим фильтрации: ${mode} (По системному времени).`;
+        },
+        () => `Использование памяти ядра: ${(Math.random() * 40 + 10).toFixed(2)} MB / 256 MB`,
+        () => `Активная зона захвата: ${window.innerWidth}x${window.innerHeight} (Viewport)`,
+        () => `Протокол синхронизации P.R.I.S.M. v2.0.26 активен.`,
+        () => `Обнаружен физический контакт с интерфейсом: Координаты подтверждены.`,
+        () => `Калибровка датчиков завершена: Ошибка 0.000${Math.floor(Math.random()*9)}%`
+    ];
 
+    // Выбираем случайную фразу
+    const randomMsg = templates[Math.floor(Math.random() * templates.length)]();
+    sysLog(randomMsg, 'INFO');
+
+    // Запускаем следующий цикл через случайное время (от 4 до 8 секунд)
+    setTimeout(generateBackgroundLog, Math.random() * 4000 + 4000);
+}
+
+// Дополнительная реакция на движение мыши (раз в 15 секунд)
+let lastMoveLog = 0;
+window.addEventListener('mousemove', (e) => {
+    let now = Date.now();
+    if (now - lastMoveLog > 15000) { 
+        sysLog(`Сканирование биометрии [X:${e.clientX} Y:${e.clientY}]... OK`, 'CORE');
+        lastMoveLog = now;
+    }
+});
+
+// Инициализация при загрузке
+generateBackgroundLog();
     // 5. Консоль
     const input = document.getElementById('user-input');
     const miniOut = document.getElementById('mini-console-output');
@@ -263,3 +306,4 @@
 </script>
 </body>
 </html>
+
