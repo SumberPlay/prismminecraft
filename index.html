@@ -247,34 +247,38 @@
         const ipElem = document.getElementById('user-ip');
         const locElem = document.getElementById('user-loc');
         
-        try {
-            // Используем ip-api.com (более стабилен для РФ)
-            // Примечание: если сайт на HTTPS, а API на HTTP, браузер может блокировать.
-            // В таком случае используется резервный универсальный сервис.
-            const response = await fetch('https://api.db-ip.com/v2/free/self');
-            const data = await response.json();
-            
-            ipElem.innerText = data.ipAddress || "127.0.0.1";
-            locElem.innerText = `${data.city || 'Unknown'}, ${data.countryCode || '??'}`;
-            
-            sysLog("Внешнее подключение верифицировано. Данные получены.", "SYNC");
-        } catch (e) {
-            console.error("IP Fetch Error:", e);
-            
-            // Резервный вариант №2 (если первый упал)
+        // Массив сервисов для перебора (если один заблокирован, пробуем другой)
+        const services = [
+            'https://api.db-ip.com/v2/free/self',
+            'https://ipapi.co/json/', // Тот, что у вас блокировался
+            'https://ip-api.com/json/'
+        ];
+
+        for (let url of services) {
             try {
-                const resAlt = await fetch('https://ipinfo.io/json?token='); // Пустой токен иногда пропускает базовые данные
-                const dataAlt = await resAlt.json();
-                ipElem.innerText = dataAlt.ip;
-                locElem.innerText = dataAlt.city;
-            } catch (e2) {
-                ipElem.innerText = "MASKED_NODE";
-                locElem.innerText = "LOCAL_HUB";
-                ipElem.style.color = "var(--alert-red)";
-                sysLog("Ошибка идентификации. Включен протокол анонимности.", "WARN");
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('Status not OK');
+                const data = await res.json();
+                
+                // Унификация полей (разные API называют их по-разному)
+                const ip = data.ipAddress || data.ip || "127.0.0.1";
+                const city = data.city || "Unknown";
+                const country = data.countryCode || data.country || "??";
+
+                ipElem.innerText = ip;
+                locElem.innerText = `${city}, ${country}`;
+                sysLog(`Идентификация завершена через ${new URL(url).hostname}`, "SYNC");
+                return; // Выходим из цикла, если данные получены
+            } catch (e) {
+                console.warn(`Сервис ${url} заблокирован или недоступен.`);
             }
         }
-    }
+
+        // Если ничего не сработало
+        ipElem.innerText = "MASKED_NODE";
+        locElem.innerText = "LOCAL_HUB";
+        ipElem.style.color = "var(--alert-red)";
+        sysLog("Критическая блокировка протоколов связи. Личность скрыта.", "WARN");
     }
 
     async function syncPrism() {
@@ -418,4 +422,5 @@
 </script>
 </body>
 </html>
+
 
