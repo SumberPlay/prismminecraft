@@ -147,19 +147,27 @@ async function syncSystem() {
     }
 }
 function welcomeVoice(name) {
-    // Проверяем, поддерживает ли браузер синтез речи
     if (!window.speechSynthesis) return;
 
+    // Грязный хак: если браузер блокирует звук, мы подождем клика
+    if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+
     const msg = new SpeechSynthesisUtterance();
-    // Текст приветствия. Можно заменить на русский, если хочешь.
     msg.text = `Welcome back, operator ${name}. All systems are nominal.`;
-    msg.lang = 'en-US'; 
-    msg.rate = 0.85; // Чуть медленнее для эффекта терминала
-    msg.pitch = 0.5;  // Низкий "мужской" голос системы
-    
-    // Очищаем очередь, если что-то уже звучит
-    window.speechSynthesis.cancel();
+    msg.lang = 'en-US';
+    msg.rate = 0.85;
+    msg.pitch = 0.5;
+
+    // Попытка запустить
     window.speechSynthesis.speak(msg);
+
+    // Если не сработало (браузер заблокировал), сработает при следующем клике по body
+    msg.onerror = (e) => {
+        console.warn("Звук заблокирован. Ждем клика пользователя.");
+        document.body.addEventListener('click', () => {
+            window.speechSynthesis.speak(msg);
+        }, { once: true });
+    };
 }
 async function checkAuth() {
     const id = document.getElementById('uid').value.toUpperCase().trim();
@@ -308,6 +316,7 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
 
