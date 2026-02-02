@@ -155,20 +155,34 @@ function welcomeVoice(name) {
     msg.text = `Welcome back, operator ${name}. All systems are nominal.`;
     msg.lang = 'en-US';
 
-    // --- НАСТРОЙКИ ГОЛОСА ---
-    msg.volume = 0.4;  // ГРОМКОСТЬ: от 0.0 до 1.0 (0.4 — это примерно 40% громкости)
-    msg.pitch = 0.1;   // ТОНАЛЬНОСТЬ: от 0.0 до 2.0 (0.1 — максимально низкий, мужской бас)
-    msg.rate = 0.8;    // СКОРОСТЬ: 0.8 — чуть замедленный, звучит более механически
-    // ------------------------
+    // 1. Получаем список всех голосов в системе
+    let voices = window.speechSynthesis.getVoices();
+
+    // 2. Ищем мужской голос (David обычно есть во всех Windows)
+    // Мы ищем голос, в названии которого есть "David", "Mark", "Google UK English Male" или просто "Male"
+    const maleVoice = voices.find(voice => 
+        voice.name.includes('David') || 
+        voice.name.includes('Mark') || 
+        voice.name.includes('Male') ||
+        voice.name.includes('Pavel')
+    );
+
+    // 3. Если нашли мужской — используем его
+    if (maleVoice) {
+        msg.voice = maleVoice;
+    }
+
+    // Настройки для суровости
+    msg.volume = 0.3; // Тихий
+    msg.pitch = 0.1;  // Басовитый
+    msg.rate = 0.8;   // Медленный
 
     window.speechSynthesis.speak(msg);
 
-    msg.onerror = (e) => {
-        console.warn("Звук заблокирован. Ожидание активации пользователем.");
-        document.body.addEventListener('click', () => {
-            window.speechSynthesis.speak(msg);
-        }, { once: true });
-    };
+    // Если список голосов еще не загрузился (такое бывает в Chrome)
+    if (voices.length === 0) {
+        window.speechSynthesis.onvoiceschanged = () => welcomeVoice(name);
+    }
 }
 async function checkAuth() {
     const id = document.getElementById('uid').value.toUpperCase().trim();
@@ -317,6 +331,7 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
 
