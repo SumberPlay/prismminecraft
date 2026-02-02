@@ -147,27 +147,39 @@ async function syncSystem() {
     }
 }
 function welcomeVoice(name) {
-    // Формируем текст
-    const text = `Welcome back, operator ${name}. All systems are nominal.`;
-    
-    // Используем неофициальное API Google Translate для получения аудио
-    // tl=en (язык), q=(текст)
-    const googleTTSUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=en&client=tw-ob`;
+    if (!window.speechSynthesis) return;
 
-    const audio = new Audio(googleTTSUrl);
-    audio.volume = 0.3; // Твой запрос: сделать потише
+    const speak = () => {
+        const synth = window.speechSynthesis;
+        const voices = synth.getVoices();
+        
+        const msg = new SpeechSynthesisUtterance();
+        
+        // Ищем самый крутой мужской голос (Natural — нейронные, Google — облачные)
+        // Приоритет: Google UK English Male -> Microsoft David -> Любой Male
+        const coolVoice = voices.find(v => v.name.includes('Google UK English Male')) || 
+                          voices.find(v => v.name.includes('David')) ||
+                          voices.find(v => v.name.includes('Male')) ||
+                          voices.find(v => v.lang.startsWith('en'));
 
-    // Пытаемся воспроизвести
-    const playPromise = audio.play();
+        msg.voice = coolVoice;
+        msg.text = `Welcome back, ${name}. All systems are nominal. P.R.I.S.M. is ready.`;
+        msg.lang = 'en-US';
+        
+        // Настройки "Джарвиса"
+        msg.volume = 0.4;  // Потише
+        msg.rate = 0.9;    // Чуть медленнее
+        msg.pitch = 0.8;   // Солидный тон
 
-    if (playPromise !== undefined) {
-        playPromise.catch(error => {
-            console.warn("Автовоспроизведение заблокировано. Ожидание клика.");
-            // Если браузер заблокировал звук, играем при первом клике
-            document.body.addEventListener('click', () => {
-                audio.play();
-            }, { once: true });
-        });
+        synth.cancel(); 
+        synth.speak(msg);
+    };
+
+    // Chrome часто не подгружает голоса сразу
+    if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.onvoiceschanged = speak;
+    } else {
+        speak();
     }
 }
 async function checkAuth() {
@@ -317,6 +329,7 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
 
