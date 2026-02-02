@@ -147,43 +147,27 @@ async function syncSystem() {
     }
 }
 function welcomeVoice(name) {
-    if (!window.speechSynthesis) return;
+    // Формируем текст
+    const text = `Welcome back, operator ${name}. All systems are nominal.`;
+    
+    // Используем неофициальное API Google Translate для получения аудио
+    // tl=en (язык), q=(текст)
+    const googleTTSUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=en&client=tw-ob`;
 
-    const speak = () => {
-        const voices = window.speechSynthesis.getVoices();
-        if (voices.length === 0) return; // Ждем, пока загрузятся
+    const audio = new Audio(googleTTSUrl);
+    audio.volume = 0.3; // Твой запрос: сделать потише
 
-        const msg = new SpeechSynthesisUtterance();
-        
-        // Пытаемся найти самый "элитный" голос
-        // 1. Ищем британца (самый похожий на Джарвиса)
-        // 2. Если нет - ищем David (классика Windows)
-        // 3. Если нет - любого Male
-        const jarvisVoice = voices.find(v => v.name.includes('Daniel') || v.name.includes('Great Britain')) || 
-                           voices.find(v => v.name.includes('David')) ||
-                           voices.find(v => v.name.includes('Male'));
+    // Пытаемся воспроизвести
+    const playPromise = audio.play();
 
-        if (jarvisVoice) {
-            msg.voice = jarvisVoice;
-        }
-
-        msg.text = `Welcome back, ${name}. Terminal initialized. All systems are operational.`;
-        msg.lang = 'en-US';
-        
-        // Настройки для серьезного мужского тона
-        msg.volume = 0.4;  
-        msg.pitch = 0.7;   // Чуть ниже среднего для солидности
-        msg.rate = 0.9;    // Уверенная, спокойная речь
-
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(msg);
-    };
-
-    // Если голоса еще не прогрузились - ждем их
-    if (window.speechSynthesis.getVoices().length === 0) {
-        window.speechSynthesis.onvoiceschanged = speak;
-    } else {
-        speak();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.warn("Автовоспроизведение заблокировано. Ожидание клика.");
+            // Если браузер заблокировал звук, играем при первом клике
+            document.body.addEventListener('click', () => {
+                audio.play();
+            }, { once: true });
+        });
     }
 }
 async function checkAuth() {
@@ -333,6 +317,7 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
 
