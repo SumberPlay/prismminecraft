@@ -148,26 +148,43 @@ async function syncSystem() {
 }
 function welcomeVoice(name) {
     if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
 
-    const msg = new SpeechSynthesisUtterance();
-    const voices = window.speechSynthesis.getVoices();
+    const speak = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length === 0) return; // Ждем, пока загрузятся
 
-    // Пытаемся найти британца Daniel или американца David
-    msg.voice = voices.find(v => v.name.includes('Daniel') || v.name.includes('UK English')) || 
-                voices.find(v => v.name.includes('David')) || 
-                voices[0];
+        const msg = new SpeechSynthesisUtterance();
+        
+        // Пытаемся найти самый "элитный" голос
+        // 1. Ищем британца (самый похожий на Джарвиса)
+        // 2. Если нет - ищем David (классика Windows)
+        // 3. Если нет - любого Male
+        const jarvisVoice = voices.find(v => v.name.includes('Daniel') || v.name.includes('Great Britain')) || 
+                           voices.find(v => v.name.includes('David')) ||
+                           voices.find(v => v.name.includes('Male'));
 
-    // Текст в стиле Джарвиса
-    msg.text = `Welcome back, ${name}. I've prepared the terminal for you. All systems are operational.`;
-    msg.lang = 'en-US';
+        if (jarvisVoice) {
+            msg.voice = jarvisVoice;
+        }
 
-    // Настройки "Джарвиса": чуть быстрее обычного, спокойный тон
-    msg.volume = 0.5;  // Не слишком громко
-    msg.rate = 0.95;   // Скорость речи (Джарвис говорит четко и быстро)
-    msg.pitch = 0.8;   // Чуть ниже среднего, но не бас-робот
+        msg.text = `Welcome back, ${name}. Terminal initialized. All systems are operational.`;
+        msg.lang = 'en-US';
+        
+        // Настройки для серьезного мужского тона
+        msg.volume = 0.4;  
+        msg.pitch = 0.7;   // Чуть ниже среднего для солидности
+        msg.rate = 0.9;    // Уверенная, спокойная речь
 
-    window.speechSynthesis.speak(msg);
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(msg);
+    };
+
+    // Если голоса еще не прогрузились - ждем их
+    if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.onvoiceschanged = speak;
+    } else {
+        speak();
+    }
 }
 async function checkAuth() {
     const id = document.getElementById('uid').value.toUpperCase().trim();
@@ -316,6 +333,7 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
 
