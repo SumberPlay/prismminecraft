@@ -382,10 +382,6 @@
         }
     });
 
-    window.addEventListener('mousedown', () => {
-        sysLog("Прерывание: Обнаружен физический контакт с интерфейсом.", "WARN");
-    });
-
     // INIT
     setInterval(updateSensors, 150);
     setInterval(updateClock, 1000);
@@ -423,6 +419,7 @@
 </script>
 </body>
 </html>
+
 
 
 
