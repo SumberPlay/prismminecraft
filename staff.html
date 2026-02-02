@@ -148,41 +148,26 @@ async function syncSystem() {
 }
 function welcomeVoice(name) {
     if (!window.speechSynthesis) return;
-
-    if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
 
     const msg = new SpeechSynthesisUtterance();
-    msg.text = `Welcome back, operator ${name}. All systems are nominal.`;
+    const voices = window.speechSynthesis.getVoices();
+
+    // Пытаемся найти британца Daniel или американца David
+    msg.voice = voices.find(v => v.name.includes('Daniel') || v.name.includes('UK English')) || 
+                voices.find(v => v.name.includes('David')) || 
+                voices[0];
+
+    // Текст в стиле Джарвиса
+    msg.text = `Welcome back, ${name}. I've prepared the terminal for you. All systems are operational.`;
     msg.lang = 'en-US';
 
-    // 1. Получаем список всех голосов в системе
-    let voices = window.speechSynthesis.getVoices();
-
-    // 2. Ищем мужской голос (David обычно есть во всех Windows)
-    // Мы ищем голос, в названии которого есть "David", "Mark", "Google UK English Male" или просто "Male"
-    const maleVoice = voices.find(voice => 
-        voice.name.includes('David') || 
-        voice.name.includes('Mark') || 
-        voice.name.includes('Male') ||
-        voice.name.includes('Pavel')
-    );
-
-    // 3. Если нашли мужской — используем его
-    if (maleVoice) {
-        msg.voice = maleVoice;
-    }
-
-    // Настройки для суровости
-    msg.volume = 0.3; // Тихий
-    msg.pitch = 0.1;  // Басовитый
-    msg.rate = 0.8;   // Медленный
+    // Настройки "Джарвиса": чуть быстрее обычного, спокойный тон
+    msg.volume = 0.5;  // Не слишком громко
+    msg.rate = 0.95;   // Скорость речи (Джарвис говорит четко и быстро)
+    msg.pitch = 0.8;   // Чуть ниже среднего, но не бас-робот
 
     window.speechSynthesis.speak(msg);
-
-    // Если список голосов еще не загрузился (такое бывает в Chrome)
-    if (voices.length === 0) {
-        window.speechSynthesis.onvoiceschanged = () => welcomeVoice(name);
-    }
 }
 async function checkAuth() {
     const id = document.getElementById('uid').value.toUpperCase().trim();
@@ -331,6 +316,7 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
 
