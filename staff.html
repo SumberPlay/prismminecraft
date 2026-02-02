@@ -146,7 +146,21 @@ async function syncSystem() {
         document.getElementById('sync-val').innerText = "СВЯЗЬ_ПОТЕРЯНА"; 
     }
 }
+function welcomeVoice(name) {
+    // Проверяем, поддерживает ли браузер синтез речи
+    if (!window.speechSynthesis) return;
 
+    const msg = new SpeechSynthesisUtterance();
+    // Текст приветствия. Можно заменить на русский, если хочешь.
+    msg.text = `Welcome back, operator ${name}. All systems are nominal.`;
+    msg.lang = 'en-US'; 
+    msg.rate = 0.85; // Чуть медленнее для эффекта терминала
+    msg.pitch = 0.5;  // Низкий "мужской" голос системы
+    
+    // Очищаем очередь, если что-то уже звучит
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(msg);
+}
 async function checkAuth() {
     const id = document.getElementById('uid').value.toUpperCase().trim();
     const password = document.getElementById('ups').value; // Берем чистый пароль
@@ -174,7 +188,8 @@ async function checkAuth() {
 
             // Сохраняем сессию
             localStorage.setItem('prism_user', JSON.stringify(userObj));
-            
+            // Запускаем голосовое приветствие
+            welcomeVoice(userObj.name);
             // Логируем вход в Telegram через твой сервер
             fetch(`${RENDER_API}/auth-log`, {
                 method: 'POST',
@@ -293,6 +308,7 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
 
