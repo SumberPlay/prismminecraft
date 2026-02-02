@@ -149,21 +149,22 @@ async function syncSystem() {
 function welcomeVoice(name) {
     if (!window.speechSynthesis) return;
 
-    // Грязный хак: если браузер блокирует звук, мы подождем клика
     if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
 
     const msg = new SpeechSynthesisUtterance();
     msg.text = `Welcome back, operator ${name}. All systems are nominal.`;
     msg.lang = 'en-US';
-    msg.rate = 0.85;
-    msg.pitch = 0.5;
 
-    // Попытка запустить
+    // --- НАСТРОЙКИ ГОЛОСА ---
+    msg.volume = 0.4;  // ГРОМКОСТЬ: от 0.0 до 1.0 (0.4 — это примерно 40% громкости)
+    msg.pitch = 0.1;   // ТОНАЛЬНОСТЬ: от 0.0 до 2.0 (0.1 — максимально низкий, мужской бас)
+    msg.rate = 0.8;    // СКОРОСТЬ: 0.8 — чуть замедленный, звучит более механически
+    // ------------------------
+
     window.speechSynthesis.speak(msg);
 
-    // Если не сработало (браузер заблокировал), сработает при следующем клике по body
     msg.onerror = (e) => {
-        console.warn("Звук заблокирован. Ждем клика пользователя.");
+        console.warn("Звук заблокирован. Ожидание активации пользователем.");
         document.body.addEventListener('click', () => {
             window.speechSynthesis.speak(msg);
         }, { once: true });
@@ -316,6 +317,7 @@ window.onload = () => {
 </script>
 </body>
 </html>
+
 
 
 
